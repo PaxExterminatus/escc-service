@@ -12,7 +12,7 @@ Route::get('/user', function (Request $request) {
     /**
      * @var Client $client;
      */
-    $client = Client::whereId(395)->with('courses');
+    $client = Client::whereId(395)->with('courses.lessons');
 
     return response()->json([
         'client' => $client->get(),

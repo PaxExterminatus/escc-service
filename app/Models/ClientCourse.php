@@ -5,10 +5,12 @@ namespace App\Models;
 use App\Traits\FieldAdapter;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Class ClientCourse
  * @package App\Models
+ *
  * @property-read int id
  * @property-read int client_id
  * @property-read int status_id
@@ -55,5 +57,16 @@ class ClientCourse extends Model
     public function getNameAttribute($value): string
     {
         return $this->adaptCase($value);
+    }
+
+    // Relations --------------------------------------------------------
+
+    /**
+     * Course lessons
+     * @return HasMany
+     */
+    public function lessons(): HasMany
+    {
+        return $this->hasMany(ClientCourseLesson::class, 'course_id', 'id');
     }
 }

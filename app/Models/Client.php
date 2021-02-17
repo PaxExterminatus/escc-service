@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 /**
  * Class Client
  * @package App\Models
+ *
  * @property-read int id
  * @property-read string name
  * @property-read string middle_name
