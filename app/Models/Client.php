@@ -24,11 +24,6 @@ class Client extends Model
     public $table = 'API_CLIENT';
     protected $primaryKey = 'id';
 
-    private function nameCase($value): string
-    {
-        return Str::of($value)->lower()->ucfirst();
-    }
-
     // Accessors ---------------------------------------------------------
 
     /**
@@ -38,7 +33,7 @@ class Client extends Model
      */
     public function getNameAttribute($value): string
     {
-        return $this->nameCase($value);
+        return $this->adaptCase($value);
     }
 
     /**
@@ -48,7 +43,7 @@ class Client extends Model
      */
     public function getMiddleNameAttribute($value): string
     {
-        return $this->nameCase($value);
+        return $this->adaptCase($value);
     }
 
     /**
@@ -58,7 +53,7 @@ class Client extends Model
      */
     public function getLastNameAttribute($value): string
     {
-        return $this->nameCase($value);
+        return $this->adaptCase($value);
     }
 
     // Relations --------------------------------------------------------
