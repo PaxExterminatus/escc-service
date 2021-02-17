@@ -2,15 +2,24 @@
 
 namespace App\Models;
 
+use App\Traits\FieldAdapter;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
-use Ramsey\Collection\Collection;
 
+/**
+ * Class Client
+ * @package App\Models
+ * @property-read int id
+ * @property-read string name
+ * @property-read string middle_name
+ * @property-read string last_name
+ */
 class Client extends Model
 {
     use HasFactory;
+    use FieldAdapter;
 
     public $table = 'API_CLIENT';
     protected $primaryKey = 'id';
@@ -56,7 +65,7 @@ class Client extends Model
 
     /**
      * Client courses.
-     * @return HasMany|Collection|ClientCourse[]
+     * @return HasMany|ClientCourse
      */
     public function courses(): HasMany
     {
