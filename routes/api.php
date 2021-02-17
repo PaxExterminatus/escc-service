@@ -9,10 +9,12 @@ use Illuminate\Support\Facades\Route;
 //});
 
 Route::get('/user', function (Request $request) {
-    //$res = DB::table('API_CLIENT')->paginate();
-    $res = Client::find(395);
+    /**
+     * @var Client $client;
+     */
+    $client = Client::whereId(395)->with('courses');
 
     return response()->json([
-        'client' => $res,
+        'client' => $client->get(),
     ]);
 });
