@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use Eloquent;
 use App\Traits\FieldAdapter;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
 
 /**
  * Class Client
@@ -16,6 +16,8 @@ use Illuminate\Support\Str;
  * @property-read string name
  * @property-read string middle_name
  * @property-read string last_name
+ *
+ * @mixin Eloquent
  */
 class Client extends Model
 {

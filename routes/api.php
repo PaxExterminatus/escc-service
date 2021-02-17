@@ -1,20 +1,11 @@
 <?php
 
-use App\Models\Client;
-use Illuminate\Http\Request;
+use App\Http\Controllers\API\ClientController;
 use Illuminate\Support\Facades\Route;
 
 //Route::middleware('auth:api')->get('/user', function (Request $request) {
 //    return $request->user();
 //});
 
-Route::get('/user', function (Request $request) {
-    /**
-     * @var Client $client;
-     */
-    $client = Client::whereId(2333)->with('courses.lessons');
+Route::get('/client/{id}', [ClientController::class, 'show']);
 
-    return response()->json([
-        'client' => $client->get(),
-    ]);
-});
