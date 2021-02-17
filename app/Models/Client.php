@@ -20,26 +20,48 @@ class Client extends Model
         return Str::of($value)->lower()->ucfirst();
     }
 
+    // Accessors ---------------------------------------------------------
+
+    /**
+     * Client name.
+     * @param $value
+     * @return string
+     */
     public function getNameAttribute($value): string
     {
         return $this->nameCase($value);
     }
 
+    /**
+     * Client middle_name.
+     * @param $value
+     * @return string
+     */
     public function getMiddleNameAttribute($value): string
     {
         return $this->nameCase($value);
     }
 
+    /**
+     * Client last_name.
+     * @param $value
+     * @return string
+     */
     public function getLastNameAttribute($value): string
     {
         return $this->nameCase($value);
     }
 
+    // Relations --------------------------------------------------------
+
     /**
+     * Client courses.
      * @return HasMany|Collection|ClientCourse[]
      */
     public function courses(): HasMany
     {
         return $this->hasMany(ClientCourse::class, 'client_id', 'id');
     }
+
+    // -------------------------------------------------------------------
 }
