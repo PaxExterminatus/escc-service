@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read int id
  * @property-read int client_id
  * @property-read int status_id
+ * @property-read int node_id
  * @property-read string status
  * @property-read string name
  */
@@ -22,13 +23,13 @@ class ClientCourse extends Model
     use HasFactory;
     use FieldAdapter;
 
-    protected $hidden = ['status_id'];
     protected $appends = ['status'];
     public $table = 'API_CLIENT_COURSES';
     protected $primaryKey = 'id';
     protected $casts = [
         'client_id' => 'integer',
         'status_id' => 'integer',
+        'node_id' => 'integer',
     ];
 
     // Accessors ---------------------------------------------------------
