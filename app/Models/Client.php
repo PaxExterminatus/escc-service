@@ -65,7 +65,6 @@ class Client extends Model
 
     /**
      * Client courses.
-     * @return HasMany|ClientCourse
      */
     public function courses(): HasMany
     {
