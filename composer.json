@@ -15,7 +15,8 @@
         "laravel/framework": "^8.12",
         "laravel/tinker": "^2.5",
         "nuwave/lighthouse": "^5.2",
-        "yajra/laravel-oci8": "^8.3.0"
+        "yajra/laravel-oci8": "^8.3.0",
+        "ext-pdo": "*"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^2.9",
