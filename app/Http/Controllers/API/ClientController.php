@@ -8,6 +8,10 @@ use Illuminate\Http\JsonResponse;
 
 class ClientController extends Controller
 {
+    /**
+     * @param int $id
+     * @return JsonResponse
+     */
     public function show(int $id): JsonResponse
     {
         $client = Client::where('id', $id)->with('courses.lessons');
