@@ -15,9 +15,19 @@ class EFrontController extends Controller
     {
         $params = $request->params();
 
-        $result = DB::selectOne("SELECT APISAS_EFRONT.EFONLINE({$params->clientCode}, {$params->requestType}, {$params->requestCode}, {$params->nodeId}, {$params->lessonItem}) AS value FROM DUAL");
+        $procedure = 'APISAS_EFRONT.EFONLINE';
 
-        return response(content: $result->value, headers: [
+        DB::executeProcedure($procedure, [
+            'cl_code' => $params->clientCode,
+            'rq_type' => $params->requestType,
+            'rq_code' => $params->requestCode,
+            'node_id' => $params->nodeId,
+            'lesson_item' => $params->lessonItem,
+        ]);
+
+        $data = DB::table('API_EFRONT_DATA')->first('data_lob');
+
+        return response(content: $data->data_lob, headers: [
             'Content-Type' => 'application/xml',
         ]);
     }
