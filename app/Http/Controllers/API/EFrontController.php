@@ -25,7 +25,10 @@ class EFrontController extends Controller
             'lesson_item' => $params->lessonItem,
         ]);
 
-        $data = DB::table('API_EFRONT_DATA')->first('data_lob');
+        $data = DB::table('API_EFRONT_DATA')
+            ->where('client_id', $params->clientCode)
+            ->first('data_lob')
+        ;
 
         return response(content: $data->data_lob, headers: [
             'Content-Type' => 'application/xml',
