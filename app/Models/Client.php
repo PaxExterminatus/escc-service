@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read string name
  * @property-read string middle_name
  * @property-read string last_name
+ * @property-read float total_deb
  *
  * @mixin Eloquent
  */
@@ -26,6 +27,9 @@ class Client extends Model
 
     public $table = 'API_CLIENT';
     protected $primaryKey = 'id';
+    protected $casts = [
+        'total_deb' => 'float',
+    ];
 
     // Accessors ---------------------------------------------------------
 
