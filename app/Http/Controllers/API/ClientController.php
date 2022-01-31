@@ -14,7 +14,7 @@ class ClientController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $client = Client::where('id', $id)->with('courses.lessons');
+        $client = Client::where('id', $id)->with('courses.lessons', 'courses.categories');
 
         return response()->json([
             'client' => $client->first(),

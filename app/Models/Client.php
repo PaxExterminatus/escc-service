@@ -11,13 +11,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Class Client
  * @package App\Models
- *
  * @property-read int id
  * @property-read string name
  * @property-read string middle_name
  * @property-read string last_name
  * @property-read float total_deb
- *
  * @mixin Eloquent
  */
 class Client extends Model
@@ -31,47 +29,27 @@ class Client extends Model
         'total_deb' => 'float',
     ];
 
-    // Accessors ---------------------------------------------------------
+    // Accessors -------------------------------------------------------------------------------------------------------
 
-    /**
-     * Client name.
-     * @param $value
-     * @return string
-     */
-    public function getNameAttribute($value): string
+    function getNameAttribute($value): string
     {
         return $this->adaptCase($value);
     }
 
-    /**
-     * Client middle_name.
-     * @param $value
-     * @return string
-     */
-    public function getMiddleNameAttribute($value): string
+    function getMiddleNameAttribute($value): string
     {
         return $this->adaptCase($value);
     }
 
-    /**
-     * Client last_name.
-     * @param $value
-     * @return string
-     */
-    public function getLastNameAttribute($value): string
+    function getLastNameAttribute($value): string
     {
         return $this->adaptCase($value);
     }
 
-    // Relations --------------------------------------------------------
+    // Relations -------------------------------------------------------------------------------------------------------
 
-    /**
-     * Client courses.
-     */
-    public function courses(): HasMany
+    function courses(): HasMany
     {
         return $this->hasMany(ClientCourse::class, 'client_id', 'id');
     }
-
-    // -------------------------------------------------------------------
 }

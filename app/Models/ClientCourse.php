@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\FieldAdapter;
+use Eloquent;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,13 +11,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Class ClientCourse
  * @package App\Models
- *
  * @property-read int id
  * @property-read int client_id
  * @property-read int status_id
  * @property-read int node_id
  * @property-read string status
  * @property-read string name
+ * @mixin Eloquent
  */
 class ClientCourse extends Model
 {
@@ -32,13 +33,9 @@ class ClientCourse extends Model
         'node_id' => 'integer',
     ];
 
-    // Accessors ---------------------------------------------------------
+    // Accessors -------------------------------------------------------------------------------------------------------
 
-    /**
-     * Course status name.
-     * @return string
-     */
-    public function getStatusAttribute(): string
+    function getStatusAttribute(): string
     {
         if ($this->status_id === 1) return 'active';
         if ($this->status_id === 2) return 'not active';
@@ -50,24 +47,20 @@ class ClientCourse extends Model
         return 'unknown';
     }
 
-    /**
-     * Course name.
-     * @param $value
-     * @return string
-     */
-    public function getNameAttribute($value): string
+    function getNameAttribute($value): string
     {
         return $this->adaptCase($value);
     }
 
-    // Relations --------------------------------------------------------
+    // Relations -------------------------------------------------------------------------------------------------------
 
-    /**
-     * Course lessons
-     * @return HasMany
-     */
-    public function lessons(): HasMany
+    function lessons(): HasMany
     {
         return $this->hasMany(ClientCourseLesson::class, 'course_id', 'id');
+    }
+
+    function categories(): HasMany
+    {
+        return $this->hasMany(CourseCategory::class, 'node_id', 'node_id');
     }
 }
