@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * Class CourseCategory
  * @package App\Models
  * @property-read int node_id Course node
+ * @property-read string parent_code Parent category code
  * @property-read string code Category code
  * @property-read string name Category name
  */
