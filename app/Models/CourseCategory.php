@@ -9,11 +9,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Class CourseCategory
+ *
  * @package App\Models
  * @property-read int node_id Course node
  * @property-read string parent_code Parent category code
  * @property-read string code Category code
  * @property-read string name Category name
+ * @property-read string $name
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ClientCourseLesson[] $lessons
+ * @property-read int|null $lessons_count
+ * @method static \Illuminate\Database\Eloquent\Builder|CourseCategory newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|CourseCategory newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|CourseCategory query()
+ * @mixin \Eloquent
  */
 class CourseCategory extends Model
 {

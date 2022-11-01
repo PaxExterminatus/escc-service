@@ -7,13 +7,17 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class ClientCourseLesson
- * @package App\Models
  *
+ * @package App\Models
  * @property-read int id
  * @property-read int client_id
  * @property-read int course_id
  * @property-read int node_id
  * @property-read string name
+ * @method static \Illuminate\Database\Eloquent\Builder|ClientCourseLesson newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|ClientCourseLesson newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|ClientCourseLesson query()
+ * @mixin \Eloquent
  */
 class ClientCourseLesson extends Model
 {

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Class ClientCourse
+ *
  * @package App\Models
  * @property-read int id
  * @property-read int client_id
@@ -18,6 +19,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read string status
  * @property-read string name
  * @mixin Eloquent
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\CourseCategory[] $categories
+ * @property-read int|null $categories_count
+ * @property-read string $name
+ * @property-read string $status
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ClientCourseLesson[] $lessons
+ * @property-read int|null $lessons_count
+ * @method static \Illuminate\Database\Eloquent\Builder|ClientCourse newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|ClientCourse newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|ClientCourse query()
  */
 class ClientCourse extends Model
 {
