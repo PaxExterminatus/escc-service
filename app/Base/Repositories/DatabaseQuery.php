@@ -1,7 +1,9 @@
 <?php
 
-namespace App\Base\Queries;
+namespace App\Base\Repositories;
 
+use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 
@@ -26,8 +28,11 @@ abstract class DatabaseQuery
         return $this;
     }
 
-    function query(): EloquentBuilder|QueryBuilder
+    /**
+     * @return iterable|Collection|EloquentCollection
+     */
+    function get(): iterable
     {
-        return $this->apply()->query;
+        return $this->apply()->query->get();
     }
 }

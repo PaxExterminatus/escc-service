@@ -7,7 +7,7 @@ use App\Domain\Messages\Services\MobileTeleSystems\BatchSending;
 use App\Domain\Messages\Services\MobileTeleSystems\BatchSendingMessage;
 use Illuminate\Support\Collection;
 
-class MessagingProviderByMobileTeleSystems implements MessagingProviderPlan
+class MobileTeleSystemsMessagingProvider implements MessagingProviderInterface
 {
     static function make(): static
     {
@@ -15,7 +15,7 @@ class MessagingProviderByMobileTeleSystems implements MessagingProviderPlan
     }
 
     /** @param MessagesDaily[]|Collection $messages */
-    function package(iterable $messages)
+    function massSending(iterable $messages)
     {
         $batch = BatchSending::make();
 

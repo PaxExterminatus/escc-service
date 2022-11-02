@@ -2,7 +2,7 @@
 
 namespace App\Domain\Messages\Services;
 
-interface MessagingProviderPlan
+interface MessagingProviderInterface
 {
 
 }
