@@ -11,6 +11,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 /**
  * App\Domain\Messages\Models\MessagesDaily
  *
+ * @property int id
+ * @property string body
+ * @property string address
  * @method static EloquentBuilder|MessagesDaily newModelQuery()
  * @method static EloquentBuilder|MessagesDaily newQuery()
  * @method static EloquentBuilder|MessagesDaily query()

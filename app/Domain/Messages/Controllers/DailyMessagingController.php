@@ -2,34 +2,37 @@
 
 namespace App\Domain\Messages\Controllers;
 
-use App\Domain\Messages\Queries\DailyMessagesQuery;
-use App\Http\Controllers\ApiController;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
+use Illuminate\Http\JsonResponse;
+use App\Http\Controllers\ApiController;
+use App\Domain\Messages\Queries\DailyMessagesQuery;
+use App\Domain\Messages\Services\MessagingProviderByMobileTeleSystems;
 
 class DailyMessagingController extends ApiController
 {
-    /** Send daily messages */
-    function send(string $messageType): JsonResponse
-    {
-        $messages = $this->dailyMessages($messageType)->query()->get();
-
-        return response()->json([
-            'messages' => $messages,
-        ]);
-    }
-
     /** Get list of daily messages */
     function index(string $messageType): JsonResponse
     {
-        $messages = $this->dailyMessages($messageType)->query()->get();
+        $messages = $this->dailyMessagesQuery($messageType)->query()->get();
+
+        MessagingProviderByMobileTeleSystems::make()->package($messages);
 
         return response()->json([
             'messages' => $messages,
         ]);
     }
 
-    protected function dailyMessages(string $type): DailyMessagesQuery
+    /** Send daily messages */
+    function send(string $messageType): JsonResponse
+    {
+        $messages = $this->dailyMessagesQuery($messageType)->query()->get();
+
+        return response()->json([
+            'messages' => $messages,
+        ]);
+    }
+
+    protected function dailyMessagesQuery(string $type): DailyMessagesQuery
     {
         $messages = DailyMessagesQuery::make();
 
