@@ -2,10 +2,10 @@
 
 namespace App\Domain\Messages\Services;
 
-use App\Domain\Messages\Models\MessagesDaily;
-use App\Domain\Messages\Services\MobileTeleSystems\BatchSending;
-use App\Domain\Messages\Services\MobileTeleSystems\BatchSendingMessage;
 use Illuminate\Support\Collection;
+use App\Domain\Messages\Models\MessagesDaily;
+use App\Domain\Messages\Services\MobileTeleSystems\Batch;
+use App\Domain\Messages\Services\MobileTeleSystems\BatchMessage;
 
 class MobileTeleSystemsMessagingProvider implements MessagingProviderInterface
 {
@@ -17,11 +17,11 @@ class MobileTeleSystemsMessagingProvider implements MessagingProviderInterface
     /** @param MessagesDaily[]|Collection $messages */
     function massSending(iterable $messages)
     {
-        $batch = BatchSending::make();
+        $batch = Batch::make();
 
         foreach ($messages as $message)
         {
-            $batchMessage = BatchSendingMessage::make()
+            $batchMessage = BatchMessage::make()
                 ->setPhoneNumber($message->address)
                 ->setExtraId($message->id)
                 ->setText($message->body);

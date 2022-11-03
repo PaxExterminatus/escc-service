@@ -4,7 +4,7 @@ namespace App\Domain\Messages\Services\MobileTeleSystems;
 
 use JsonSerializable;
 
-class BatchSendingMessage implements JsonSerializable
+class BatchMessage implements JsonSerializable
 {
     protected string $phoneNumber;
     protected string $extraId;

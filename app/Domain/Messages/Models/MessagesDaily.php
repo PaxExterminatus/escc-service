@@ -26,4 +26,5 @@ class MessagesDaily extends Model
 
     protected $table = 'API_MESSAGES_SMS_DAILY';
     protected $primaryKey = 'ID';
+    protected $fillable = ['id', 'type', 'encoding', 'address', 'body'];
 }

@@ -34,8 +34,6 @@ class DailyMessagingController extends ApiController
     {
         $messages = $this->applyParamsToDailyMessagesRepository($messageType)->get();
 
-        dd($messages);
-
         MobileTeleSystemsMessagingProvider::make()->massSending($messages);
 
         return response()->json([
