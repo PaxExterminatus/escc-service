@@ -1,21 +1,28 @@
 <?php
 
-namespace App\Domain\Messages\Services;
+namespace App\Domain\Messages\Services\MobileTeleSystems;
 
 use App\Domain\Messages\Models\MessagesDaily;
-use App\Domain\Messages\Services\MobileTeleSystems\BatchChanel;
-use App\Domain\Messages\Services\MobileTeleSystems\Batch;
-use App\Domain\Messages\Services\MobileTeleSystems\BatchMessage;
+use App\Domain\Messages\Services\MessagingProviderInterface;
+use Illuminate\Http\Client\Response;
+use GuzzleHttp\Promise\PromiseInterface;
 
-class MobileTeleSystemsMessagingProvider implements MessagingProviderInterface
+class Provider implements MessagingProviderInterface
 {
+    protected ProviderAPI $api;
+
+    function __construct()
+    {
+        $this->api = new ProviderAPI;
+    }
+
     static function make(): static
     {
         return new static;
     }
 
     /** @param MessagesDaily[] $messages */
-    function massSending(iterable $messages)
+    function massSending(iterable $messages): PromiseInterface|Response
     {
         $batch = Batch::make();
 
@@ -36,6 +43,6 @@ class MobileTeleSystemsMessagingProvider implements MessagingProviderInterface
 
         $batch->addChannel($smsChanel);
 
-        dd($batch->jsonSerialize());
+        return $this->api->batch($batch->toArray());
     }
 }

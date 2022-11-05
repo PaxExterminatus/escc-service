@@ -2,12 +2,12 @@
 
 namespace App\Domain\Messages\Controllers;
 
-use Illuminate\Support\Str;
-use Illuminate\Http\JsonResponse;
-use App\Http\Controllers\ApiController;
 use App\Domain\Messages\Models\MessagesDaily;
 use App\Domain\Messages\Queries\DailyMessagesRepository;
-use App\Domain\Messages\Services\MobileTeleSystemsMessagingProvider;
+use App\Domain\Messages\Services\MobileTeleSystems\Provider;
+use App\Http\Controllers\ApiController;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str;
 
 class DailyMessagingController extends ApiController
 {
@@ -33,9 +33,14 @@ class DailyMessagingController extends ApiController
     {
         $messages = $this->applyParamsToDailyMessagesRepository($messageType)->get();
 
-        MobileTeleSystemsMessagingProvider::make()->massSending($messages);
+        $response = Provider::make()->massSending($messages);
 
         return response()->json([
+            'response' => [
+                'status' => $response->status(),
+                'reason' => $response->reason(),
+                'data' => $response->json(),
+            ],
             'messages' => $messages,
         ]);
     }

@@ -34,7 +34,7 @@
         "php": "^8.0.2",
         "fideloper/proxy": "^4.4",
         "fruitcake/laravel-cors": "^2.0",
-        "guzzlehttp/guzzle": "^7.0.1",
+        "guzzlehttp/guzzle": "^7.5.0",
         "laravel/framework": "^v9.37.0",
         "laravel/tinker": "^2.5",
         "yajra/laravel-oci8": "^v9.0.3",
