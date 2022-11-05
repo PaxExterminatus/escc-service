@@ -2,8 +2,8 @@
 
 namespace App\Domain\Messages\Services;
 
-use Illuminate\Support\Collection;
 use App\Domain\Messages\Models\MessagesDaily;
+use App\Domain\Messages\Services\MobileTeleSystems\BatchChanel;
 use App\Domain\Messages\Services\MobileTeleSystems\Batch;
 use App\Domain\Messages\Services\MobileTeleSystems\BatchMessage;
 
@@ -14,7 +14,7 @@ class MobileTeleSystemsMessagingProvider implements MessagingProviderInterface
         return new static;
     }
 
-    /** @param MessagesDaily[]|Collection $messages */
+    /** @param MessagesDaily[] $messages */
     function massSending(iterable $messages)
     {
         $batch = Batch::make();
@@ -28,5 +28,14 @@ class MobileTeleSystemsMessagingProvider implements MessagingProviderInterface
 
             $batch->addMessage($batchMessage);
         }
+
+        $smsChanel = BatchChanel::make()
+            ->setName('sms')
+            ->setOptionAlphaName('TestAlphaName')
+            ->setOptionTtl(300);
+
+        $batch->addChannel($smsChanel);
+
+        dd($batch->jsonSerialize());
     }
 }

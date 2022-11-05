@@ -24,6 +24,9 @@ class MessagesDaily extends Model
     use HasFactory;
     use FieldAdapter;
 
+    static string $TYPE_SMS = 'SMS';
+    static string $TYPE_EMAIL = 'EMAIL';
+
     protected $table = 'API_MESSAGES_SMS_DAILY';
     protected $primaryKey = 'ID';
     protected $fillable = ['id', 'type', 'encoding', 'address', 'body'];
