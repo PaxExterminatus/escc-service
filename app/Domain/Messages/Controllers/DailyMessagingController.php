@@ -6,7 +6,10 @@ use App\Domain\Messages\Models\MessagesDaily;
 use App\Domain\Messages\Queries\DailyMessagesRepository;
 use App\Domain\Messages\Services\MobileTeleSystems\Provider;
 use App\Http\Controllers\ApiController;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Str;
 
 class DailyMessagingController extends ApiController
@@ -42,6 +45,26 @@ class DailyMessagingController extends ApiController
                 'data' => $response->json(),
             ],
             'messages' => $messages,
+        ]);
+    }
+
+    function txt(string $messageType): Response|Application|ResponseFactory
+    {
+        $messages = $this->applyParamsToDailyMessagesRepository($messageType)->get();
+
+        $content = "Phone number\t1\r\n";
+
+        foreach ($messages as $message)
+        {
+            $content = $content . "$message->address\t$message->body\r\n";
+        }
+
+        $filename = 'daily_sms_messages_' .  date('Y-m-d', time());
+
+        return response($content, 200, [
+            'Content-Type' => 'text/plain',
+            'Cache-Control' => 'no-store, no-cache',
+            'Content-Disposition' => "attachment; filename=$filename",
         ]);
     }
 

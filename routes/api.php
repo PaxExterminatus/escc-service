@@ -28,3 +28,11 @@ Route::get('/messages/daily/{messageType}/', [DailyMessagingController::class, '
  * @example /api/messages/daily/telegram/send
  */
 Route::get('/messages/daily/{messageType}/send', [DailyMessagingController::class, 'send']);
+
+/**
+ * @example /api/messages/daily/sms/txt
+ * @example /api/messages/daily/email/txt
+ * @example /api/messages/daily/viber/txt
+ * @example /api/messages/daily/telegram/txt
+ */
+Route::get('/messages/daily/{messageType}/txt', [DailyMessagingController::class, 'txt']);
