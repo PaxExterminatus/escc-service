@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Class Client
+ *
  * @package App\Models
  * @property-read int id
  * @property-read string name
@@ -17,6 +18,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read string last_name
  * @property-read float total_deb
  * @mixin Eloquent
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ClientCourse[] $courses
+ * @property-read int|null $courses_count
+ * @property-read string $last_name
+ * @property-read string $middle_name
+ * @property-read string $name
+ * @method static \Illuminate\Database\Eloquent\Builder|Client newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Client newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Client query()
  */
 class Client extends Model
 {
