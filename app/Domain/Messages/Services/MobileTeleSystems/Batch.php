@@ -29,6 +29,13 @@ class Batch implements JsonSerializable
         return $this;
     }
 
+    function messages(): array
+    {
+        return $this->messages->map(function (BatchMessage $message) {
+            return $message->toArray();
+        })->toArray();
+    }
+
     function addChannel(BatchChanel $chanel): static
     {
         $this->channels->push($chanel);
@@ -37,17 +44,18 @@ class Batch implements JsonSerializable
 
     function toArray(): array
     {
-        return [
-            'messages' => $this->messages->map(function (BatchMessage $message) {
-                return $message->toArray();
-            })->toArray(),
-            'channels' => $this->channels->map(function (BatchChanel $chanel) {
-                return $chanel->getName();
-            })->toArray(),
-            'channel_options' => $this->channels->map(function (BatchChanel $chanel) {
-                return $chanel->options();
-            })->toArray(),
+        $data = [
+            'messages' => $this->messages(),
+            'channels' => [],
         ];
+
+        foreach ($this->channels as $chanel)
+        {
+            $data['channels'][] = $chanel->getName();
+            $data['channel_options'][$chanel->getName()] = $chanel->options();
+        }
+
+        return $data;
     }
 
     function jsonSerialize(): array

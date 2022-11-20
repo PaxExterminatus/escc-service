@@ -36,7 +36,10 @@ class DailyMessagingController extends ApiController
     {
         $messages = $this->applyParamsToDailyMessagesRepository($messageType)->get();
 
-        $response = Provider::make()->massSending($messages);
+        $result = Provider::make()->massSending($messages, $this->sendingName());
+
+        $request = $result['request'];
+        $response = $result['response'];
 
         return response()->json([
             'response' => [
@@ -44,7 +47,7 @@ class DailyMessagingController extends ApiController
                 'reason' => $response->reason(),
                 'data' => $response->json(),
             ],
-            'messages' => $messages,
+            'request' => $request,
         ]);
     }
 
@@ -59,7 +62,7 @@ class DailyMessagingController extends ApiController
             $content = $content . "$message->address\t$message->body\r\n";
         }
 
-        $filename = 'daily_sms_messages_' .  date('Y-m-d', time());
+        $filename = $this->sendingName();
 
         return response($content, 200, [
             'Content-Type' => 'text/plain',
@@ -77,5 +80,10 @@ class DailyMessagingController extends ApiController
             $this->dailyMessagesRepository->setTypeAsEmail();
 
         return $this->dailyMessagesRepository;
+    }
+
+    protected function sendingName(): string
+    {
+        return 'daily_sms_messages_' .  date('Y-m-d', time());
     }
 }

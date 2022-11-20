@@ -41,10 +41,8 @@ class BatchChanel implements JsonSerializable
     function options(): array
     {
         return [
-            $this->name => [
-                'alpha_name' => $this->alphaName,
-                'ttl' => $this->ttl,
-            ],
+            'alpha_name' => $this->alphaName,
+            'ttl' => $this->ttl,
         ];
     }
 
