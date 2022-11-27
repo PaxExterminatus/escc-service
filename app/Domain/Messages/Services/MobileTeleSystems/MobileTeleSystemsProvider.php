@@ -4,17 +4,16 @@ namespace App\Domain\Messages\Services\MobileTeleSystems;
 
 use App\Domain\Messages\Models\MessagesDaily;
 use App\Domain\Messages\Services\MessagingProviderInterface;
-use http\Env\Request;
 use Illuminate\Http\Client\Response;
 use GuzzleHttp\Promise\PromiseInterface;
 
-class Provider implements MessagingProviderInterface
+class MobileTeleSystemsProvider implements MessagingProviderInterface
 {
-    protected ProviderAPI $api;
+    protected MobileTeleSystemsApi $api;
 
     function __construct()
     {
-        $this->api = new ProviderAPI;
+        $this->api = new MobileTeleSystemsApi;
     }
 
     static function make(): static
@@ -28,11 +27,11 @@ class Provider implements MessagingProviderInterface
      */
     function massSending(iterable $messages, string $name): array
     {
-        $batch = Batch::make();
+        $batch = MobileTeleSystemsBatch::make();
 
         foreach ($messages as $message)
         {
-            $batchMessage = BatchMessage::make()
+            $batchMessage = MobileTeleSystemsBatchMessage::make()
                 ->setPhoneNumber($message->address)
                 ->setExtraId($message->id)
                 ->setText($message->body);
@@ -40,7 +39,7 @@ class Provider implements MessagingProviderInterface
             $batch->addMessage($batchMessage);
         }
 
-        $smsChanel = BatchChanel::make()
+        $smsChanel = MobileTeleSystemsBatchChanel::make()
             ->setName('sms')
             ->setOptionAlphaName($name)
             ->setOptionTtl(300);

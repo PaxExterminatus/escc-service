@@ -4,7 +4,7 @@ namespace App\Domain\Messages\Services\MobileTeleSystems;
 
 use JsonSerializable;
 
-class BatchChanel implements JsonSerializable
+class MobileTeleSystemsBatchChanel implements JsonSerializable
 {
     protected string $name;
     protected string $alphaName;

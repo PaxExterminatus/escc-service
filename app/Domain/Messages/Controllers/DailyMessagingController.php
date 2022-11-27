@@ -4,7 +4,7 @@ namespace App\Domain\Messages\Controllers;
 
 use App\Domain\Messages\Models\MessagesDaily;
 use App\Domain\Messages\Queries\DailyMessagesRepository;
-use App\Domain\Messages\Services\MobileTeleSystems\Provider;
+use App\Domain\Messages\Services\MobileTeleSystems\MobileTeleSystemsProvider;
 use App\Http\Controllers\ApiController;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
@@ -36,7 +36,7 @@ class DailyMessagingController extends ApiController
     {
         $messages = $this->applyParamsToDailyMessagesRepository($type)->get();
 
-        $result = Provider::make()->massSending($messages, $this->sendingName());
+        $result = MobileTeleSystemsProvider::make()->massSending($messages, $this->sendingName());
 
         $request = $result['request'];
         $response = $result['response'];

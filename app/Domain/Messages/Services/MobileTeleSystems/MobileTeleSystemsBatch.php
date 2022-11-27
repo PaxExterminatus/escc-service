@@ -5,11 +5,11 @@ namespace App\Domain\Messages\Services\MobileTeleSystems;
 use Illuminate\Support\Collection;
 use JsonSerializable;
 
-class Batch implements JsonSerializable
+class MobileTeleSystemsBatch implements JsonSerializable
 {
-    /** @var BatchMessage[]|Collection */
+    /** @var MobileTeleSystemsBatchMessage[]|Collection */
     protected iterable $messages;
-    /** @var BatchChanel[]|Collection */
+    /** @var MobileTeleSystemsBatchChanel[]|Collection */
     protected iterable $channels;
 
     function __construct()
@@ -23,7 +23,7 @@ class Batch implements JsonSerializable
         return new static;
     }
 
-    function addMessage(BatchMessage $message): static
+    function addMessage(MobileTeleSystemsBatchMessage $message): static
     {
         $this->messages->push($message);
         return $this;
@@ -31,12 +31,12 @@ class Batch implements JsonSerializable
 
     function messages(): array
     {
-        return $this->messages->map(function (BatchMessage $message) {
+        return $this->messages->map(function (MobileTeleSystemsBatchMessage $message) {
             return $message->toArray();
         })->toArray();
     }
 
-    function addChannel(BatchChanel $chanel): static
+    function addChannel(MobileTeleSystemsBatchChanel $chanel): static
     {
         $this->channels->push($chanel);
         return $this;
