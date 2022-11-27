@@ -39,7 +39,7 @@ class DailyMessagingController extends ApiController
     {
         $messages = $this->applyParamsToDailyMessagesRepository($type)->get();
 
-        $result = MobileTeleSystemsProvider::make()->massSending($messages, $this->sendingName());
+        $result = MobileTeleSystemsProvider::make()->massSending($messages, $this->senderName());
 
         $request = $result['request'];
         $response = $result['response'];
@@ -70,7 +70,7 @@ class DailyMessagingController extends ApiController
             $content = $content . "$message->address\t$message->body\r\n";
         }
 
-        $filename = $this->sendingName();
+        $filename = $this->senderName();
 
         return response($content, 200, [
             'Content-Type' => 'text/plain',
@@ -90,7 +90,7 @@ class DailyMessagingController extends ApiController
         return $this->dailyRepository;
     }
 
-    protected function sendingName(): string
+    protected function senderName(): string
     {
         return env('MTS_API_ALFA_NAME');
     }
