@@ -7,7 +7,7 @@ use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
-class ProviderAPI
+class MobileTeleSystemsApi
 {
     protected string $clientId;
     protected PendingRequest $http;

@@ -4,7 +4,7 @@ namespace App\Domain\Messages\Services\MobileTeleSystems;
 
 use JsonSerializable;
 
-class BatchChanel implements JsonSerializable
+class MobileTeleSystemsBatchChanel implements JsonSerializable
 {
     protected string $name;
     protected string $alphaName;
@@ -41,10 +41,8 @@ class BatchChanel implements JsonSerializable
     function options(): array
     {
         return [
-            $this->name => [
-                'alpha_name' => $this->alphaName,
-                'ttl' => $this->ttl,
-            ],
+            'alpha_name' => $this->alphaName,
+            'ttl' => $this->ttl,
         ];
     }
 
