@@ -14,12 +14,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property int id
  * @property string body
  * @property string address
- * @method static EloquentBuilder|MessagesDaily newModelQuery()
- * @method static EloquentBuilder|MessagesDaily newQuery()
- * @method static EloquentBuilder|MessagesDaily query()
+ * @method static EloquentBuilder|DailyMessage newModelQuery()
+ * @method static EloquentBuilder|DailyMessage newQuery()
+ * @method static EloquentBuilder|DailyMessage query()
  * @mixin Eloquent
  */
-class MessagesDaily extends Model
+class DailyMessage extends Model
 {
     use HasFactory;
     use FieldAdapter;

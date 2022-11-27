@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\Messages\Services\MobileTeleSystems;
+namespace App\Domain\Messages\Services\Senders\MobileTeleSystems;
 
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\PendingRequest;
