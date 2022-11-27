@@ -2,8 +2,7 @@
 
 namespace App\Domain\Messages\Controllers;
 
-use App\Domain\Messages\Models\DailyMessage;
-use App\Domain\Messages\Models\ElectronicMessage;
+use App\Domain\Messages\Models\DailyMessageView;
 use App\Domain\Messages\Queries\DailyMessagesRepository;
 use App\Domain\Messages\Services\DataManagement\DailyMessagingUpdateStatusService;
 use App\Domain\Messages\Services\Senders\MobileTeleSystems\MobileTeleSystemsProvider;
@@ -12,7 +11,6 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class DailyMessagingController extends ApiController
@@ -41,7 +39,7 @@ class DailyMessagingController extends ApiController
     {
         $messages = $this->applyParamsToDailyMessagesRepository($type)->get();
 
-        $result = MobileTeleSystemsProvider::make()->massSending($messages, $this->sendingName());
+        $result = MobileTeleSystemsProvider::make()->massSending($messages, $this->senderName());
 
         $request = $result['request'];
         $response = $result['response'];
@@ -72,7 +70,7 @@ class DailyMessagingController extends ApiController
             $content = $content . "$message->address\t$message->body\r\n";
         }
 
-        $filename = $this->sendingName();
+        $filename = $this->senderName();
 
         return response($content, 200, [
             'Content-Type' => 'text/plain',
@@ -83,16 +81,16 @@ class DailyMessagingController extends ApiController
 
     protected function applyParamsToDailyMessagesRepository(string $type): DailyMessagesRepository
     {
-        if (Str::upper($type) === DailyMessage::$TYPE_SMS)
+        if (Str::upper($type) === DailyMessageView::$TYPE_SMS)
             $this->dailyRepository->setTypeAsSms();
 
-        if (Str::upper($type) === DailyMessage::$TYPE_EMAIL)
+        if (Str::upper($type) === DailyMessageView::$TYPE_EMAIL)
             $this->dailyRepository->setTypeAsEmail();
 
         return $this->dailyRepository;
     }
 
-    protected function sendingName(): string
+    protected function senderName(): string
     {
         return env('MTS_API_ALFA_NAME');
     }

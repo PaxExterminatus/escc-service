@@ -3,22 +3,24 @@
 namespace App\Domain\Messages\Services\DataManagement;
 
 use App\Domain\Messages\Models\ElectronicMessage;
-use App\Domain\Messages\Models\DailyMessage;
+use App\Domain\Messages\Models\DailyMessageView;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 class DailyMessagingUpdateStatusService
 {
     /**
-     * @param DailyMessage[]|Collection $messages
+     * @param DailyMessageView[]|Collection $messages
      * @return void
      */
     function massSendingSuccess(Collection $messages): void
     {
-        foreach ($messages as $message)
+        $ids = $messages->pluck('id');
+        $eMessages = ElectronicMessage::whereIn('emsg', $ids)->get();
+
+        foreach ($eMessages as $eMessage)
         {
-            $status = ElectronicMessage::EMSG_STATUS_TRY;
-            DB::update("UPDATE EMSG SET EMSG_STATUS = $status WHERE EMSG = $message->id");
+            $eMessage->emsg_status = ElectronicMessage::EMSG_STATUS_TRY;
+            $eMessage->save();
         }
     }
 }

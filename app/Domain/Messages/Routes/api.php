@@ -21,4 +21,6 @@ Route::prefix('api/messages/')
          * @example /api/messages/daily/email/txt
          */
         Route::get('daily/{type}/txt', [DailyMessagingController::class, 'txt']);
+
+        Route::get('daily/{type}/tst', [DailyMessagingController::class, 'tst']);
     });
