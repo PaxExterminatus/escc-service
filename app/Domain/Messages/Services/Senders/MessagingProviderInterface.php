@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\Messages\Services;
+namespace App\Domain\Messages\Services\Senders;
 
 interface MessagingProviderInterface
 {

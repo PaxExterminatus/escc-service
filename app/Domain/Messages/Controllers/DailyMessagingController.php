@@ -2,23 +2,28 @@
 
 namespace App\Domain\Messages\Controllers;
 
-use App\Domain\Messages\Models\MessagesDaily;
+use App\Domain\Messages\Models\DailyMessage;
+use App\Domain\Messages\Models\ElectronicMessage;
 use App\Domain\Messages\Queries\DailyMessagesRepository;
-use App\Domain\Messages\Services\MobileTeleSystems\MobileTeleSystemsProvider;
+use App\Domain\Messages\Services\DataManagement\DailyMessagingUpdateStatusService;
+use App\Domain\Messages\Services\Senders\MobileTeleSystems\MobileTeleSystemsProvider;
 use App\Http\Controllers\ApiController;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class DailyMessagingController extends ApiController
 {
-    protected DailyMessagesRepository $dailyMessagesRepository;
+    protected DailyMessagesRepository $dailyRepository;
+    protected DailyMessagingUpdateStatusService $statusService;
 
-    function __construct(DailyMessagesRepository $dailyMessagesRepository)
+    function __construct(DailyMessagesRepository $dailyRepository)
     {
-        $this->dailyMessagesRepository = $dailyMessagesRepository;
+        $this->dailyRepository = $dailyRepository;
+        $this->statusService = new DailyMessagingUpdateStatusService();
     }
 
     /** Get list of daily messages */
@@ -40,6 +45,11 @@ class DailyMessagingController extends ApiController
 
         $request = $result['request'];
         $response = $result['response'];
+
+        if ($response->status() === 200)
+        {
+            $this->statusService->massSendingSuccess($messages);
+        }
 
         return response()->json([
             'response' => [
@@ -73,13 +83,13 @@ class DailyMessagingController extends ApiController
 
     protected function applyParamsToDailyMessagesRepository(string $type): DailyMessagesRepository
     {
-        if (Str::upper($type) === MessagesDaily::$TYPE_SMS)
-            $this->dailyMessagesRepository->setTypeAsSms();
+        if (Str::upper($type) === DailyMessage::$TYPE_SMS)
+            $this->dailyRepository->setTypeAsSms();
 
-        if (Str::upper($type) === MessagesDaily::$TYPE_EMAIL)
-            $this->dailyMessagesRepository->setTypeAsEmail();
+        if (Str::upper($type) === DailyMessage::$TYPE_EMAIL)
+            $this->dailyRepository->setTypeAsEmail();
 
-        return $this->dailyMessagesRepository;
+        return $this->dailyRepository;
     }
 
     protected function sendingName(): string

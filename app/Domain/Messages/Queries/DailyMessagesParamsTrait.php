@@ -2,7 +2,7 @@
 
 namespace App\Domain\Messages\Queries;
 
-use App\Domain\Messages\Models\MessagesDaily;
+use App\Domain\Messages\Models\DailyMessage;
 
 trait DailyMessagesParamsTrait
 {
@@ -16,11 +16,11 @@ trait DailyMessagesParamsTrait
 
     function setTypeAsSms(): static
     {
-        return $this->setType(MessagesDaily::$TYPE_SMS);
+        return $this->setType(DailyMessage::$TYPE_SMS);
     }
 
     function setTypeAsEmail(): static
     {
-        return $this->setType(MessagesDaily::$TYPE_EMAIL);
+        return $this->setType(DailyMessage::$TYPE_EMAIL);
     }
 }

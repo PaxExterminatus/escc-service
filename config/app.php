@@ -165,6 +165,8 @@ return [
         App\Providers\RouteServiceProvider::class,
         App\Providers\RepositoryServiceProvider::class,
 
+        Yajra\Oci8\Oci8ServiceProvider::class,
+
         App\Domain\Messages\MessagesServiceProviders::class,
     ],
 

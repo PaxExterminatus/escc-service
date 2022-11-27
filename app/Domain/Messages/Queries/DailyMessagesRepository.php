@@ -2,7 +2,7 @@
 
 namespace App\Domain\Messages\Queries;
 
-use App\Domain\Messages\Models\MessagesDaily;
+use App\Domain\Messages\Models\DailyMessage;
 
 interface DailyMessagesRepository
 {
@@ -11,7 +11,7 @@ interface DailyMessagesRepository
     function setTypeAsEmail(): static;
 
     /**
-     * @return iterable|MessagesDaily[]
+     * @return iterable|DailyMessage[]
      */
     function get(): iterable;
 }
