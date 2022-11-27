@@ -22,9 +22,9 @@ class DailyMessagingController extends ApiController
     }
 
     /** Get list of daily messages */
-    function index(string $messageType): JsonResponse
+    function index(string $type): JsonResponse
     {
-        $messages = $this->applyParamsToDailyMessagesRepository($messageType)->get();
+        $messages = $this->applyParamsToDailyMessagesRepository($type)->get();
 
         return response()->json([
             'messages' => $messages,
@@ -32,9 +32,9 @@ class DailyMessagingController extends ApiController
     }
 
     /** Send daily messages */
-    function send(string $messageType): JsonResponse
+    function send(string $type): JsonResponse
     {
-        $messages = $this->applyParamsToDailyMessagesRepository($messageType)->get();
+        $messages = $this->applyParamsToDailyMessagesRepository($type)->get();
 
         $result = Provider::make()->massSending($messages, $this->sendingName());
 
@@ -51,9 +51,9 @@ class DailyMessagingController extends ApiController
         ]);
     }
 
-    function txt(string $messageType): Response|Application|ResponseFactory
+    function txt(string $type): Response|Application|ResponseFactory
     {
-        $messages = $this->applyParamsToDailyMessagesRepository($messageType)->get();
+        $messages = $this->applyParamsToDailyMessagesRepository($type)->get();
 
         $content = "Phone number\t1\r\n";
 
@@ -84,6 +84,6 @@ class DailyMessagingController extends ApiController
 
     protected function sendingName(): string
     {
-        return 'daily_sms_messages_' .  date('Y-m-d', time());
+        return env('MTS_API_ALFA_NAME');
     }
 }

@@ -42,7 +42,7 @@ class Provider implements MessagingProviderInterface
 
         $smsChanel = BatchChanel::make()
             ->setName('sms')
-            ->setOptionAlphaName('Daily')
+            ->setOptionAlphaName($name)
             ->setOptionTtl(300);
 
         $batch->addChannel($smsChanel);
