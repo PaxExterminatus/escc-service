@@ -4,21 +4,20 @@ namespace App\Domain\Messages\Models;
 
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Yajra\Oci8\Eloquent\OracleEloquent;
 
 /**
  * App\Domain\Messages\Models\ElectronicMessage
  *
- * @property int|null emsg_stream
+ * @property int emsg_stream
  * @property int emsg
  * @property int emsg_type
- * @property int|null emsg_type_sub
+ * @property int emsg_type_sub
  * @property string emsg_date
- * @property string|null emsg_address
- * @property string|null emsg_body
- * @property int|null emsg_status
- * @property int|null updated_at
+ * @property string emsg_address
+ * @property string emsg_body
+ * @property int emsg_status
+ * @property string updated_at
  * @method static Builder|ElectronicMessage newModelQuery()
  * @method static Builder|ElectronicMessage newQuery()
  * @method static Builder|ElectronicMessage query()
@@ -30,14 +29,22 @@ use Yajra\Oci8\Eloquent\OracleEloquent;
  * @method static Builder|ElectronicMessage whereEMSGSTREAM($value)
  * @method static Builder|ElectronicMessage whereEMSGTYPE($value)
  * @method static Builder|ElectronicMessage whereEMSGTYPESUB($value)
- * @mixin Model
  * @mixin Eloquent
  */
 class ElectronicMessage extends OracleEloquent
 {
+    protected $connection = 'oracle';
     protected $table = 'EMSG';
-    protected $primaryKey = 'EMSG';
+    protected $primaryKey = 'emsg';
     protected $fillable = ['*'];
+
+    protected $casts = [
+        'emsg_stream' => 'integer',
+        'emsg' => 'integer',
+        'emsg_type' => 'integer',
+        'emsg_type_sub' => 'integer',
+        'emsg_status' => 'integer',
+    ];
 
     const EMSG_STATUS_WAIT = 1; // Message waiting to be sent
     const EMSG_STATUS_TRY = 2; // The message was sent. The service provender received the message

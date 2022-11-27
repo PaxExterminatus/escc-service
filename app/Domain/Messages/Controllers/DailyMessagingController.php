@@ -2,8 +2,7 @@
 
 namespace App\Domain\Messages\Controllers;
 
-use App\Domain\Messages\Models\DailyMessage;
-use App\Domain\Messages\Models\ElectronicMessage;
+use App\Domain\Messages\Models\DailyMessageView;
 use App\Domain\Messages\Queries\DailyMessagesRepository;
 use App\Domain\Messages\Services\DataManagement\DailyMessagingUpdateStatusService;
 use App\Domain\Messages\Services\Senders\MobileTeleSystems\MobileTeleSystemsProvider;
@@ -12,7 +11,6 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class DailyMessagingController extends ApiController
@@ -83,10 +81,10 @@ class DailyMessagingController extends ApiController
 
     protected function applyParamsToDailyMessagesRepository(string $type): DailyMessagesRepository
     {
-        if (Str::upper($type) === DailyMessage::$TYPE_SMS)
+        if (Str::upper($type) === DailyMessageView::$TYPE_SMS)
             $this->dailyRepository->setTypeAsSms();
 
-        if (Str::upper($type) === DailyMessage::$TYPE_EMAIL)
+        if (Str::upper($type) === DailyMessageView::$TYPE_EMAIL)
             $this->dailyRepository->setTypeAsEmail();
 
         return $this->dailyRepository;

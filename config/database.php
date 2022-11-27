@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'mysql'),
+    'default' => env('DB_CONNECTION', 'oracle'),
 
     /*
     |--------------------------------------------------------------------------
@@ -34,6 +34,24 @@ return [
     */
 
     'connections' => [
+
+        'oracle' => [
+            'driver'         => 'oracle',
+            'tns'            => env('DB_ORA_TNS', ''),
+            'host'           => env('DB_ORA_HOST', ''),
+            'port'           => env('DB_ORA_PORT', '1521'),
+            'database'       => env('DB_ORA_DATABASE', ''),
+            'service_name'   => env('DB_ORA_SERVICE_NAME', ''),
+            'username'       => env('DB_ORA_USERNAME', ''),
+            'password'       => env('DB_ORA_PASSWORD', ''),
+            'charset'        => env('DB_ORA_CHARSET', 'AL32UTF8'),
+            'prefix'         => env('DB_ORA_PREFIX', ''),
+            'prefix_schema'  => env('DB_ORA_SCHEMA_PREFIX', ''),
+            'edition'        => env('DB_ORA_EDITION', 'ora$base'),
+            'server_version' => env('DB_ORA_SERVER_VERSION', '11g'),
+            'load_balance'   => env('DB_ORA_LOAD_BALANCE', 'yes'),
+            'dynamic'        => [],
+        ],
 
         'sqlite' => [
             'driver' => 'sqlite',
