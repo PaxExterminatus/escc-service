@@ -34,6 +34,7 @@ use Yajra\Oci8\Eloquent\OracleEloquent;
 class ElectronicMessage extends OracleEloquent
 {
     protected $connection = 'oracle';
+    public $timestamps = false;
     protected $table = 'EMSG';
     protected $primaryKey = 'emsg';
     protected $fillable = ['*'];
