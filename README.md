@@ -33,3 +33,10 @@
 ## Run artisan server
 
 `php artisan serv --port=8000`
+
+
+## History
+
+- SMS Sender 1.1 - Отправка ежедневных сообщений [+]
+- SMS Sender 1.2 - Ручная отправка сообщений операторами
+- SMS Sender 1.3 - Автоматическая отправка ежедневных сообщений

@@ -35,7 +35,7 @@
         "fideloper/proxy": "^4.4",
         "fruitcake/laravel-cors": "^v2.2.0",
         "guzzlehttp/guzzle": "^7.5.0",
-        "laravel/framework": "^v9.41.0",
+        "laravel/framework": "^v9.46.0",
         "laravel/tinker": "^v2.7.3",
         "yajra/laravel-oci8": "^v9.0.4",
         "ext-pdo": "*"
