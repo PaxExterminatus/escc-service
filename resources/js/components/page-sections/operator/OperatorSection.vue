@@ -2,7 +2,8 @@
     <div class="page-section">
 
         <nav class="section-menu">
-            <PanelMenu :model="operatorMenu"></PanelMenu>
+<!--            <Sidebar v-model:visible="operatorMenuVisible"></Sidebar>-->
+            <Menu :model="operatorMenu"/>
         </nav>
 
         <main class="content-main">
@@ -12,19 +13,22 @@
 </template>
 
 <script>
-import PanelMenu from 'primevue/panelmenu';
+import Sidebar from 'primevue/sidebar';
+import Menu from 'primevue/menu';
 import {operatorMenu} from './operator-menu'
 
 export default {
     name: 'OperatorSection',
 
     components: {
-        PanelMenu,
+        Menu,
+        Sidebar,
     },
 
     data() {
         return {
             operatorMenu,
+            operatorMenuVisible: true,
         }
     },
 }

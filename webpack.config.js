@@ -4,7 +4,7 @@ module.exports = {
             'api': __dirname + '/resources/js/api',
             'app': __dirname + '/resources/js/app',
             'cmp': __dirname + '/resources/js/components',
-            'page': __dirname + '/resources/js/components/page',
+            'page': __dirname + '/resources/js/components/page-content',
             'model': __dirname + '/resources/js/model',
             'view': __dirname + '/resources/js/view',
         },

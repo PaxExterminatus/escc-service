@@ -1,7 +1,8 @@
 // import MemberSection from 'cmp/page/member/MemberSection'
 // import MemberHomeContent from 'cmp/page/member/MemberHomeContent'
 import {GuestSection, OperatorSection} from 'cmp/page-sections';
-import {OperatorBase} from "cmp/page-content";
+import {OperatorBase, MessagesSending} from 'cmp/page-content';
+
 
 export default [
     {
@@ -15,15 +16,10 @@ export default [
                 component: OperatorBase,
             },
             {
-                path: '/messages',
-                name: 'messages',
-                component: () => import(/* webpackChunkName: "chunk.page.member.courses" */ 'page/member/CoursesContent'),
+                path: '/messages/sending',
+                name: 'messages-sending',
+                component: () => import(/* webpackChunkName: "chunk.page-content.messages.sending" */ 'cmp/page-content/MessagesSending'),
             },
         ],
     },
-    // {
-    //     path: '/auth',
-    //     name: 'auth',
-    //     component: GuestSection,
-    // },
 ];
