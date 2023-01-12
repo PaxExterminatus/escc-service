@@ -1,6 +1,6 @@
 <template>
-    <div id="app" class="application">
-        APP VITE
+    <div class="application">
+        <router-view/>
     </div>
 </template>
 
