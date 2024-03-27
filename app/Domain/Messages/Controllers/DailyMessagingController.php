@@ -2,6 +2,8 @@
 
 namespace App\Domain\Messages\Controllers;
 
+use App\Domain\Messages\Enums\MessageTypeEnum;
+use App\Domain\Messages\Requests\DailyMessagesRequest;
 use App\Domain\Messages\Models\DailyMessageView;
 use App\Domain\Messages\Queries\DailyMessagesRepository;
 use App\Domain\Messages\Services\DataManagement\DailyMessagingUpdateStatusService;
@@ -18,26 +20,30 @@ class DailyMessagingController extends ApiController
     protected DailyMessagesRepository $dailyRepository;
     protected DailyMessagingUpdateStatusService $statusService;
 
-    function __construct(DailyMessagesRepository $dailyRepository)
+    public function __construct(DailyMessagesRepository $dailyRepository)
     {
         $this->dailyRepository = $dailyRepository;
         $this->statusService = new DailyMessagingUpdateStatusService();
     }
 
-    /** Get list of daily messages */
-    function index(string $type): JsonResponse
+    /**
+     * Daily messages: list
+     */
+    public function index(DailyMessagesRequest $request): JsonResponse
     {
-        $messages = $this->applyParamsToDailyMessagesRepository($type)->get();
+        $messages = $this->applyParamsToDailyMessagesRepository($request->type)->get();
 
         return response()->json([
             'messages' => $messages,
         ]);
     }
 
-    /** Send daily messages */
-    function send(string $type): JsonResponse
+    /**
+     * Daily messages: send
+     */
+    public function send(DailyMessagesRequest $request): JsonResponse
     {
-        $messages = $this->applyParamsToDailyMessagesRepository($type)->get();
+        $messages = $this->applyParamsToDailyMessagesRepository($request->type)->get();
 
         $result = MobileTeleSystemsProvider::make()->massSending($messages, $this->senderName());
 
@@ -59,9 +65,14 @@ class DailyMessagingController extends ApiController
         ]);
     }
 
-    function txt(string $type): Response|Application|ResponseFactory
+    /**
+     * Daily messages: txt file
+     * @example /api/messages/daily/sms/txt
+     * @example /api/messages/daily/email/txt
+     */
+    public function txt(DailyMessagesRequest $request): Response|Application|ResponseFactory
     {
-        $messages = $this->applyParamsToDailyMessagesRepository($type)->get();
+        $messages = $this->applyParamsToDailyMessagesRepository($request->type)->get();
 
         $content = "Phone number\t1\r\n";
 
@@ -81,10 +92,10 @@ class DailyMessagingController extends ApiController
 
     protected function applyParamsToDailyMessagesRepository(string $type): DailyMessagesRepository
     {
-        if (Str::upper($type) === DailyMessageView::$TYPE_SMS)
+        if (Str::upper($type) === MessageTypeEnum::sms->value)
             $this->dailyRepository->setTypeAsSms();
 
-        if (Str::upper($type) === DailyMessageView::$TYPE_EMAIL)
+        if (Str::upper($type) === MessageTypeEnum::email->value)
             $this->dailyRepository->setTypeAsEmail();
 
         return $this->dailyRepository;

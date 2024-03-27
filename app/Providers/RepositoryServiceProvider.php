@@ -9,7 +9,7 @@ use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
 {
-    function register()
+    function register(): void
     {
         $this->app->bind(
             DailyMessagesRepository::class,
