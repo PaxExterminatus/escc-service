@@ -3,9 +3,10 @@
 namespace App\Domain\Messages\Controllers;
 
 use App\Domain\Messages\Enums\MessageTypeEnum;
+use App\Domain\Messages\Queries\DailyMessagesJsonReader;
+use App\Domain\Messages\Queries\DailyMessagesQuery;
+use App\Domain\Messages\Queries\DailyMessagesRepositoryService;
 use App\Domain\Messages\Requests\DailyMessagesRequest;
-use App\Domain\Messages\Models\DailyMessageView;
-use App\Domain\Messages\Queries\DailyMessagesRepository;
 use App\Domain\Messages\Services\DataManagement\DailyMessagingUpdateStatusService;
 use App\Domain\Messages\Services\Senders\MobileTeleSystems\MobileTeleSystemsProvider;
 use App\Http\Controllers\ApiController;
@@ -17,13 +18,13 @@ use Illuminate\Support\Str;
 
 class DailyMessagingController extends ApiController
 {
-    protected DailyMessagesRepository $dailyRepository;
     protected DailyMessagingUpdateStatusService $statusService;
+    protected DailyMessagesQuery|DailyMessagesJsonReader $dailyRepository;
 
-    public function __construct(DailyMessagesRepository $dailyRepository)
+    public function __construct()
     {
-        $this->dailyRepository = $dailyRepository;
         $this->statusService = new DailyMessagingUpdateStatusService();
+        $this->dailyRepository = DailyMessagesRepositoryService::build();
     }
 
     /**
@@ -90,12 +91,12 @@ class DailyMessagingController extends ApiController
         ]);
     }
 
-    protected function applyParamsToDailyMessagesRepository(string $type): DailyMessagesRepository
+    protected function applyParamsToDailyMessagesRepository(string $type): DailyMessagesJsonReader|DailyMessagesQuery
     {
-        if (Str::upper($type) === MessageTypeEnum::sms->value)
+        if (Str::lower($type) === MessageTypeEnum::sms->value)
             $this->dailyRepository->setTypeAsSms();
 
-        if (Str::upper($type) === MessageTypeEnum::email->value)
+        if (Str::lower($type) === MessageTypeEnum::email->value)
             $this->dailyRepository->setTypeAsEmail();
 
         return $this->dailyRepository;

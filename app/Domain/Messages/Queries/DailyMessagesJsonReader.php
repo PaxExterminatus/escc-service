@@ -5,7 +5,7 @@ namespace App\Domain\Messages\Queries;
 use App\Base\Repositories\JsonReader;
 use App\Domain\Messages\Models\DailyMessageView;
 
-class DailyMessagesReader extends JsonReader implements DailyMessagesRepository
+class DailyMessagesJsonReader extends JsonReader
 {
     use DailyMessagesParamsTrait;
 

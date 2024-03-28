@@ -7,7 +7,7 @@ use App\Domain\Messages\Models\DailyMessageView;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 
-class DailyMessagesQuery extends DatabaseQuery implements DailyMessagesRepository
+class DailyMessagesQuery extends DatabaseQuery
 {
     use DailyMessagesParamsTrait;
 
