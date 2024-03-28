@@ -6,8 +6,9 @@ use App\Base\Repositories\DatabaseQuery;
 use App\Domain\Messages\Models\DailyMessageView;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Support\Str;
 
-class DailyMessagesQuery extends DatabaseQuery
+class DailyMessagesSourceDatabase extends DatabaseQuery
 {
     use DailyMessagesParamsTrait;
 
@@ -18,7 +19,9 @@ class DailyMessagesQuery extends DatabaseQuery
 
     protected function apply(): static
     {
-        $this->query->where('type', 'SMS');
+        if ($this->type)
+            $this->query->where('type', Str::upper($this->type));
+
         return $this;
     }
 }

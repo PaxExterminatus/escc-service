@@ -3,9 +3,9 @@
 namespace App\Domain\Messages\Controllers;
 
 use App\Domain\Messages\Enums\MessageTypeEnum;
-use App\Domain\Messages\Queries\DailyMessagesJsonReader;
-use App\Domain\Messages\Queries\DailyMessagesQuery;
-use App\Domain\Messages\Queries\DailyMessagesRepositoryService;
+use App\Domain\Messages\Queries\DailyMessagesSourceJson;
+use App\Domain\Messages\Queries\DailyMessagesSourceDatabase;
+use App\Domain\Messages\Queries\DailyMessagesRepository;
 use App\Domain\Messages\Requests\DailyMessagesRequest;
 use App\Domain\Messages\Services\DataManagement\DailyMessagingUpdateStatusService;
 use App\Domain\Messages\Services\Senders\MobileTeleSystems\MobileTeleSystemsProvider;
@@ -19,12 +19,12 @@ use Illuminate\Support\Str;
 class DailyMessagingController extends ApiController
 {
     protected DailyMessagingUpdateStatusService $statusService;
-    protected DailyMessagesQuery|DailyMessagesJsonReader $dailyRepository;
+    protected DailyMessagesSourceDatabase|DailyMessagesSourceJson $dailyMessagesSource;
 
     public function __construct()
     {
         $this->statusService = new DailyMessagingUpdateStatusService();
-        $this->dailyRepository = DailyMessagesRepositoryService::build();
+        $this->dailyMessagesSource = DailyMessagesRepository::get();
     }
 
     /**
@@ -91,15 +91,15 @@ class DailyMessagingController extends ApiController
         ]);
     }
 
-    protected function applyParamsToDailyMessagesRepository(string $type): DailyMessagesJsonReader|DailyMessagesQuery
+    protected function applyParamsToDailyMessagesRepository(string $type): DailyMessagesSourceJson|DailyMessagesSourceDatabase
     {
         if (Str::lower($type) === MessageTypeEnum::sms->value)
-            $this->dailyRepository->setTypeAsSms();
+            $this->dailyMessagesSource->setType(MessageTypeEnum::sms->value);
 
         if (Str::lower($type) === MessageTypeEnum::email->value)
-            $this->dailyRepository->setTypeAsEmail();
+            $this->dailyMessagesSource->setType(MessageTypeEnum::email->value);
 
-        return $this->dailyRepository;
+        return $this->dailyMessagesSource;
     }
 
     protected function senderName(): string
