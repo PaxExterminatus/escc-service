@@ -34,7 +34,7 @@ class DailyMessagingController extends ApiController
     {
         $messages = $this->applyParamsToDailyMessagesRepository($request->type)->get();
 
-        return response()->json([
+        return $this->success([
             'messages' => $messages,
         ]);
     }

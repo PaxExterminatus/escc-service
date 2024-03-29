@@ -9,7 +9,7 @@ use Illuminate\Http\JsonResponse;
 
 abstract class ApiController extends Controller
 {
-    use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
+   // use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
     protected function success(iterable $data = [], string $message = null, int $code = 200, string $redirect = null): JsonResponse
     {

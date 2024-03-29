@@ -3,10 +3,24 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 use Throwable;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class Handler extends ExceptionHandler
 {
+    protected function convertValidationExceptionToResponse(ValidationException $e, $request): Response|JsonResponse|SymfonyResponse|RedirectResponse|null
+    {
+        if ($e->response) {
+            return $e->response;
+        }
+
+        return response()->json($e->validator->errors()->getMessages(), 422);
+    }
+
     /**
      * A list of the exception types that are not reported.
      *
