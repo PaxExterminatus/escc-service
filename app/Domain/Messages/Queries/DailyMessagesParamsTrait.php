@@ -2,8 +2,6 @@
 
 namespace App\Domain\Messages\Queries;
 
-use App\Domain\Messages\Models\DailyMessage;
-
 trait DailyMessagesParamsTrait
 {
     protected string $type;

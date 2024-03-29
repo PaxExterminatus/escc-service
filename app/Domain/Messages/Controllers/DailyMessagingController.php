@@ -7,10 +7,11 @@ use App\Domain\Messages\Queries\DailyMessagesRepository;
 use App\Domain\Messages\Queries\DailyMessagesSourceDatabase;
 use App\Domain\Messages\Queries\DailyMessagesSourceJson;
 use App\Domain\Messages\Requests\DailyMessagesRequest;
-use App\Domain\Messages\Resources\DailyMessageCollection;
 use App\Domain\Messages\Services\DataManagement\DailyMessagingUpdateStatusService;
 use App\Domain\Messages\Services\Senders\MobileTeleSystems\MobileTeleSystemsProvider;
 use App\Http\Controllers\ApiController;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\DailyMessageCollection;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Contracts\Support\Responsable;
@@ -20,10 +21,10 @@ use Illuminate\Support\Str;
 
 /**
  * Daily Messaging
- * @tags Client Messaging
+ * @tags Client Messaging, SMS
  *
  */
-class DailyMessagingController extends ApiController
+class DailyMessagingController extends Controller
 {
     protected DailyMessagingUpdateStatusService $statusService;
     protected DailyMessagesSourceDatabase|DailyMessagesSourceJson $dailyMessagesSource;
@@ -35,18 +36,22 @@ class DailyMessagingController extends ApiController
     }
 
     /**
-     * Get messages
+     * Daily Messaging: get list
      * @example /api/messages/daily/sms
      * @example /api/messages/daily/email
+     *
+
      */
     public function index(DailyMessagesRequest $request): Responsable
     {
         $messages = $this->applyParamsToDailyMessagesRepository($request->type)->get();
-        return new DailyMessageCollection($messages);
+        $resource = new DailyMessageCollection($messages);
+
+        return $resource;
     }
 
     /**
-     * Send messages
+     * Daily Messaging: send
      * @example /api/messages/daily/sms/send
      * @example /api/messages/daily/email/send
      */
@@ -75,8 +80,7 @@ class DailyMessagingController extends ApiController
     }
 
     /**
-     * Get txt file
-     *
+     * Daily Messaging: get list as txt file
      * @example /api/messages/daily/sms/txt
      * @example /api/messages/daily/email/txt
      */

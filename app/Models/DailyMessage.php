@@ -1,13 +1,12 @@
 <?php
 
-namespace App\Domain\Messages\Models;
+namespace App\Models;
 
-use App\Domain\Messages\Enums\MessageTypeEnum;
 use App\Traits\FieldAdapter;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * App\Domain\Messages\Models\MessagesDaily

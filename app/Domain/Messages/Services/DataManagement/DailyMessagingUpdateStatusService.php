@@ -3,7 +3,7 @@
 namespace App\Domain\Messages\Services\DataManagement;
 
 use App\Domain\Messages\Models\ElectronicMessage;
-use App\Domain\Messages\Models\DailyMessage;
+use App\Models\DailyMessage;
 use Illuminate\Support\Collection;
 
 class DailyMessagingUpdateStatusService
