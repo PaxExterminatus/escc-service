@@ -38,8 +38,6 @@ class DailyMessagingController extends Controller
      * Daily Messaging: get list
      * @example /api/messages/daily/sms
      * @example /api/messages/daily/email
-     *
-
      */
     public function index(DailyMessagesRequest $request): Responsable
     {

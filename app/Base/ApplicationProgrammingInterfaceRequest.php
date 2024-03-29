@@ -5,7 +5,6 @@ namespace App\Base;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -23,18 +22,14 @@ class ApplicationProgrammingInterfaceRequest extends FormRequest
 
     protected function failedValidation(Validator $validator)
     {
-        throw new HttpResponseException(
-            $this->error([
-                'errors' => $validator->errors()
-            ]),
-        );
-    }
+        $data = [
+            'message' => 'Failed validation',
+            'errors' => $validator->errors()
+        ];
 
-    protected function error(iterable $data = [], string $message = 'Failed validation', int $code = 400, string $redirect = null): JsonResponse
-    {
-        return response()->json([
-                'status' => 'error',
-                'message' => $message,
-            ] + $data, Response::HTTP_UNPROCESSABLE_ENTITY);
+        $status = Response::HTTP_UNPROCESSABLE_ENTITY;
+        $response = response()->json($data, $status);
+
+        throw new HttpResponseException($response);
     }
 }
