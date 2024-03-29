@@ -9,7 +9,6 @@ use App\Domain\Messages\Queries\DailyMessagesSourceJson;
 use App\Domain\Messages\Requests\DailyMessagesRequest;
 use App\Domain\Messages\Services\DataManagement\DailyMessagingUpdateStatusService;
 use App\Domain\Messages\Services\Senders\MobileTeleSystems\MobileTeleSystemsProvider;
-use App\Http\Controllers\ApiController;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\DailyMessageCollection;
 use Illuminate\Contracts\Foundation\Application;
