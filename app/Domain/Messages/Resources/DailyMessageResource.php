@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Resources;
+namespace App\Domain\Messages\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Models\DailyMessage
+ * @mixin \App\Domain\Messages\Models\DailyMessage
  */
 class DailyMessageResource extends JsonResource
 {

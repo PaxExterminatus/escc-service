@@ -3,7 +3,7 @@
 namespace App\Domain\Messages\Queries;
 
 use App\Base\Repositories\JsonReader;
-use App\Models\DailyMessage;
+use App\Domain\Messages\Models\DailyMessage;
 use Illuminate\Support\Collection;
 
 class DailyMessagesSourceJson extends JsonReader

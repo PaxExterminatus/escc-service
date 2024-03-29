@@ -2,8 +2,8 @@
 
 namespace App\Domain\Messages\Services\Senders\MobileTeleSystems;
 
+use App\Domain\Messages\Models\DailyMessage;
 use App\Domain\Messages\Services\Senders\MessagingProviderInterface;
-use App\Models\DailyMessage;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\Response;
 

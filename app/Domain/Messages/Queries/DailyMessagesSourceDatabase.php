@@ -3,7 +3,7 @@
 namespace App\Domain\Messages\Queries;
 
 use App\Base\Repositories\DatabaseQuery;
-use App\Models\DailyMessage;
+use App\Domain\Messages\Models\DailyMessage;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Str;
