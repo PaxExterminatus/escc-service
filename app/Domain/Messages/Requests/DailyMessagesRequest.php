@@ -14,10 +14,8 @@ class DailyMessagesRequest extends ApplicationProgrammingInterfaceRequest
     public function rules(): array
     {
         return [
-            'type' => [
-                'required',
-                Rule::enum(MessageTypeEnum::class),
-            ],
+            // Message sending channels
+            'type' => ['required', Rule::enum(MessageTypeEnum::class)],
         ];
     }
 

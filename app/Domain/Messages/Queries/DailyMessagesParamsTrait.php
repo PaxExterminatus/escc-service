@@ -2,7 +2,7 @@
 
 namespace App\Domain\Messages\Queries;
 
-use App\Domain\Messages\Models\DailyMessageView;
+use App\Domain\Messages\Models\DailyMessage;
 
 trait DailyMessagesParamsTrait
 {

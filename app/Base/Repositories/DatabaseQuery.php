@@ -28,10 +28,7 @@ abstract class DatabaseQuery
         return $this;
     }
 
-    /**
-     * @return iterable|Collection|EloquentCollection
-     */
-    function get(): iterable
+    function get(): iterable|Collection|EloquentCollection
     {
         return $this->apply()->query->get();
     }
