@@ -3,9 +3,7 @@
 namespace App\Domain\Messages\Controllers;
 
 use App\Domain\Messages\Enums\MessageTypeEnum;
-use App\Domain\Messages\Queries\DailyMessagesRepository;
-use App\Domain\Messages\Queries\DailyMessagesSourceDatabase;
-use App\Domain\Messages\Queries\DailyMessagesSourceJson;
+use App\Domain\Messages\Queries\DailyMessagesDataService;
 use App\Domain\Messages\Requests\DailyMessagesRequest;
 use App\Domain\Messages\Resources\DailyMessageCollection;
 use App\Domain\Messages\Services\DataManagement\DailyMessagingUpdateStatusService;
@@ -26,12 +24,10 @@ use Illuminate\Support\Str;
 class DailyMessagingController extends Controller
 {
     protected DailyMessagingUpdateStatusService $statusService;
-    protected DailyMessagesSourceDatabase|DailyMessagesSourceJson $dailyMessagesSource;
 
     public function __construct()
     {
         $this->statusService = new DailyMessagingUpdateStatusService();
-        $this->dailyMessagesSource = DailyMessagesRepository::get();
     }
 
     /**
@@ -41,10 +37,9 @@ class DailyMessagingController extends Controller
      */
     public function index(DailyMessagesRequest $request): Responsable
     {
-        $messages = $this->applyParamsToDailyMessagesRepository($request->type)->get();
-        $resource = new DailyMessageCollection($messages);
+        $messages = DailyMessagesDataService::make()->setType($request->type)->get();
 
-        return $resource;
+        return DailyMessageCollection::make($messages);
     }
 
     /**
@@ -54,7 +49,7 @@ class DailyMessagingController extends Controller
      */
     public function send(DailyMessagesRequest $request): JsonResponse
     {
-        $messages = $this->applyParamsToDailyMessagesRepository($request->type)->get();
+        $messages = $this->repository($request->type)->get();
 
         $result = MobileTeleSystemsProvider::make()->massSending($messages, $this->senderName());
 
@@ -83,7 +78,7 @@ class DailyMessagingController extends Controller
      */
     public function txt(DailyMessagesRequest $request): Response|Application|ResponseFactory
     {
-        $messages = $this->applyParamsToDailyMessagesRepository($request->type)->get();
+        $messages = $this->repository($request->type)->get();
 
         $content = "Phone number\t1\r\n";
 
@@ -101,15 +96,17 @@ class DailyMessagingController extends Controller
         ]);
     }
 
-    protected function applyParamsToDailyMessagesRepository(string $type): DailyMessagesSourceJson|DailyMessagesSourceDatabase
+    protected function repository(string $type): DailyMessagesSourceJson|DailyMessagesSourceDatabase
     {
+        $repository = DailyMessagesRepository::get();
+
         if (Str::lower($type) === MessageTypeEnum::sms->value)
-            $this->dailyMessagesSource->setType(MessageTypeEnum::sms->value);
+            $repository->setType(MessageTypeEnum::sms->value);
 
         if (Str::lower($type) === MessageTypeEnum::email->value)
-            $this->dailyMessagesSource->setType(MessageTypeEnum::email->value);
+            $repository->setType(MessageTypeEnum::email->value);
 
-        return $this->dailyMessagesSource;
+        return $repository;
     }
 
     protected function senderName(): string
