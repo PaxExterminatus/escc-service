@@ -2,8 +2,7 @@
 
 namespace App\Domain\Messages\Controllers;
 
-use App\Domain\Messages\Enums\MessageTypeEnum;
-use App\Domain\Messages\Queries\DailyMessagesDataService;
+use App\Domain\Messages\DataService\DailyMessagesDataService;
 use App\Domain\Messages\Requests\DailyMessagesRequest;
 use App\Domain\Messages\Resources\DailyMessageCollection;
 use App\Domain\Messages\Services\DataManagement\DailyMessagingUpdateStatusService;
@@ -14,12 +13,10 @@ use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
-use Illuminate\Support\Str;
 
 /**
  * Daily Messaging
- * @tags Client Messaging, SMS
- *
+ * @tags Client Messaging, SMS, Emailing
  */
 class DailyMessagingController extends Controller
 {
@@ -37,8 +34,7 @@ class DailyMessagingController extends Controller
      */
     public function index(DailyMessagesRequest $request): Responsable
     {
-        $messages = DailyMessagesDataService::make()->setType($request->type)->get();
-
+        $messages = $this->repository($request)->get();
         return DailyMessageCollection::make($messages);
     }
 
@@ -49,9 +45,10 @@ class DailyMessagingController extends Controller
      */
     public function send(DailyMessagesRequest $request): JsonResponse
     {
-        $messages = $this->repository($request->type)->get();
+        $messages = $this->repository($request)->get();
 
-        $result = MobileTeleSystemsProvider::make()->massSending($messages, $this->senderName());
+        $result = MobileTeleSystemsProvider::make()
+            ->massSending($messages, $this->senderName());
 
         $request = $result['request'];
         $response = $result['response'];
@@ -96,17 +93,9 @@ class DailyMessagingController extends Controller
         ]);
     }
 
-    protected function repository(string $type): DailyMessagesSourceJson|DailyMessagesSourceDatabase
+    protected function repository(DailyMessagesRequest $request): DailyMessagesDataService
     {
-        $repository = DailyMessagesRepository::get();
-
-        if (Str::lower($type) === MessageTypeEnum::sms->value)
-            $repository->setType(MessageTypeEnum::sms->value);
-
-        if (Str::lower($type) === MessageTypeEnum::email->value)
-            $repository->setType(MessageTypeEnum::email->value);
-
-        return $repository;
+       return DailyMessagesDataService::make()->setType($request->type);
     }
 
     protected function senderName(): string

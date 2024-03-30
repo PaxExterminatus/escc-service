@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\Messages\Queries;
+namespace App\Domain\Messages\DataService;
 
 use App\Base\Repositories\JsonReader;
 use App\Domain\Messages\Models\DailyMessage;
@@ -18,7 +18,7 @@ class DailyMessagesDataService
 
     public function setType(string $type): static
     {
-        $this->type = $type;
+        $this->type = Str::upper($type);
         return $this;
     }
 
@@ -38,7 +38,7 @@ class DailyMessagesDataService
         }
         else
         {
-            return DailyMessage::query()->where('type', Str::upper($this->type))->get();
+            return DailyMessage::query()->where('type', $this->type)->get();
         }
     }
 }
