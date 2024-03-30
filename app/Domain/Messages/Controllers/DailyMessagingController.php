@@ -47,8 +47,7 @@ class DailyMessagingController extends Controller
     {
         $messages = $this->repository($request)->get();
 
-        $result = MobileTeleSystemsProvider::make()
-            ->massSending($messages, $this->senderName());
+        $result = MobileTeleSystemsProvider::make()->massSending($messages, $this->senderName());
 
         $request = $result['request'];
         $response = $result['response'];
@@ -62,9 +61,15 @@ class DailyMessagingController extends Controller
             'response' => [
                 'status' => $response->status(),
                 'reason' => $response->reason(),
-                'data' => $response->json(),
+                'job_id' => $result['response']['job_id'] ?? null,
             ],
-            'request' => $request,
+            /**
+             * @var array{messages: object[], channels: string[], channel_options: object}
+             */
+            'request' => [
+                'messages' => $request['messages'],
+                'channels' => $request['channels'],
+            ],
         ]);
     }
 
