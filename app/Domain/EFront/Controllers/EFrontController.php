@@ -11,6 +11,14 @@ use Illuminate\Support\Facades\DB;
 
 class EFrontController extends Controller
 {
+    /**
+     * EFront data
+     *
+     * Get a list of courses and lessons for e-front. Checking PIN code for lessons in e-front.
+     *
+     * @param EFrontDataRequest $request
+     * @return Response|Application|ResponseFactory
+     */
     public function data(EFrontDataRequest $request): Response|Application|ResponseFactory
     {
         $procedure = 'APISAS_EFRONT.EFONLINE';
