@@ -2,6 +2,7 @@
 
 namespace App\Domain\EFront\Controllers;
 
+use App\Domain\EFront\Models\EFrontData;
 use App\Domain\EFront\Requests\EFrontDataRequest;
 use App\Http\Controllers\Controller;
 use Illuminate\Contracts\Foundation\Application;
@@ -31,12 +32,14 @@ class EFrontController extends Controller
             'lesson_item' => $request->lesson_item,
         ]);
 
-        $data = DB::table('API_EFRONT_DATA')
-            ->where('client_id', $request->cl_code)
+        $data = EFrontData::where('client_id', $request->cl_code)
             ->first('data_lob');
 
-        return response(content: $data->data_lob, headers: [
-            'Content-Type' => 'application/xml',
-        ]);
+        return response(
+            content: $data->data_lob,
+            headers: [
+                'Content-Type' => 'application/xml',
+            ]
+        );
     }
 }

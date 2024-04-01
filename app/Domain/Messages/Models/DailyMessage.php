@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class DailyMessage extends Model
 {
-    use HasFactory, FieldAdapter;
+    use HasFactory;
 
     protected $table = 'API_MESSAGES_SMS_DAILY';
     protected $primaryKey = 'ID';
