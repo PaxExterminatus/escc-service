@@ -1,6 +1,5 @@
 <?php
 
-use App\Domain\EFront\Controllers\EFrontController;
 use App\Http\Controllers\API\ClientController;
 use Illuminate\Support\Facades\Route;
 
