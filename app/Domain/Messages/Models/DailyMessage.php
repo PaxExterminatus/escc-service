@@ -3,7 +3,6 @@
 namespace App\Domain\Messages\Models;
 
 use App\Traits\FieldAdapter;
-use Eloquent;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,15 +17,12 @@ use Illuminate\Database\Eloquent\Model;
  * @method static EloquentBuilder|DailyMessage newModelQuery()
  * @method static EloquentBuilder|DailyMessage newQuery()
  * @method static EloquentBuilder|DailyMessage query()
- * @mixin Eloquent
+ * @method static EloquentBuilder|DailyMessage whereType(string $type)
+ * @mixin \Eloquent
  */
 class DailyMessage extends Model
 {
-    use HasFactory;
-    use FieldAdapter;
-
-    static string $TYPE_SMS = 'SMS';
-    static string $TYPE_EMAIL = 'EMAIL';
+    use HasFactory, FieldAdapter;
 
     protected $table = 'API_MESSAGES_SMS_DAILY';
     protected $primaryKey = 'ID';

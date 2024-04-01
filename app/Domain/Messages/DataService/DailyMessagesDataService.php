@@ -30,7 +30,7 @@ class DailyMessagesDataService
 
             foreach (JsonReader::make()->read('api.messages.daily.sms')['messages'] as $message)
             {
-                $model = (new DailyMessage())->fill($message);
+                $model = (new DailyMessage)->fill($message);
                 $messages->push($model);
             }
 
@@ -38,7 +38,7 @@ class DailyMessagesDataService
         }
         else
         {
-            return DailyMessage::query()->where('type', $this->type)->get();
+            return DailyMessage::whereType($this->type)->get();
         }
     }
 }
