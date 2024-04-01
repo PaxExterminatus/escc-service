@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Domain\EFront\Requests;
 
 use App\Base\ApplicationProgrammingInterfaceRequest;
 use App\Domain\EFront\Enums\EFrontRequestTypeEnum;

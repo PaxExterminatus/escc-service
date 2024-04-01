@@ -4,9 +4,9 @@ namespace App\Domain\Messages;
 
 use Illuminate\Support\ServiceProvider;
 
-class MessagesServiceProviders extends ServiceProvider
+class MessagesServiceProvider extends ServiceProvider
 {
-    function boot()
+    public function boot(): void
     {
         $this->loadRoutesFrom(__DIR__.'/Routes/api.php');
     }

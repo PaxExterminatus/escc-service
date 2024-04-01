@@ -2,8 +2,8 @@
 
 namespace App\Domain\EFront\Controllers;
 
+use App\Domain\EFront\Requests\EFrontDataRequest;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\EFrontDataRequest;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Response;

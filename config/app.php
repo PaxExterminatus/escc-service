@@ -167,7 +167,7 @@ return [
 
         Yajra\Oci8\Oci8ServiceProvider::class,
 
-        App\Domain\Messages\MessagesServiceProviders::class,
+        App\Domain\Messages\MessagesServiceProvider::class,
     ],
 
     /*
