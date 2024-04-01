@@ -7,9 +7,6 @@ use App\Domain\EFront\Enums\EFrontRequestTypeEnum;
 use Illuminate\Validation\Rule;
 
 /**
- * Class EFrontDataRequest
- * @package App\Http\Requests
- *
  * @property int cl_code
  * @property string type
  * @property string code
