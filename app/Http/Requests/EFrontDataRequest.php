@@ -2,15 +2,22 @@
 
 namespace App\Http\Requests;
 
+use App\Base\ApplicationProgrammingInterfaceRequest;
+use App\Domain\EFront\Enums\EFrontRequestTypeEnum;
+use Illuminate\Validation\Rule;
+
 /**
  * Class EFrontDataRequest
  * @package App\Http\Requests
- * @method EFrontDataRequestParams params()
+ *
+ * @property int cl_code
+ * @property string rq_type
+ * @property string rq_code
+ * @property int node_id
+ * @property int lesson_item
  */
-class EFrontDataRequest extends BaseFormRequest
+class EFrontDataRequest extends ApplicationProgrammingInterfaceRequest
 {
-    protected string $paramsClass = EFrontDataRequestParams::class;
-
     public function authorize(): bool
     {
         return true;
@@ -18,6 +25,17 @@ class EFrontDataRequest extends BaseFormRequest
 
     public function rules(): array
     {
-        return [];
+        return [
+            // Aurora client ID
+            'cl_code' => ['required','int'],
+            // Request type
+            'rq_type' => ['required', Rule::enum(EFrontRequestTypeEnum::class)],
+            // Request code
+            'rq_code' => [],
+            // Aurora node ID
+            'node_id' => ['int'],
+            // Aurora lesson item id
+            'lesson_item' => ['int'],
+        ];
     }
 }
