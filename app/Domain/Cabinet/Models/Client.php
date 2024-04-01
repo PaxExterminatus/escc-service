@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Models;
+namespace App\Domain\Cabinet\Models;
 
-use Eloquent;
 use App\Traits\FieldAdapter;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -17,15 +16,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read string middle_name
  * @property-read string last_name
  * @property-read float total_deb
- * @mixin Eloquent
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ClientCourse[] $courses
+ *
  * @property-read int|null $courses_count
- * @property-read string $last_name
- * @property-read string $middle_name
- * @property-read string $name
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection|ClientCourse[] $courses
+
  * @method static \Illuminate\Database\Eloquent\Builder|Client newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Client newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Client query()
+ *
+ * @mixin \Eloquent
  */
 class Client extends Model
 {

@@ -1,16 +1,20 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Domain\Cabinet\Controllers;
 
-use App\Models\Client;
+use App\Domain\Cabinet\Models\Client;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 
-class ClientController extends Controller
+/**
+ * @tags Cabinet
+ */
+class CabinetClientController extends Controller
 {
     /**
-     * @param int $id
-     * @return JsonResponse
+     * Client data
+     *
+     * Information about client courses and lessons
      */
     public function show(int $id): JsonResponse
     {

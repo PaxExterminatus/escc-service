@@ -10,6 +10,9 @@ use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * @tags E-Front
+ */
 class EFrontController extends Controller
 {
     /**

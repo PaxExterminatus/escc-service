@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Domain\Cabinet\Models;
 
 use App\Traits\FieldAdapter;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,12 +15,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read string parent_code Parent category code
  * @property-read string code Category code
  * @property-read string name Category name
- * @property-read string $name
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ClientCourseLesson[] $lessons
+ *
  * @property-read int|null $lessons_count
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection|ClientCourseLesson[] $lessons
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|CourseCategory newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|CourseCategory newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|CourseCategory query()
+ *
  * @mixin \Eloquent
  */
 class CourseCategory extends Model

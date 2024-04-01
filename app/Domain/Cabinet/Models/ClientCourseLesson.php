@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Domain\Cabinet\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,9 +14,11 @@ use Illuminate\Database\Eloquent\Model;
  * @property-read int course_id
  * @property-read int node_id
  * @property-read string name
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|ClientCourseLesson newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|ClientCourseLesson newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|ClientCourseLesson query()
+ *
  * @mixin \Eloquent
  */
 class ClientCourseLesson extends Model

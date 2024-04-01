@@ -16,7 +16,7 @@ use Illuminate\Http\Response;
 
 /**
  * Daily Messaging
- * @tags Client Messaging, SMS, Emailing
+ * @tags Messaging, SMS, Emailing
  */
 class DailyMessagingController extends Controller
 {
@@ -28,7 +28,7 @@ class DailyMessagingController extends Controller
     }
 
     /**
-     * Daily Messaging: get list
+     * Daily: get list
      * @example /api/messages/daily/sms
      * @example /api/messages/daily/email
      */
@@ -39,7 +39,7 @@ class DailyMessagingController extends Controller
     }
 
     /**
-     * Daily Messaging: send
+     * Daily: send
      * @example /api/messages/daily/sms/send
      * @example /api/messages/daily/email/send
      */
@@ -74,7 +74,7 @@ class DailyMessagingController extends Controller
     }
 
     /**
-     * Daily Messaging: get list as txt file
+     * Daily: get list as txt file
      * @example /api/messages/daily/sms/txt
      * @example /api/messages/daily/email/txt
      */

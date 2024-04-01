@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Models;
+namespace App\Domain\Cabinet\Models;
 
 use App\Traits\FieldAdapter;
-use Eloquent;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -18,16 +17,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read int node_id
  * @property-read string status
  * @property-read string name
- * @mixin Eloquent
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\CourseCategory[] $categories
- * @property-read int|null $categories_count
- * @property-read string $name
- * @property-read string $status
- * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\ClientCourseLesson[] $lessons
+ *
  * @property-read int|null $lessons_count
+ * @property-read int|null $categories_count
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection|ClientCourseLesson[] $lessons
+ * @property-read \Illuminate\Database\Eloquent\Collection|CourseCategory[] $categories
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|ClientCourse newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|ClientCourse newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|ClientCourse query()
+ *
+ * @mixin \Eloquent
  */
 class ClientCourse extends Model
 {
