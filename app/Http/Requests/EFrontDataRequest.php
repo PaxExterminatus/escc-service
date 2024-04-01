@@ -11,8 +11,8 @@ use Illuminate\Validation\Rule;
  * @package App\Http\Requests
  *
  * @property int cl_code
- * @property string rq_type
- * @property string rq_code
+ * @property string type
+ * @property string code
  * @property int node_id
  * @property int lesson_item
  */
@@ -29,9 +29,9 @@ class EFrontDataRequest extends ApplicationProgrammingInterfaceRequest
             // Aurora client ID
             'cl_code' => ['required','int'],
             // Request type
-            'rq_type' => ['required', Rule::enum(EFrontRequestTypeEnum::class)],
-            // Request code
-            'rq_code' => [],
+            'type' => ['required', Rule::enum(EFrontRequestTypeEnum::class)],
+            // Request PIN code
+            'code' => [],
             // Aurora node ID
             'node_id' => ['int'],
             // Aurora lesson item id

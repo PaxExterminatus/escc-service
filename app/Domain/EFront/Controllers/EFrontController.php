@@ -17,8 +17,8 @@ class EFrontController extends Controller
 
         DB::executeProcedure($procedure, [
             'cl_code' => $request->cl_code,
-            'rq_type' => $request->rq_type,
-            'rq_code' => $request->rq_code,
+            'rq_type' => $request->type,
+            'rq_code' => $request->code,
             'node_id' => $request->node_id,
             'lesson_item' => $request->lesson_item,
         ]);
