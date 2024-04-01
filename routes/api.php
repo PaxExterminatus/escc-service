@@ -9,5 +9,3 @@ use Illuminate\Support\Facades\Route;
 //});
 
 Route::get('/client/{id}', [ClientController::class, 'show']);
-
-Route::match(['get', 'post'], '/efront/data', [EFrontController::class, 'data']);

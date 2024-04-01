@@ -168,6 +168,7 @@ return [
         Yajra\Oci8\Oci8ServiceProvider::class,
 
         App\Domain\Messages\MessagesServiceProvider::class,
+        App\Domain\EFront\EFrontServiceProvider::class,
     ],
 
     /*
