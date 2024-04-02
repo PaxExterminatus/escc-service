@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @property-read int|null $lessons_count
  *
- * @property-read \Illuminate\Database\Eloquent\Collection|ClientCourseLesson[] $lessons
+ * @property-read \Illuminate\Database\Eloquent\Collection|Lesson[] $lessons
  *
  * @method static \Illuminate\Database\Eloquent\Builder|CourseCategory newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|CourseCategory newQuery()
@@ -48,6 +48,6 @@ class CourseCategory extends Model
 
     public function lessons(): HasMany
     {
-        return $this->hasMany(ClientCourseLesson::class, 'course_id', 'id');
+        return $this->hasMany(Lesson::class, 'course_id', 'id');
     }
 }

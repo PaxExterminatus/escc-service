@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Domain\Cabinet\Models\ClientCourse
+ * @mixin \App\Domain\Cabinet\Models\Course
  */
 class CourseResource extends JsonResource
 {
@@ -17,6 +17,9 @@ class CourseResource extends JsonResource
             'node_id' => (int)$this->node_id,
             'client_id' => (int)$this->client_id,
             'name' => $this->name,
+            /**
+             * @var \App\Domain\Cabinet\Enums\CourseStatusEnum
+             */
             'status' => $this->status,
             'lessons' => LessonResource::collection($this->lessons),
             'categories' => CategoryResource::collection($this->categories),

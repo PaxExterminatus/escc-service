@@ -21,16 +21,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read int|null $lessons_count
  * @property-read int|null $categories_count
  *
- * @property-read \Illuminate\Database\Eloquent\Collection|ClientCourseLesson[] $lessons
+ * @property-read \Illuminate\Database\Eloquent\Collection|Lesson[] $lessons
  * @property-read \Illuminate\Database\Eloquent\Collection|CourseCategory[] $categories
  *
- * @method static \Illuminate\Database\Eloquent\Builder|ClientCourse newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|ClientCourse newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|ClientCourse query()
+ * @method static \Illuminate\Database\Eloquent\Builder|Course newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Course newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Course query()
  *
  * @mixin \Eloquent
  */
-class ClientCourse extends Model
+class Course extends Model
 {
     use HasFactory;
     use FieldAdapter;
@@ -67,7 +67,7 @@ class ClientCourse extends Model
 
     function lessons(): HasMany
     {
-        return $this->hasMany(ClientCourseLesson::class, 'course_id', 'id');
+        return $this->hasMany(Lesson::class, 'course_id', 'id');
     }
 
     function categories(): HasMany

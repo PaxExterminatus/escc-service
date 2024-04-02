@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Domain\Cabinet\Models\ClientCourseLesson
+ * @mixin \App\Domain\Cabinet\Models\Lesson
  */
 class LessonResource extends JsonResource
 {

@@ -15,13 +15,13 @@ use Illuminate\Database\Eloquent\Model;
  * @property-read int node_id
  * @property-read string name
  *
- * @method static \Illuminate\Database\Eloquent\Builder|ClientCourseLesson newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|ClientCourseLesson newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|ClientCourseLesson query()
+ * @method static \Illuminate\Database\Eloquent\Builder|Lesson newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Lesson newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Lesson query()
  *
  * @mixin \Eloquent
  */
-class ClientCourseLesson extends Model
+class Lesson extends Model
 {
     use HasFactory;
 
