@@ -3,8 +3,8 @@
 namespace App\Domain\Cabinet\Controllers;
 
 use App\Domain\Cabinet\Models\Client;
+use App\Domain\Cabinet\Resources\ClientResource;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\JsonResponse;
 
 /**
  * @tags Cabinet
@@ -16,12 +16,10 @@ class CabinetClientController extends Controller
      *
      * Information about client courses and lessons
      */
-    public function show(int $id): JsonResponse
+    public function show(int $id): ClientResource
     {
-        $client = Client::where('id', $id)->with('courses.lessons', 'courses.categories');
+        $client = Client::where('id', $id)->with('courses.lessons', 'courses.categories')->first();
 
-        return response()->json([
-            'client' => $client->first(),
-        ]);
+        return ClientResource::make($client);
     }
 }
