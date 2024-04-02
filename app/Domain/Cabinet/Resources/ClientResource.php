@@ -10,6 +10,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class ClientResource extends JsonResource
 {
+    public static $wrap = 'client';
+
     public function toArray(Request $request): array
     {
         return [
