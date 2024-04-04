@@ -2,6 +2,7 @@
 
 namespace App\Domain\Cabinet\Models;
 
+use App\Casts\NameCast;
 use App\Traits\FieldAdapter;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,31 +29,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Client extends Model
 {
-    use HasFactory;
-    use FieldAdapter;
+    use HasFactory, FieldAdapter;
 
     public $table = 'API_CLIENT';
     protected $primaryKey = 'id';
     protected $casts = [
         'total_deb' => 'float',
+        'name' => NameCast::class,
+        'middle_name' => NameCast::class,
+        'last_name' => NameCast::class,
     ];
 
     // Accessors -------------------------------------------------------------------------------------------------------
-
-    function getNameAttribute($value): string
-    {
-        return $this->adaptCase($value);
-    }
-
-    function getMiddleNameAttribute($value): string
-    {
-        return $this->adaptCase($value);
-    }
-
-    function getLastNameAttribute($value): string
-    {
-        return $this->adaptCase($value);
-    }
 
     // Relations -------------------------------------------------------------------------------------------------------
 
