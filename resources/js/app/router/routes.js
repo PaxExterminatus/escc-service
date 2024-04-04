@@ -12,7 +12,7 @@ export default [
         name: 'clients',
         children: [
             {
-                path: '/clients/profile',
+                path: '/clients/profile/:id?',
                 name: 'clientsProfile',
                 component: ProfilePage,
             }
