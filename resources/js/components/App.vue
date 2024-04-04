@@ -1,18 +1,20 @@
 <template>
-    <div id="app" class="application">
+    <div class="main-menu">
+        <PanelMenu :model="appMenu" multiple class="w-full md:w-20rem"/>
+    </div>
 
-        <MegaMenu :model="appMenu" orientation="vertical"/>
+    <div class="main-content">
         <router-view/>
     </div>
 </template>
 
 <script>
-import MegaMenu from 'primevue/megamenu'
-import {appMenu} from 'menu/AppMenu';
+import PanelMenu from 'primevue/panelmenu'
+import {appMenu} from 'menu/AppMenu'
 
 export default {
     components: {
-        MegaMenu,
+        PanelMenu,
     },
 
     data() {
