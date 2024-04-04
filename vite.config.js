@@ -20,7 +20,10 @@ export default defineConfig({
             ".sass",
         ],
         alias: {
+            'app': __dirname + '/resources/js/app',
+            'menu': __dirname + '/resources/js/app/menu',
             'cmp': __dirname + '/resources/js/components',
+            'page': __dirname + '/resources/js/components/page',
         },
     },
 });

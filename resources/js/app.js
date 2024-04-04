@@ -10,7 +10,7 @@ import Toast from 'primevue/toast'
 import App from 'cmp/App.vue'
 
 // Options -------------------------------------------------------------------------------------------------------------
-//import router from 'app/router'
+import router from 'app/router'
 //import store from 'app/store'
 
 // Application ---------------------------------------------------------------------------------------------------------
@@ -33,7 +33,7 @@ app.use(PrimeVue, {
 })
 
 app.use(ToastService)
-//app.use(router)
+app.use(router)
 //app.use(store)
 
 app.component('Toast', Toast)
