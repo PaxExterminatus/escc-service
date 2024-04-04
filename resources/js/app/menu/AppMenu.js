@@ -2,15 +2,18 @@ import {MenuItem} from './Menu';
 
 export const appMenu = [
     MenuItem({
+        key: 1,
         label: 'Home',
         icon: 'pi pi-home',
         route: '/',
     }),
     MenuItem({
+        key: 2,
         label: 'Клиенты',
         icon: 'pi pi-users',
         items: [
             MenuItem({
+                key: 21,
                 label: 'Профиль',
                 icon: 'pi pi-user',
                 route: '/clients/profile',
@@ -18,6 +21,7 @@ export const appMenu = [
         ],
     }),
     MenuItem({
+        key: 3,
         label: 'Docs',
         icon: 'pi pi-file',
         items: [
@@ -30,3 +34,8 @@ export const appMenu = [
         ],
     }),
 ];
+
+export const defaultExpandedKeys = {
+    2: true,
+    3: false,
+};

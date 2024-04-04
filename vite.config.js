@@ -24,6 +24,7 @@ export default defineConfig({
             'menu': __dirname + '/resources/js/app/menu',
             'cmp': __dirname + '/resources/js/components',
             'page': __dirname + '/resources/js/components/page',
+            'element': __dirname + '/resources/js/components/element',
         },
     },
 });

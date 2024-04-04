@@ -9,14 +9,14 @@
         <template #title></template>
         <template #content>
 
-            <InputGroup class="mb-5">
+            <InputGroup>
                 <FloatLabel>
                     <InputText v-model="client.id" inputId="clientId" :useGrouping="false" @keydown.enter="search"/>
                     <label for="clientId">ID</label>
                 </FloatLabel>
             </InputGroup>
 
-            <InputGroup class="mb-5">
+            <InputGroup>
                 <FloatLabel>
                     <InputText v-model="client.name" inputId="clientName" :useGrouping="false"/>
                     <label for="clientName">Имя</label>
@@ -37,14 +37,14 @@
 </template>
 
 <script>
+import axios from 'axios'
 import {defineComponent} from 'vue'
 import Card from 'primevue/card'
 import InputText from 'primevue/inputtext'
-import InputGroup from 'primevue/inputgroup'
+import InputGroup from 'element/InputGroup'
 import InputGroupAddon from 'primevue/inputgroupaddon'
 import FloatLabel from 'primevue/floatlabel';
 import Button from 'primevue/button'
-import axios from 'axios'
 
 export default defineComponent({
     name: 'ProfilePage',
