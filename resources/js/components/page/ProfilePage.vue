@@ -35,9 +35,9 @@
     </Card>
 
     <template v-if="client.id">
-        <Panel toggleable collapsed>
+        <Panel toggleable :collapsed="collapsed">
             <template #header>
-                <h1 >Отправка сообщений</h1>
+                <h1 @click="toggle" class="cursor-pointer">Отправка сообщений</h1>
             </template>
         </Panel>
     </template>
@@ -58,7 +58,9 @@ import Panel from 'primevue/panel'
 const router = useRouter();
 const route = useRoute();
 
-let client = ref({
+let collapsed = ref(true);
+
+const client = ref({
     id: route.params.id ?? null,
     name: null,
     name_last: null,
@@ -68,6 +70,10 @@ let client = ref({
 onMounted(() => {
     if (client.id) search();
 });
+
+const toggle = () => {
+    collapsed.value = !collapsed.value;
+};
 
 const search = () =>
 {
