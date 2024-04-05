@@ -5,20 +5,7 @@
         </template>
     </Toolbar>
 
-    <Card class="w-full">
-        <template #title></template>
-        <template #content>
-            <InputGroup>
-                <Input v-model="client.id" @enter="search" id="clientId" label="ID"/>
-            </InputGroup>
-
-            <InputGroup>
-                <Input v-model="client.name_last" id="clientNameMiddle" label="Фамилия"/>
-                <Input v-model="client.name" id="clientName" label="Имя"/>
-                <Input v-model="client.name_middle" id="clientNameMiddle" label="Отчество"/>
-            </InputGroup>
-        </template>
-    </Card>
+    <ProfileCard :client="client" @search="search"/>
 
     <template v-if="client.id">
         <Panel toggleable :collapsed="collapsed">
@@ -32,15 +19,12 @@
 <script setup>
 import axios from 'axios'
 import {onMounted, ref} from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import Card from 'primevue/card'
-
-import Input from 'element/Input'
-import InputGroup from 'element/InputGroup'
+import {useRouter, useRoute} from 'vue-router'
 
 import Button from 'primevue/button'
 import Toolbar from 'primevue/toolbar'
 import Panel from 'primevue/panel'
+import ProfileCard from 'cmp/profile/ProfileCard'
 
 const router = useRouter();
 const route = useRoute();
