@@ -1,14 +1,13 @@
 <template>
-    <h1>Profile</h1>
-
-    <div class="mb-2">
-        <Button label="Search" severity="secondary" outlined @click="search"/>
-    </div>
+    <Toolbar>
+        <template #start>
+            <Button label="Search" severity="secondary" outlined @click="search"/>
+        </template>
+    </Toolbar>
 
     <Card class="w-full">
         <template #title></template>
         <template #content>
-
             <InputGroup>
                 <FloatLabel>
                     <InputText v-model="client.id" inputId="clientId" :useGrouping="false" @keydown.enter="search"/>
@@ -34,59 +33,52 @@
             </InputGroup>
         </template>
     </Card>
+
+    <template v-if="client.id">
+        <Panel toggleable collapsed>
+            <template #header>
+                <h1 >Отправка сообщений</h1>
+            </template>
+        </Panel>
+    </template>
 </template>
 
-<script>
+<script setup>
 import axios from 'axios'
-import {defineComponent} from 'vue'
+import {onMounted, ref} from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import Card from 'primevue/card'
 import InputText from 'primevue/inputtext'
 import InputGroup from 'element/InputGroup'
-import InputGroupAddon from 'primevue/inputgroupaddon'
-import FloatLabel from 'primevue/floatlabel';
+import FloatLabel from 'primevue/floatlabel'
 import Button from 'primevue/button'
+import Toolbar from 'primevue/toolbar'
+import Panel from 'primevue/panel'
 
-export default defineComponent({
-    name: 'ProfilePage',
+const router = useRouter();
+const route = useRoute();
 
-    components: {
-        Card,
-        InputGroup,
-        InputGroupAddon,
-        Button,
-        InputText,
-        FloatLabel,
-    },
+let client = ref({
+    id: route.params.id ?? null,
+    name: null,
+    name_last: null,
+    name_middle: null,
+}).value;
 
-    mounted() {
-        if (this.client.id) this.search();
-    },
+onMounted(() => {
+    if (client.id) search();
+});
 
-    data() {
-        return {
-            client: {
-                id: this.$route.params.id ?? null,
-                name: null,
-                name_last: null,
-                name_middle: null,
-            },
-        };
-    },
+const search = () =>
+{
+    axios.get(`/api/profile/${client.id}`)
+        .then((response) => {
+            client.name = response.data.profile.name;
+            client.name_last = response.data.profile.name_last;
+            client.name_middle = response.data.profile.name_middle;
 
-    methods: {
-        search()
-        {
-            if (this.client.id)
-            {
-                axios.get(`/api/profile/${this.client.id}`)
-                    .then((response) => {
-                        this.client = response.data.profile;
-
-                        if (this.client.id)
-                            this.$router.push({ name: 'clientsProfile', params: { id: response.data.profile.id } })
-                    })
-            }
-        }
-    },
-})
+            if (client.id)
+                router.push({ name: 'clientsProfile', params: { id: response.data.profile.id } })
+        });
+};
 </script>

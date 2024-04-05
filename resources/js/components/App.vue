@@ -1,8 +1,6 @@
 <template>
     <div class="main-menu">
-
         <MainMenu/>
-
     </div>
 
     <div class="main-content">
@@ -10,23 +8,7 @@
     </div>
 </template>
 
-<script>
+<script setup>
 import MainMenu from 'cmp/template/MainMenu'
 
-export default {
-    components: {
-        MainMenu,
-    },
-
-    methods: {
-        expand()
-        {
-            for (let node of items.value) {
-                expandNode(node);
-            }
-
-            expandedKeys.value = {...expandedKeys.value};
-        }
-    },
-}
 </script>
