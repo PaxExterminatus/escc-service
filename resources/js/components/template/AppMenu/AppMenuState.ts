@@ -1,0 +1,3 @@
+interface AppMenuState {
+    visible: boolean
+}

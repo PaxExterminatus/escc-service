@@ -1,11 +1,15 @@
-import {MenuItem} from './Menu';
+import {MenuItem} from 'menu/Menu';
+import menu from './AppMenuStoreAdapter'
 
-export const appMenu = [
+export const appMenuData = [
     MenuItem({
         key: 1,
         label: 'Home',
         icon: 'pi pi-home',
         route: '/',
+        command () {
+            menu.hide()
+        },
     }),
     MenuItem({
         key: 2,
@@ -17,6 +21,9 @@ export const appMenu = [
                 label: 'Профиль',
                 icon: 'pi pi-user',
                 route: '/clients/profile',
+                command () {
+                    menu.hide()
+                },
             }),
         ],
     }),
@@ -30,6 +37,9 @@ export const appMenu = [
                 icon: 'pi pi-code',
                 url: '/docs/api/',
                 target: 'blank',
+                command () {
+                    menu.hide()
+                },
             }),
         ],
     }),

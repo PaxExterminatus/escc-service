@@ -11,7 +11,7 @@ import App from 'cmp/App.vue'
 
 // Options -------------------------------------------------------------------------------------------------------------
 import router from 'app/router'
-//import store from 'app/store'
+import store from 'app/store'
 
 // Application ---------------------------------------------------------------------------------------------------------
 const app = createApp(App)
@@ -34,7 +34,7 @@ app.use(PrimeVue, {
 
 app.use(ToastService)
 app.use(router)
-//app.use(store)
+app.use(store)
 
 app.component('Toast', Toast)
 
