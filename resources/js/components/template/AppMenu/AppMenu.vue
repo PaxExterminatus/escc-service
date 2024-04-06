@@ -2,12 +2,14 @@
     import {ref} from 'vue'
     import PanelMenu from 'primevue/panelmenu'
     import {appMenuData, defaultExpandedKeys} from 'cmp/template/AppMenu/AppMenuData.js'
+    import menu from "./AppMenuStoreAdapter.js";
+    import Sidebar from 'primevue/sidebar';
 
     const expandedKeys = ref(defaultExpandedKeys)
 </script>
 
 <template>
-    <Sidebar>
+    <Sidebar v-model:visible="menu.visible" class="main-menu-bar">
         <PanelMenu v-model:expandedKeys="expandedKeys" :model="appMenuData" multiple class="w-full md:w-20rem">
             <template #item="{ item }">
                 <router-link v-if="item.route" v-slot="{ href, navigate }" :to="item.route" custom>
