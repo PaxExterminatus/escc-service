@@ -15,6 +15,5 @@
 <script setup>
 import {menu, AppMenu} from 'cmp/template/AppMenu'
 
-
 import Button from 'primevue/button'
 </script>

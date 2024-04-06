@@ -1,5 +1,5 @@
 const state = () => ({
-    visible: true,
+    visible: false,
 });
 
 const mutations = {
@@ -12,10 +12,6 @@ const mutations = {
 }
 
 const getters = {
-    /**
-     * @param {AppMenuState} state
-     * @return boolean
-     */
     visible(state) {
         return state.visible;
     },

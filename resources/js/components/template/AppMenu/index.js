@@ -3,5 +3,5 @@ import menu from './AppMenuStoreAdapter.js'
 
 export {
     menu,
-    AppMenu
+    AppMenu,
 }

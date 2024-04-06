@@ -1,3 +1,0 @@
-interface AppMenuState {
-    visible: boolean
-}

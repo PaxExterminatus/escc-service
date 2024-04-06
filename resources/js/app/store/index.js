@@ -1,12 +1,18 @@
 import { createStore } from 'vuex';
-import menu from 'cmp/template/AppMenu/AppMenuStore';
+
+import AppMenuStore from 'cmp/template/AppMenu/AppMenuStore';
+import {menu} from 'cmp/template/AppMenu';
 
 const store = createStore({
     modules: {
-        menu,
+        menu: AppMenuStore,
     },
     state: {},
     mutations: {},
 });
 
-export default store;
+export default store
+
+export {
+    menu
+}
