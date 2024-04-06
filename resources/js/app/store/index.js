@@ -1,7 +1,6 @@
 import { createStore } from 'vuex';
 
 import AppMenuStore from 'cmp/template/AppMenu/AppMenuStore';
-import {menu} from 'cmp/template/AppMenu';
 
 const store = createStore({
     modules: {
@@ -12,7 +11,3 @@ const store = createStore({
 });
 
 export default store
-
-export {
-    menu
-}

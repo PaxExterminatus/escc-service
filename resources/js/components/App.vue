@@ -13,7 +13,8 @@
 </template>
 
 <script setup>
-import {menu, AppMenu} from 'cmp/template/AppMenu'
+import AppMenu from 'cmp/template/AppMenu/AppMenuComponent'
+import {menu} from 'app/lib'
 
 import Button from 'primevue/button'
 </script>

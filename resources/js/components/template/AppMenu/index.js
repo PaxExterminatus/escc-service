@@ -1,7 +1,7 @@
-import AppMenu from './AppMenu.vue'
-import menu from './AppMenuStoreAdapter.js'
+import AppMenuComponent from './AppMenuComponent'
+import menu from './AppMenuStoreAdapter'
 
 export {
     menu,
-    AppMenu,
+    AppMenuComponent,
 }
