@@ -44,8 +44,9 @@ const toggle = () => {
 const search = () =>
 {
     profile.api.get(profile.id)
-        .then(response =>
+        .then((response) =>
         {
+            console.log(response)
             profile.fill(response.data.profile)
             if (profile.id) router.push({ name: 'clientsProfile', params: {id: profile.id}})
         });

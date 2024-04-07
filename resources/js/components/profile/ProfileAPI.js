@@ -17,7 +17,7 @@ class ProfileAPI {
             {
                 /** @type {ProfileResponseData}*/
                 const data = response.data;
-                return response.data;
+                return response;
             });
     }
 }
