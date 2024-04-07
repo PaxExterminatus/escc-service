@@ -1,6 +1,6 @@
 <template>
     <FloatLabel>
-        <InputText v-model="modelValue" :inputId="props.id" :useGrouping="false" @keydown.enter="enter"/>
+        <InputText v-model="modelValue" :inputId="props.id" @keydown.enter="enter"/>
         <label :for="props.id">{{props.label}}</label>
     </FloatLabel>
 </template>
