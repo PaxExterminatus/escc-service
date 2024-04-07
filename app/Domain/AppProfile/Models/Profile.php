@@ -43,6 +43,7 @@ class Profile extends Model
             'client_name' => NameCast::class,
             'client_middle_name' => NameCast::class,
             'client_last_name' => NameCast::class,
+            'client_birthday' => 'date:Y-m-d',
         ];
     }
 

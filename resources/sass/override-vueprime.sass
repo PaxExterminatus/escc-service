@@ -10,6 +10,9 @@
         flex-direction: column
         min-height: 144px
         .p-card-content
+            display: flex
+            flex-direction: column
+            gap: 2rem
             flex: 1
             padding: 0
     .p-card-footer
@@ -88,6 +91,8 @@
         flex-direction: column
     .p-inputgroup > *
         margin-bottom: 2rem
+    .p-inputgroup > *:last-child
+        margin-bottom: 0
     .p-inputtext
         border-radius: 6px
 

@@ -19,6 +19,7 @@ class ProfileResource extends JsonResource
             'name' => $this->client_name,
             'name_middle' => $this->client_middle_name,
             'name_last' => $this->client_last_name,
+            'birthday' => $this->client_birthday->format('d.m.Y'),
         ];
     }
 }

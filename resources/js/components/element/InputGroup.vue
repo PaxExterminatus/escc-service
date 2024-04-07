@@ -4,7 +4,7 @@
 </script>
 
 <template>
-    <InputGroup class="mb-5">
+    <InputGroup>
         <slot></slot>
     </InputGroup>
 </template>
