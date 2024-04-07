@@ -13,8 +13,11 @@ class ProfileAPI {
     get(id)
     {
         return axios.get(this.routers.get(id))
-            .then((response) => {
-                return response;
+            .then((response) =>
+            {
+                /** @type {ProfileResponseData}*/
+                const data = response.data;
+                return response.data;
             });
     }
 }
