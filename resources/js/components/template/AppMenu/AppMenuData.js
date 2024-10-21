@@ -11,6 +11,7 @@ export const appMenuData = [
             menu.hide()
         },
     }),
+
     MenuItem({
         key: 2,
         label: 'Клиенты',
@@ -25,8 +26,18 @@ export const appMenuData = [
                     menu.hide()
                 },
             }),
+            MenuItem({
+                key: 22,
+                label: 'Контейнер',
+                icon: 'pi pi-box',
+                route: '/container',
+                command () {
+                    menu.hide()
+                },
+            }),
         ],
     }),
+
     MenuItem({
         key: 3,
         label: 'Docs',

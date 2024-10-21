@@ -1,5 +1,6 @@
 import AppPage from 'page/AppPage'
 import ProfilePage from 'page/ProfilePage'
+import ContainerPage from 'page/ContainerPage';
 
 export default [
     {
@@ -15,6 +16,18 @@ export default [
                 path: '/clients/profile/:id?',
                 name: 'clientsProfile',
                 component: ProfilePage,
+            }
+        ],
+    },
+
+    {
+        path: '/container',
+        name: 'container',
+        children: [
+            {
+                path: '/container/:id?',
+                name: 'containerShow',
+                component: ContainerPage,
             }
         ],
     },
