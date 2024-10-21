@@ -4,9 +4,6 @@ namespace App\Domain\App\Profile\Models;
 
 use App\Casts\NameCast;
 use App\Casts\SexCast;
-use App\Domain\Cabinet\Models\Client;
-use App\Traits\FieldAdapter;
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
@@ -25,16 +22,10 @@ use Illuminate\Support\Carbon;
  * @property Carbon client_birthday
  * @property string client_sex
  *
- * @method static EloquentBuilder|Client newModelQuery()
- * @method static EloquentBuilder|Profile newQuery()
- * @method static EloquentBuilder|Profile query()
- *
  * @mixin \Eloquent
  */
 class Profile extends Model
 {
-    use FieldAdapter;
-
     protected $table = 'CLIENT';
     protected $primaryKey = 'client_id';
 

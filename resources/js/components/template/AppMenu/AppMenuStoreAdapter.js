@@ -1,4 +1,4 @@
-import store from 'Domain/App/store'
+import store from 'app/store'
 
 class AppMenuStoreAdapter
 {
