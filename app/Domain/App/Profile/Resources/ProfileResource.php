@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Domain\AppProfile\Resources;
+namespace App\Domain\App\Profile\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Domain\AppProfile\Models\Profile
+ * @mixin \App\Domain\App\Profile\Models\Profile
  */
 class ProfileResource extends JsonResource
 {

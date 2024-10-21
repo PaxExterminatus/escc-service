@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domain\AppProfile;
+namespace App\Domain\App\Profile;
 
 use Illuminate\Support\ServiceProvider;
 

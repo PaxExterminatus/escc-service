@@ -170,7 +170,7 @@ return [
         App\Domain\Messages\MessagesServiceProvider::class,
         App\Domain\EFront\EFrontServiceProvider::class,
         App\Domain\Cabinet\CabinetServiceProvider::class,
-        App\Domain\AppProfile\AppProfileServiceProvider::class,
+        \App\Domain\App\Profile\AppProfileServiceProvider::class,
     ],
 
     /*

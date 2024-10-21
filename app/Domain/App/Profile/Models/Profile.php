@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Domain\AppProfile\Models;
+namespace App\Domain\App\Profile\Models;
 
 use App\Casts\NameCast;
 use App\Casts\SexCast;
-use App\Traits\FieldAdapter;
 use App\Domain\Cabinet\Models\Client;
+use App\Traits\FieldAdapter;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 
 /**
  * @property int client_id

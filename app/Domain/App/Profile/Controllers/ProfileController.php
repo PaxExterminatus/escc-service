@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Domain\AppProfile\Controllers;
+namespace App\Domain\App\Profile\Controllers;
 
-use App\Domain\AppProfile\Models\Profile;
-use App\Domain\AppProfile\Resources\ProfileResource;
+use App\Domain\App\Profile\Models\Profile;
+use App\Domain\App\Profile\Resources\ProfileResource;
 use App\Http\Controllers\Controller;
 
 class ProfileController extends Controller
