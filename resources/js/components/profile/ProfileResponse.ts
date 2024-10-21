@@ -8,4 +8,11 @@ interface ProfileData {
     name_last: string|null
     name_middle: string|null
     birthday: string|null
+    sex: SexEnum
+}
+
+enum SexEnum {
+    man = 'man',
+    woman = 'woman',
+    unknown = 'unknown',
 }

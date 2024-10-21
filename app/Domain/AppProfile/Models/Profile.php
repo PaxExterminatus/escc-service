@@ -3,6 +3,7 @@
 namespace App\Domain\AppProfile\Models;
 
 use App\Casts\NameCast;
+use App\Casts\SexCast;
 use App\Traits\FieldAdapter;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -20,6 +21,7 @@ use Illuminate\Support\Carbon;
  * @property string client_middle_name
  * @property string client_last_name
  * @property Carbon client_birthday
+ * @property string client_sex
  * ...
  *
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Domain\Cabinet\Models\Client newModelQuery()
@@ -44,6 +46,7 @@ class Profile extends Model
             'client_middle_name' => NameCast::class,
             'client_last_name' => NameCast::class,
             'client_birthday' => 'date:Y-m-d',
+            'client_sex' => SexCast::class,
         ];
     }
 

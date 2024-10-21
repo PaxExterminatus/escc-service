@@ -1,4 +1,5 @@
 import {profileAPI} from './ProfileAPI';
+import {profileSex} from './ProfileSex';
 
 class Profile {
 
@@ -9,6 +10,7 @@ class Profile {
         this.name_last = null
         this.name_middle = null
         this.birthday = null
+        this.sex = null;
     }
 
     /**
@@ -33,6 +35,7 @@ class Profile {
         this.name_last = data.name_last
         this.name_middle = data.name_middle
         this.birthday = data.birthday
+        this.sex = profileSex[data.sex]
 
         return this;
     }

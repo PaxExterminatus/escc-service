@@ -14,28 +14,36 @@
 
             <InputGroup>
                 <Input v-model="profile().birthday" id="clientBirthday" label="Birthday"/>
+                <FloatLabel>
+                    <Dropdown v-model="profile().sex" :options="sexes" optionLabel="name" id="clientSex"/>
+                    <label for="clientSex">Sex</label>
+                </FloatLabel>
             </InputGroup>
         </template>
     </Card>
 </template>
 
 <script setup>
-import {defineEmits, defineProps, computed} from 'vue'
+import {defineEmits, defineProps, ref} from 'vue'
 import Card from 'primevue/card'
 import InputGroup from 'primevue/inputgroup'
 import Input from 'element/Input.vue'
 import {Profile} from './Profile.js'
+import {profileSexOptions} from './ProfileSex.js'
+
+import Dropdown from 'primevue/dropdown'
+import FloatLabel from 'primevue/floatlabel';
 
 const props = defineProps({
     client: Profile,
 });
 
-/**
- * @return {Profile}
- */
+/** @return {Profile} */
 const profile = () => {
     return props.client;
 }
+
+const sexes = ref(profileSexOptions);
 
 const emit = defineEmits({
     search: null,
