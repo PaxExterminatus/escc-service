@@ -2,42 +2,50 @@
 
 namespace App\Domain\Messages\Controllers;
 
-use App\Domain\Messages\Models\DailyMessageView;
-use App\Domain\Messages\Queries\DailyMessagesRepository;
+use App\Domain\Messages\DataService\DailyMessagesDataService;
+use App\Domain\Messages\Requests\DailyMessagesRequest;
+use App\Domain\Messages\Resources\DailyMessageCollection;
 use App\Domain\Messages\Services\DataManagement\DailyMessagingUpdateStatusService;
 use App\Domain\Messages\Services\Senders\MobileTeleSystems\MobileTeleSystemsProvider;
-use App\Http\Controllers\ApiController;
+use App\Http\Controllers\Controller;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
+use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
-use Illuminate\Support\Str;
 
-class DailyMessagingController extends ApiController
+/**
+ * Daily Messaging
+ * @tags Messaging, SMS, Emailing
+ */
+class DailyMessagingController extends Controller
 {
-    protected DailyMessagesRepository $dailyRepository;
     protected DailyMessagingUpdateStatusService $statusService;
 
-    function __construct(DailyMessagesRepository $dailyRepository)
+    public function __construct()
     {
-        $this->dailyRepository = $dailyRepository;
         $this->statusService = new DailyMessagingUpdateStatusService();
     }
 
-    /** Get list of daily messages */
-    function index(string $type): JsonResponse
+    /**
+     * Daily: get list
+     * @example /api/messages/daily/sms
+     * @example /api/messages/daily/email
+     */
+    public function index(DailyMessagesRequest $request): Responsable
     {
-        $messages = $this->applyParamsToDailyMessagesRepository($type)->get();
-
-        return response()->json([
-            'messages' => $messages,
-        ]);
+        $messages = $this->repository($request)->get();
+        return DailyMessageCollection::make($messages);
     }
 
-    /** Send daily messages */
-    function send(string $type): JsonResponse
+    /**
+     * Daily: send
+     * @example /api/messages/daily/sms/send
+     * @example /api/messages/daily/email/send
+     */
+    public function send(DailyMessagesRequest $request): JsonResponse
     {
-        $messages = $this->applyParamsToDailyMessagesRepository($type)->get();
+        $messages = $this->repository($request)->get();
 
         $result = MobileTeleSystemsProvider::make()->massSending($messages, $this->senderName());
 
@@ -53,15 +61,26 @@ class DailyMessagingController extends ApiController
             'response' => [
                 'status' => $response->status(),
                 'reason' => $response->reason(),
-                'data' => $response->json(),
+                'job_id' => $result['response']['job_id'] ?? null,
             ],
-            'request' => $request,
+            /**
+             * @var array{messages: object[], channels: string[], channel_options: object}
+             */
+            'request' => [
+                'messages' => $request['messages'],
+                'channels' => $request['channels'],
+            ],
         ]);
     }
 
-    function txt(string $type): Response|Application|ResponseFactory
+    /**
+     * Daily: get list as txt file
+     * @example /api/messages/daily/sms/txt
+     * @example /api/messages/daily/email/txt
+     */
+    public function txt(DailyMessagesRequest $request): Response|Application|ResponseFactory
     {
-        $messages = $this->applyParamsToDailyMessagesRepository($type)->get();
+        $messages = $this->repository($request->type)->get();
 
         $content = "Phone number\t1\r\n";
 
@@ -79,15 +98,9 @@ class DailyMessagingController extends ApiController
         ]);
     }
 
-    protected function applyParamsToDailyMessagesRepository(string $type): DailyMessagesRepository
+    protected function repository(DailyMessagesRequest $request): DailyMessagesDataService
     {
-        if (Str::upper($type) === DailyMessageView::$TYPE_SMS)
-            $this->dailyRepository->setTypeAsSms();
-
-        if (Str::upper($type) === DailyMessageView::$TYPE_EMAIL)
-            $this->dailyRepository->setTypeAsEmail();
-
-        return $this->dailyRepository;
+       return DailyMessagesDataService::make()->setType($request->type);
     }
 
     protected function senderName(): string

@@ -2,7 +2,7 @@
 
 namespace App\Domain\Messages\Services\Senders\MobileTeleSystems;
 
-use App\Domain\Messages\Models\DailyMessageView;
+use App\Domain\Messages\Models\DailyMessage;
 use App\Domain\Messages\Services\Senders\MessagingProviderInterface;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\Response;
@@ -22,7 +22,7 @@ class MobileTeleSystemsProvider implements MessagingProviderInterface
     }
 
     /**
-     * @param DailyMessageView[] $messages
+     * @param DailyMessage[] $messages
      * @return array{response: PromiseInterface|Response, request: array}
      */
     function massSending(iterable $messages, string $name): array
