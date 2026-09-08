@@ -1,4 +1,6 @@
 <template>
+    <Toast position="top-center"/>
+
     <header class="app-header">
         <Button icon="pi pi-bars" severity="secondary" raised @click="menu.show()"/>
     </header>

@@ -9,11 +9,11 @@ class ContainerStatusCast
 {
     public function get(Model $model, string $key, mixed $value, array $attributes): string
     {
-        return ContainerStatusEnum::name((int)$value);
+        return ContainerStatusEnum::from((int)$value)->label();
     }
 
-    public function set(Model $model, string $key, mixed $value, array $attributes): ?int
+    public function set(Model $model, string $key, mixed $value, array $attributes): int
     {
-        return ContainerStatusEnum::id($value);
+        return (int)$value;
     }
 }

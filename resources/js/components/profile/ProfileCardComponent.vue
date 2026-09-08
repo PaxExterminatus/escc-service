@@ -13,7 +13,8 @@
             </InputGroup>
 
             <InputGroup>
-                <Input v-model="profile().birthday" id="clientBirthday" label="Birthday"/>
+                <Input v-model="profile().birthday" :label="birthdayLabel" id="clientBirthday"/>
+
                 <FloatLabel>
                     <Dropdown v-model="profile().sex" :options="sexes" optionLabel="name" id="clientSex"/>
                     <label for="clientSex">Sex</label>
@@ -24,12 +25,13 @@
 </template>
 
 <script setup>
-import {defineEmits, defineProps, ref} from 'vue'
+import {computed, defineEmits, defineProps, ref} from 'vue'
 import Card from 'primevue/card'
 import InputGroup from 'primevue/inputgroup'
 import Input from 'element/Input.vue'
 import {Profile} from './Profile.js'
 import {profileSexOptions} from './ProfileSex.js'
+import {birthdayInfo} from './BirthdayInfo.js'
 
 import Dropdown from 'primevue/dropdown'
 import FloatLabel from 'primevue/floatlabel';
@@ -44,6 +46,13 @@ const profile = () => {
 }
 
 const sexes = ref(profileSexOptions);
+
+const info = computed(() => birthdayInfo(profile().birthday));
+const birthdayLabel = computed(() => {
+    if (!info.value) return 'Birthday';
+
+    return `Birthday (${info.value.age}), ${info.value.countdown}`;
+});
 
 const emit = defineEmits({
     search: null,

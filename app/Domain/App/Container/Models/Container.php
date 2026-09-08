@@ -45,6 +45,7 @@ class Container extends Model
 {
     protected $table = 'CONTAINER';
     protected $primaryKey = 'container_id';
+    public $timestamps = false;
 
     protected function casts(): array
     {
@@ -52,7 +53,7 @@ class Container extends Model
             'container_id' => 'integer',
             'client_id' => 'integer',
             'status_id' => ContainerStatusCast::class,
-
+            'container_date' => 'datetime',
         ];
     }
 }

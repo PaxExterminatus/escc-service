@@ -16,3 +16,4 @@ yarn-error.log
 /.phpstorm.meta.php
 /composer.phar
 /public/build/
+/.env.remote

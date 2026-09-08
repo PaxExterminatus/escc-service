@@ -15,8 +15,7 @@ class ProfileController extends Controller
      */
     public function show(int $id): ProfileResource
     {
-        $profile = Profile::where('client_id', $id)->first();
-
+        $profile = Profile::where('client_id', $id)->firstOrFail();
         return ProfileResource::make($profile);
     }
 }

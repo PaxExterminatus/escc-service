@@ -3,8 +3,12 @@
 use App\Http\Controllers\SPAController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', SPAController::class)->name('home');
+//Route::get('/', SPAController::class)->name('home');
+//
+//Route::prefix('/clients/')->group(function () {
+//    Route::get('profile/{id?}', SPAController::class);
+//});
 
-Route::prefix('/clients/')->group(function () {
-    Route::get('profile/{id?}', SPAController::class);
+Route::fallback(function () {
+    return view('spa');
 });
