@@ -5,7 +5,7 @@
         "dev": "vite",
         "build": "vite build",
         "php artisan serv": "php artisan serv",
-        "artisan.bat serve --port=8010": ".\artisan.bat serve --port=8010",
+        "artisan.bat serve --port=8010": ".\\artisan.bat serve --port=8010",
         "php artisan schedule:run": "php artisan schedule:run",
         "nvm list": "nvm list",
         "nvm use 18.12.0": "nvm use 18.12.0"

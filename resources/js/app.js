@@ -1,4 +1,5 @@
 import { createApp } from 'vue'
+import axios from 'axios'
 
 // Libraries -----------------------------------------------------------------------------------------------------------
 import PrimeVue from 'primevue/config'
@@ -12,6 +13,22 @@ import App from 'cmp/App.vue'
 // Options -------------------------------------------------------------------------------------------------------------
 import router from 'app/router'
 import store from 'app/store'
+import {showError} from 'app/toast'
+
+// HTTP ----------------------------------------------------------------------------------------------------------------
+// Универсальный обработчик "не найдено": все компоненты дёргают общий axios напрямую
+// (своего клиента с перехватчиками, как в escc-cabinet, здесь нет), поэтому вешаем
+// перехватчик на сам axios — покрывает все запросы разом.
+axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 404) {
+            showError(error.response?.data?.message || 'Запрашиваемые данные не найдены');
+        }
+
+        return Promise.reject(error);
+    },
+)
 
 // Application ---------------------------------------------------------------------------------------------------------
 const app = createApp(App)
