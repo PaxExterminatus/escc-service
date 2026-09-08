@@ -22,6 +22,19 @@ class Handler extends ExceptionHandler
     }
 
     /**
+     * routes/api.php — чистый JSON API, а не HTML. По умолчанию Laravel решает
+     * JSON-ответ вернуть или HTML-страницу ошибки по заголовку Accept запроса —
+     * для браузерной навигации (или клиента без Accept: application/json) это
+     * значит HTML "404 Not Found" вместо {"message": ...} даже для api/*-роутов.
+     * Форсируем JSON по префиксу пути, не трогая routes/web.php (там SPA-фолбэк
+     * на resources/views/spa.blade.php, ему HTML нужен).
+     */
+    protected function shouldReturnJson($request, Throwable $e): bool
+    {
+        return $request->is('api/*') || parent::shouldReturnJson($request, $e);
+    }
+
+    /**
      * A list of the exception types that are not reported.
      *
      * @var array

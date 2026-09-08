@@ -18,7 +18,7 @@ class CabinetClientController extends Controller
      */
     public function show(int $id): ClientResource
     {
-        $client = Client::where('id', $id)->with('courses.lessons', 'courses.categories')->first();
+        $client = Client::where('id', $id)->with('courses.lessons', 'courses.categories')->firstOrFail();
 
         return ClientResource::make($client);
     }
