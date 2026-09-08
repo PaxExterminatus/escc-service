@@ -2,10 +2,12 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -62,6 +64,19 @@ class Handler extends ExceptionHandler
     {
         $this->reportable(function (Throwable $e) {
             //
+        });
+
+        // ModelNotFoundException::getMessage() включает полный класс модели
+        // ("No query results for model [App\...\Profile]") — служебная деталь
+        // реализации, которая утекает во фронтенд-тост как есть. Отдаём наружу
+        // только "No query results". Ловим уже после того, как базовый Handler
+        // (prepareException) сам оборачивает ModelNotFoundException в
+        // NotFoundHttpException — на исходный тип renderable() не сработал бы,
+        // потому что эта конвертация происходит раньше проверки renderable-колбэков.
+        $this->renderable(function (NotFoundHttpException $e, $request) {
+            if ($request->is('api/*') && $e->getPrevious() instanceof ModelNotFoundException) {
+                return response()->json(['message' => 'No query results'], 404);
+            }
         });
     }
 }
