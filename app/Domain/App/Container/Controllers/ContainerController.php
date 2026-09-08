@@ -47,16 +47,11 @@ class ContainerController extends Controller
      */
     public function setStatus(int $id, int $statusId): ContainerResource
     {
-        $name = ContainerStatusEnum::name($statusId);
+        $status = ContainerStatusEnum::tryFrom($statusId);
 
-        abort_if($name === null, 422, "Unknown container status id: {$statusId}");
+        abort_if($status === null, 422, "Unknown container status id: {$statusId}");
 
-        $container = Container::where('container_id', $id)->firstOrFail();
-
-        $container->status_id = $name;
-        $container->save();
-
-        return ContainerResource::make($container);
+        return $this->applyStatus($id, $status);
     }
 
     protected function applyStatus(int $id, ContainerStatusEnum $status): ContainerResource

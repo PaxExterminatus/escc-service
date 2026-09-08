@@ -2,39 +2,33 @@
 
 namespace App\Domain\App\Container\Enums;
 
-enum ContainerStatusEnum: string
+/**
+ * Backing value = сам id из REV_CONST.boxStatus* — для id -> case работают нативные
+ * ContainerStatusEnum::from()/tryFrom(). label() — только для отображения (строка
+ * "Sent"/"Stopped"/... в ContainerResource и на фронтенде).
+ */
+enum ContainerStatusEnum: int
 {
-    case stopped = 'Stopped';
-    case in_progress = 'InProgress';
-    case error = 'Error';
-    case canceled = 'Canceled';
-    case ready = 'Ready';
-    case sent = 'Sent';
-    case temporary = 'Temporary';
+    case temporary = -1;
+    case stopped = 1;
+    case in_progress = 2;
+    case error = 3;
+    case canceled = 4;
+    case assembling = 50;
+    case ready = 45;
+    case sent = 70;
 
-    static function name(int $id): ?string
+    public function label(): string
     {
-        if ($id === 1) return ContainerStatusEnum::stopped->value;
-        if ($id === 2) return ContainerStatusEnum::in_progress->value;
-        if ($id === 3) return ContainerStatusEnum::error->value;
-        if ($id === 4) return ContainerStatusEnum::canceled->value;
-        if ($id === 45) return ContainerStatusEnum::ready->value;
-        if ($id === 70) return ContainerStatusEnum::sent->value;
-        if ($id === -1) return ContainerStatusEnum::temporary->value;
-        return null;
-    }
-
-    static function id(string $name): ?int
-    {
-        $lower = strtolower($name);
-
-        if ($lower === strtolower(ContainerStatusEnum::stopped->value)) return 1;
-        if ($lower === strtolower(ContainerStatusEnum::in_progress->value)) return 2;
-        if ($lower === strtolower(ContainerStatusEnum::error->value)) return 3;
-        if ($lower === strtolower(ContainerStatusEnum::canceled->value)) return 4;
-        if ($lower === strtolower(ContainerStatusEnum::ready->value)) return 45;
-        if ($lower === strtolower(ContainerStatusEnum::sent->value)) return 70;
-        if ($lower === strtolower(ContainerStatusEnum::temporary->value)) return -1;
-        return null;
+        return match ($this) {
+            self::temporary => 'Temporary',
+            self::stopped => 'Stopped',
+            self::in_progress => 'InProgress',
+            self::error => 'Error',
+            self::canceled => 'Canceled',
+            self::assembling => 'Assembling',
+            self::ready => 'Ready',
+            self::sent => 'Sent',
+        };
     }
 }

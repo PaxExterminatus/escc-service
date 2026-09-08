@@ -65,6 +65,10 @@ const statusActions = [
         command: () => emit('setStatus', 4),
     },
     {
+        label: 'Assembling [50]',
+        command: () => emit('setStatus', 50),
+    },
+    {
         label: 'Ready [45]',
         command: () => emit('setStatus', 45),
     },
