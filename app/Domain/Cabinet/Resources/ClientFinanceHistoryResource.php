@@ -19,6 +19,7 @@ class ClientFinanceHistoryResource extends JsonResource
             'operation_date' => $this->operation_date?->toDateTimeString(),
             'amount' => $this->amount,
             'description' => $this->description,
+            'course_name' => $this->course_name,
         ];
     }
 }

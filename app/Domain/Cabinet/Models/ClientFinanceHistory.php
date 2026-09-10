@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property-read \Illuminate\Support\Carbon operation_date
  * @property-read float amount
  * @property-read string|null description
+ * @property-read string|null course_name
  *
  * @method static \Illuminate\Database\Eloquent\Builder|ClientFinanceHistory newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|ClientFinanceHistory newQuery()
