@@ -18,7 +18,9 @@ use Illuminate\Support\Facades\DB;
  *   CLIENT_PROPERTY                         — телефон/email клиента
  *   CLIENT_BASKET, CLIENT_SUB, CONTAINER     — 2 курса на клиента, каждый свой заказ
  *   CATALOGUE, CATEGORY, PRODUCT_CATEGORY    — 2 тестовых курса, по 1-2 урока, категории
- *   MONEY_DIST, MONEY_SOURCE                 — начисления и НЕСКОЛЬКО оплат (API_CLIENT_FINANCE_HISTORY)
+ *   MONEY_DIST, MONEY_SOURCE                 — начисления, оплаты и записи-погашения
+ *                                               (см. enroll() — COURSE_NAME в
+ *                                               API_CLIENT_FINANCE_HISTORY находится через них)
  *   API_EFRONT_DATA                          — по записи на клиента
  *   EMSG                                     — по SMS на клиента, адресовано на его CLIENT_PROPERTY.CLIENT_MPHONE
  *
@@ -26,9 +28,11 @@ use Illuminate\Support\Facades\DB;
  *   php artisan db:seed --class="Database\Seeders\ReferenceDataSeeder"
  *   php artisan db:seed --class="Database\Seeders\TestClientDataSeeder"
  *
- * Идемпотентно и для клиентов (ensureClient по CLIENT_CODE), и для общего тестового
- * каталога курсов/уроков/категорий — повторный запуск (например, после сбоя на середине)
- * не создаёт дублей.
+ * Тестовые клиенты (TEST-DEBTOR-01, TEST-PAYER-01) при каждом запуске удаляются
+ * (resetClient) и создаются заново — так повторный прогон всегда даёт состояние,
+ * соответствующее текущему коду сидера, без ручных SQL-патчей. Общий тестовый каталог
+ * курсов/уроков/категорий (ensureTestCatalogue) — общая опорная структура на оба клиента,
+ * остаётся идемпотентным (создаётся один раз, повторные запуски не трогают).
  *
  * Только для локальной тестовой XE — см. GuardsAgainstNonTestDatabase::guardTestDatabaseOnly().
  */
@@ -53,33 +57,31 @@ class TestClientDataSeeder extends Seeder
 
         $catalogue = $this->ensureTestCatalogue($db);
 
-        [$debtorId, $debtorCreated] = $this->ensureClient($db, 'Иван', 'Должников', 'TEST-DEBTOR-01', sex: 1, birthday: now()->subYears(30));
-        if ($debtorCreated) {
-            $this->createClientProperty($db, $debtorId, phone: '+375291112233', email: 'debtor.test@example.invalid');
-            // Курс 1: оплатил только частично, двумя платежами. Курс 2: не заплатил вообще.
-            $this->enroll($db, $debtorId, $catalogue['course1'], $catalogue['course1_lessons'], chargeSum: 300.00, payments: [
-                ['sum' => 60.00, 'daysAgo' => 25, 'desc' => 'Оплата картой, часть 1 (тест)'],
-                ['sum' => 40.00, 'daysAgo' => 15, 'desc' => 'Оплата картой, часть 2 (тест)'],
-            ]);
-            $this->enroll($db, $debtorId, $catalogue['course2'], $catalogue['course2_lessons'], chargeSum: 150.00, payments: []);
-            // Напоминание о долге — по формату из самого дампа (см. REV_MDEPAYMENTS.client_account_tdc:
-            // "DOLG: "||CLIENT.GETTOTALDEBT||" bel.rub; KOD KLIENTA: "||CLCODE).
-            $this->createSms($db, '+375291112233', 'DOLG: 350.00 bel.rub; KOD KLIENTA: TEST-DEBTOR-01 (тест)');
-        }
+        $this->resetClient($db, 'TEST-DEBTOR-01');
+        $debtorId = $this->createClient($db, 'Иван', 'Должников', 'TEST-DEBTOR-01', sex: 1, birthday: now()->subYears(30));
+        $this->createClientProperty($db, $debtorId, phone: '+375291112233', email: 'debtor.test@example.invalid');
+        // Курс 1: оплатил только частично, двумя платежами. Курс 2: не заплатил вообще.
+        $this->enroll($db, $debtorId, $catalogue['course1'], $catalogue['course1_lessons'], chargeSum: 300.00, payments: [
+            ['sum' => 60.00, 'daysAgo' => 25, 'desc' => 'Оплата картой, часть 1 (тест)'],
+            ['sum' => 40.00, 'daysAgo' => 15, 'desc' => 'Оплата картой, часть 2 (тест)'],
+        ]);
+        $this->enroll($db, $debtorId, $catalogue['course2'], $catalogue['course2_lessons'], chargeSum: 150.00, payments: []);
+        // Напоминание о долге — по формату из самого дампа (см. REV_MDEPAYMENTS.client_account_tdc:
+        // "DOLG: "||CLIENT.GETTOTALDEBT||" bel.rub; KOD KLIENTA: "||CLCODE).
+        $this->createSms($db, '+375291112233', 'DOLG: 350.00 bel.rub; KOD KLIENTA: TEST-DEBTOR-01 (тест)');
 
-        [$payerId, $payerCreated] = $this->ensureClient($db, 'Мария', 'Полноплатова', 'TEST-PAYER-01', sex: 0, birthday: now()->subYears(27));
-        if ($payerCreated) {
-            $this->createClientProperty($db, $payerId, phone: '+375291112244', email: 'payer.test@example.invalid');
-            // Оба курса оплачены полностью, курс 1 — двумя платежами (демонстрирует именно "историю", а не одну строку).
-            $this->enroll($db, $payerId, $catalogue['course1'], $catalogue['course1_lessons'], chargeSum: 300.00, payments: [
-                ['sum' => 150.00, 'daysAgo' => 25, 'desc' => 'Оплата картой, часть 1 (тест)'],
-                ['sum' => 150.00, 'daysAgo' => 15, 'desc' => 'Оплата картой, часть 2 (тест)'],
-            ]);
-            $this->enroll($db, $payerId, $catalogue['course2'], $catalogue['course2_lessons'], chargeSum: 150.00, payments: [
-                ['sum' => 150.00, 'daysAgo' => 10, 'desc' => 'Оплата картой (тест)'],
-            ]);
-            $this->createSms($db, '+375291112244', 'Спасибо за оплату! Баланс: 0.00 bel.rub; KOD KLIENTA: TEST-PAYER-01 (тест)');
-        }
+        $this->resetClient($db, 'TEST-PAYER-01');
+        $payerId = $this->createClient($db, 'Мария', 'Полноплатова', 'TEST-PAYER-01', sex: 0, birthday: now()->subYears(27));
+        $this->createClientProperty($db, $payerId, phone: '+375291112244', email: 'payer.test@example.invalid');
+        // Оба курса оплачены полностью, курс 1 — двумя платежами (демонстрирует именно "историю", а не одну строку).
+        $this->enroll($db, $payerId, $catalogue['course1'], $catalogue['course1_lessons'], chargeSum: 300.00, payments: [
+            ['sum' => 150.00, 'daysAgo' => 25, 'desc' => 'Оплата картой, часть 1 (тест)'],
+            ['sum' => 150.00, 'daysAgo' => 15, 'desc' => 'Оплата картой, часть 2 (тест)'],
+        ]);
+        $this->enroll($db, $payerId, $catalogue['course2'], $catalogue['course2_lessons'], chargeSum: 150.00, payments: [
+            ['sum' => 150.00, 'daysAgo' => 10, 'desc' => 'Оплата картой (тест)'],
+        ]);
+        $this->createSms($db, '+375291112244', 'Спасибо за оплату! Баланс: 0.00 bel.rub; KOD KLIENTA: TEST-PAYER-01 (тест)');
 
         if ($this->command) {
             $this->command->info("Debtor client_id = {$debtorId}: курс 1 — выставлено 300, оплачено 100 (2 платежа); курс 2 — выставлено 150, не оплачено. Итого долг 350.");
@@ -202,6 +204,43 @@ class TestClientDataSeeder extends Seeder
     }
 
     /**
+     * Удаляет тестового клиента с данным CLIENT_CODE и всё, что на него ссылается
+     * (в порядке, безопасном для FK) — если клиента с таким кодом нет, ничего не делает.
+     * Вызывается перед createClient(), чтобы каждый прогон сидера пересоздавал клиента
+     * заново, а не наследовал данные от более старой версии сидера.
+     */
+    protected function resetClient(ConnectionInterface $db, string $code): void
+    {
+        $clientId = $db->table('CLIENT')->where('CLIENT_CODE', $code)->value('CLIENT_ID');
+        if (!$clientId) {
+            return;
+        }
+
+        $phones = $db->table('CLIENT_PROPERTY')->where('CLIENT_ID', $clientId)->pluck('client_mphone')->filter();
+        foreach ($phones as $phone) {
+            $db->table('EMSG')->where('EMSG_ADDRESS', $phone)->delete();
+        }
+
+        $containerIds = $db->table('CONTAINER')->where('CLIENT_ID', $clientId)->pluck('container_id');
+        $subItemIds = $db->table('CLIENT_SUB')->where('CLIENT_ID', $clientId)->pluck('item_id');
+
+        // Реальные (не "condition-only") FK внутри этой цепочки образуют порядок
+        // CLIENT_BASKET(урок, по CONTAINER_ID) -> CONTAINER -> CLIENT_SUB -> CLIENT_BASKET(курс, по ITEM_ID) —
+        // проверено на живой БД (см. USER_CONSTRAINTS), CLIENT_BASKET одна таблица на обе роли,
+        // поэтому удаляем её в два захода, до и после CONTAINER/CLIENT_SUB.
+        $db->table('CLIENT_BASKET')->whereIn('CONTAINER_ID', $containerIds)->delete();
+        $db->table('CONTAINER')->where('CLIENT_ID', $clientId)->delete();
+        $db->table('CLIENT_SUB')->where('CLIENT_ID', $clientId)->delete();
+        $db->table('CLIENT_BASKET')->whereIn('ITEM_ID', $subItemIds)->delete();
+
+        $db->table('MONEY_DIST')->where('CLIENT_ID', $clientId)->delete();
+        $db->table('MONEY_SOURCE')->where('CLIENT_ID', $clientId)->delete();
+        $db->table('API_EFRONT_DATA')->where('CLIENT_ID', $clientId)->delete();
+        $db->table('CLIENT_PROPERTY')->where('CLIENT_ID', $clientId)->delete();
+        $db->table('CLIENT')->where('CLIENT_ID', $clientId)->delete();
+    }
+
+    /**
      * CLIENT_PROPERTY — контакты клиента (телефон/email), отдельная таблица от CLIENT
      * (PK = CLIENT_ID, 1:1). Ничего специфичного не требует — ни один из справочников,
      * только FK на CLIENT (ON DELETE CASCADE NOVALIDATE).
@@ -220,20 +259,10 @@ class TestClientDataSeeder extends Seeder
      * EMSG не привязана к клиенту напрямую (нет столбца CLIENT_ID — адресация по
      * EMSG_ADDRESS), это общая очередь сообщений. Формат текста — по образцу из самого
      * дампа (см. вызов в REV_MDEPAYMENTS). Должна подхватываться API_MESSAGES_SMS_DAILY
-     * (EMSG_TYPE=1, EMSG_STATUS=1, EMSG_DATE = сегодня). Идемпотентно — ищем по
-     * EMSG_ADDRESS+EMSG_BODY перед вставкой.
+     * (EMSG_TYPE=1, EMSG_STATUS=1, EMSG_DATE = сегодня).
      */
     protected function createSms(ConnectionInterface $db, string $phone, string $body): void
     {
-        // EMSG_BODY — CLOB, Oracle не сравнивает его через "=" (ORA-00932), поэтому
-        // идемпотентность проверяем только по адресу (для теста этого достаточно —
-        // один телефон = один клиент = одна SMS).
-        $exists = $db->table('EMSG')->where('EMSG_ADDRESS', $phone)->exists();
-
-        if ($exists) {
-            return;
-        }
-
         $streamId = (int)$db->selectOne('SELECT EMSG_STREAM_SEQ.NEXTVAL AS ID FROM DUAL')->id;
         $emsgId = (int)$db->selectOne('SELECT EMSG_SEQ.NEXTVAL AS ID FROM DUAL')->id;
 
@@ -250,27 +279,17 @@ class TestClientDataSeeder extends Seeder
     }
 
     /**
-     * Идемпотентно по CLIENT_CODE (уникальный индекс XAK1CLIENT) — при повторном запуске
-     * (например, после сбоя на более позднем шаге) не создаёт клиента заново, а возвращает
-     * его существующий id и created=false, чтобы вызывающий код не дублировал зачисления/SMS.
-     *
      * @param int $sex 1 = мужчина, 0 = женщина — см. App\Enums\SexEnum (escc-service),
      *                 значения не из REV_CONST, а из кода приложения (SexCast/SexEnum).
-     * @return array{0: int, 1: bool} [client_id, created]
      */
-    protected function ensureClient(
+    protected function createClient(
         ConnectionInterface $db,
         string $firstName,
         string $lastName,
         string $code,
         int $sex,
         Carbon $birthday
-    ): array {
-        $existingId = $db->table('CLIENT')->where('CLIENT_CODE', $code)->value('CLIENT_ID');
-        if ($existingId) {
-            return [(int)$existingId, false];
-        }
-
+    ): int {
         $id = (int)$db->selectOne('SELECT S_CLIENT.NEXTVAL AS ID FROM DUAL')->id;
 
         $db->table('CLIENT')->insert([
@@ -297,12 +316,13 @@ class TestClientDataSeeder extends Seeder
             [$id, "<eFront><client_id>{$id}</client_id><test>true</test></eFront>"]
         );
 
-        return [$id, true];
+        return $id;
     }
 
     /**
      * Записывает клиента на один курс: корзина на курс + подписка + заказ (контейнер) +
-     * корзина на уроки внутри этого заказа + начисление + ноль/несколько оплат.
+     * корзина на уроки внутри этого заказа + начисление + ноль/несколько оплат (каждая —
+     * с записью-погашением, связывающей платёж с контейнером/курсом).
      *
      * @param int[] $lessonNodeIds
      * @param array<array{sum: float, daysAgo: int, desc: string}> $payments
