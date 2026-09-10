@@ -43,8 +43,9 @@
 --   WHEN md.credit = 40 THEN md.CREDIT_ID END AS CONTAINER_ID"). Для CHARGE (CREDIT=40 всегда,
 --   зафиксировано в WHERE) — это md.CREDIT_ID. Для PAYMENT прямой связи нет — платёж находит свой
 --   контейнер через запись-погашение в MONEY_DIST: MONEY_DIST.MTRANS_ID = MONEY_SOURCE.TRANS_ID.
---   Дальше в обоих случаях: CONTAINER.SUB_ID -> CLIENT_SUB.PRODUCT_ID -> CATALOGUE.NODE_ID,
---   CATALOGUE.NODE_ALT_NAME — то же поле, что отдаёт API_CLIENT_COURSES.NAME.
+--   Дальше в обоих случаях курс ищем тем же путём, что и готовая в схеме API_CLIENT_COURSES
+--   (см. дамп): CONTAINER.SUB_ID -> CLIENT_SUB cs JOIN CLIENT_BASKET cb ON cs.ITEM_ID = cb.ITEM_ID
+--   JOIN CATALOGUE ct ON cb.NODE_ID = ct.NODE_ID.
 --
 
 DROP VIEW API_CLIENT_FINANCE_HISTORY;
@@ -78,8 +79,10 @@ CREATE VIEW API_CLIENT_FINANCE_HISTORY (
                                          ELSE pay_md.CREDIT_ID END
         LEFT JOIN CLIENT_SUB pay_cs
           ON pay_cs.SUB_ID = pay_cn.SUB_ID
+        LEFT JOIN CLIENT_BASKET pay_cb
+          ON pay_cb.ITEM_ID = pay_cs.ITEM_ID
         LEFT JOIN CATALOGUE pay_cat
-          ON pay_cat.NODE_ID = pay_cs.PRODUCT_ID
+          ON pay_cat.NODE_ID = pay_cb.NODE_ID
       WHERE ms.STATUS_ID = 1 -- REV_CONST.msStatusActive
 
     UNION ALL
@@ -96,8 +99,10 @@ CREATE VIEW API_CLIENT_FINANCE_HISTORY (
           ON chg_cn.CONTAINER_ID = md.CREDIT_ID
         LEFT JOIN CLIENT_SUB chg_cs
           ON chg_cs.SUB_ID = chg_cn.SUB_ID
+        LEFT JOIN CLIENT_BASKET chg_cb
+          ON chg_cb.ITEM_ID = chg_cs.ITEM_ID
         LEFT JOIN CATALOGUE chg_cat
-          ON chg_cat.NODE_ID = chg_cs.PRODUCT_ID
+          ON chg_cat.NODE_ID = chg_cb.NODE_ID
       WHERE md.CREDIT = 40 AND md.DEBET = 70 -- см. UK_Client_Debt: код '4070'
 
       ORDER BY 4 DESC
