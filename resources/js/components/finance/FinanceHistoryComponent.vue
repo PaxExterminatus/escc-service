@@ -1,5 +1,9 @@
 <template>
-    <DataTable :value="history().items" :loading="loading" size="small" dataKey="id">
+    <div v-if="loading && !loaded" class="flex justify-content-center align-items-center p-4">
+        <ProgressSpinner style="width: 40px; height: 40px" strokeWidth="4"/>
+    </div>
+
+    <DataTable v-else :value="history().items" size="small" dataKey="id">
         <Column field="operation_date" header="Дата">
             <template #body="{data}">{{ formatDate(data.operation_date) }} ({{ relativeTimeAgo(data.operation_date) }})</template>
         </Column>
@@ -22,12 +26,14 @@
 import {defineProps} from 'vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
+import ProgressSpinner from 'primevue/progressspinner'
 import {FinanceHistory} from './FinanceHistory.js'
 import {relativeTimeAgo} from './FinanceDate.js'
 
 const props = defineProps({
     history: FinanceHistory,
     loading: Boolean,
+    loaded: Boolean,
 });
 
 /** @return {FinanceHistory} */
