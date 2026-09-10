@@ -396,7 +396,7 @@ class TestClientDataSeeder extends Seeder
             'DEBET' => 70, // REV_CONST.mdAccountMaterial
             'DEBET_ID' => 0, // не FK-проверяется, см. дамп схемы
             'CREDIT' => 40, // REV_CONST.mdAccountInvoice
-            'CREDIT_ID' => 0,
+            'CREDIT_ID' => $containerId, // сторона с кодом 40 хранит CONTAINER_ID (см. API_CLIENT_FINANCE_HISTORY)
         ]);
 
         foreach ($payments as $payment) {
@@ -410,6 +410,21 @@ class TestClientDataSeeder extends Seeder
                 'TYPE_ID' => 1,
                 'STATUS_ID' => 1, // REV_CONST.msStatusActive
                 'REC_DATE' => now(),
+            ]);
+
+            // Запись-погашение: связывает платёж с контейнером через MTRANS_ID = MONEY_SOURCE.TRANS_ID
+            // (см. API_CLIENT_FINANCE_HISTORY — так платёж находит свой курс).
+            $settlementLogId = (int)$db->selectOne('SELECT S_MONEY_DIST.NEXTVAL AS ID FROM DUAL')->id;
+            $db->table('MONEY_DIST')->insert([
+                'LOG_ID' => $settlementLogId,
+                'CLIENT_ID' => $clientId,
+                'TRANS_DATE' => now()->subDays($payment['daysAgo']),
+                'TRANS_SUM' => $payment['sum'],
+                'MTRANS_ID' => $transId,
+                'DEBET' => 40, // REV_CONST.mdAccountInvoice
+                'DEBET_ID' => $containerId,
+                'CREDIT' => 15, // REV_CONST.mdAccountTransit
+                'CREDIT_ID' => 0,
             ]);
         }
     }

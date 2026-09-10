@@ -12,6 +12,9 @@
             </template>
         </Column>
         <Column field="description" header="Описание"/>
+        <Column field="course_name" header="Курс">
+            <template #body="{data}">{{ data.course_name ?? '—' }}</template>
+        </Column>
     </DataTable>
 </template>
 
