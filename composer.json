@@ -34,6 +34,7 @@
     "require": {
         "php": "^8.3",
         "ext-pdo": "*",
+        "ext-iconv": "*",
         "ext-oci8": ">=3.0.1",
         "laravel/framework": "^v13.15.0",
         "yajra/laravel-oci8": "^v13.6.0",

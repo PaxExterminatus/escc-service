@@ -14,8 +14,8 @@ class DailyMessagesRequest extends ApplicationProgrammingInterfaceRequest
     public function rules(): array
     {
         return [
-            // Message sending channels
-            'type' => ['required', Rule::enum(MessageTypeEnum::class)],
+            // Route segment is the type's case name ('sms'/'email'), not its numeric EMSG_TYPE value.
+            'type' => ['required', Rule::in(array_column(MessageTypeEnum::cases(), 'name'))],
         ];
     }
 
@@ -23,7 +23,7 @@ class DailyMessagesRequest extends ApplicationProgrammingInterfaceRequest
     {
         return [
             'type.required' => 'Type is required',
-            'type.Illuminate\Validation\Rules\Enum' => 'Valid values is ' . MessageTypeEnum::sms->value . ', ' . MessageTypeEnum::email->value,
+            'type.in' => 'Valid values is ' . implode(', ', array_column(MessageTypeEnum::cases(), 'name')),
         ];
     }
 }

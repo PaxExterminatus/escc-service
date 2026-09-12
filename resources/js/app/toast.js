@@ -14,6 +14,16 @@ function showError(message) {
     });
 }
 
+function showSuccess(message) {
+    ToastEventBus.emit('add', {
+        severity: 'success',
+        summary: 'Готово',
+        detail: message,
+        life: 5000,
+    });
+}
+
 export {
     showError,
+    showSuccess,
 }

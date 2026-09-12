@@ -2,7 +2,7 @@
     <Toast position="top-center"/>
 
     <header class="app-header">
-        <Button icon="pi pi-bars" severity="secondary" raised @click="menu.show()"/>
+        <Button icon="pi pi-bars" severity="secondary" raised v-tooltip.right="'Меню'" @click="menu.show()"/>
     </header>
 
     <div class="app-body">

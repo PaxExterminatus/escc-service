@@ -110,6 +110,8 @@ class ReferenceDataSeeder extends Seeder
         $this->ensure($db, 'EMSG_TYPE', 'EMSG_TYPE', 1, ['EMSG_NAME' => 'SMS']);
         $this->ensure($db, 'EMSG_TYPE', 'EMSG_TYPE', 2, ['EMSG_NAME' => 'EMAIL']);
         $this->ensure($db, 'EMSG_STATUS', 'STATUS', 1, ['STATUS_NAME' => 'Ready']);
+        $this->ensure($db, 'EMSG_STATUS', 'STATUS', 2, ['STATUS_NAME' => 'Try']);
+        $this->ensure($db, 'EMSG_STATUS', 'STATUS', 3, ['STATUS_NAME' => 'Operator']);
 
         // Стаб-записи (не справочники по сути, но такие же статичные "заглушки",
         // на которые ссылаются CLIENT_BASKET.CHANNEL_ID/SALE_ID и CONTAINER.BATCH_ID

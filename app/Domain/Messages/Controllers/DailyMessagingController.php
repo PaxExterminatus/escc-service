@@ -80,7 +80,7 @@ class DailyMessagingController extends Controller
      */
     public function txt(DailyMessagesRequest $request): Response|Application|ResponseFactory
     {
-        $messages = $this->repository($request->type)->get();
+        $messages = $this->repository($request)->get();
 
         $content = "Phone number\t1\r\n";
 

@@ -12,6 +12,24 @@
             <template #header>
                 <h1 @click="toggleMessages" class="cursor-pointer">Отправка сообщений</h1>
             </template>
+            <template #icons>
+                <button
+                    type="button"
+                    class="p-link p-panel-header-icon p-panel-toggler"
+                    :disabled="messagesLoading"
+                    v-tooltip.top="'Обновить принудительно'"
+                    @click="loadMessages"
+                >
+                    <span :class="messagesLoading ? 'pi pi-spinner pi-spin' : 'pi pi-refresh'"></span>
+                </button>
+            </template>
+
+            <MessagesPanel
+                :messaging="messaging"
+                :client-id="profile.id"
+                :loading="messagesLoading"
+                :loaded="messagesLoaded"
+            />
         </Panel>
 
         <Panel toggleable :collapsed="financeCollapsed">
@@ -23,6 +41,7 @@
                     type="button"
                     class="p-link p-panel-header-icon p-panel-toggler"
                     :disabled="financeLoading"
+                    v-tooltip.top="'Обновить принудительно'"
                     @click="loadFinance"
                 >
                     <span :class="financeLoading ? 'pi pi-spinner pi-spin' : 'pi pi-refresh'"></span>
@@ -43,11 +62,14 @@ import Toolbar from 'primevue/toolbar'
 import Panel from 'primevue/panel'
 import {ProfileCard, Profile} from 'cmp/profile'
 import {FinanceHistoryTable, FinanceHistory} from 'cmp/finance'
+import {MessagesPanel, Messaging} from 'cmp/messages'
 
 const router = useRouter();
 const route = useRoute();
 
 let messagesCollapsed = ref(true);
+let messagesLoading = ref(false);
+let messagesLoaded = ref(false);
 let financeCollapsed = ref(true);
 let financeLoading = ref(false);
 let financeLoaded = ref(false);
@@ -58,12 +80,35 @@ const profile = ref(Profile.empty({id: route.params.id})).value;
 /** @type {FinanceHistory} */
 const financeHistory = ref(new FinanceHistory).value;
 
+/** @type {Messaging} */
+const messaging = ref(new Messaging).value;
+
 onMounted(() => {
     if (profile.id) search();
 });
 
 const toggleMessages = () => {
     messagesCollapsed.value = !messagesCollapsed.value;
+
+    if (!messagesCollapsed.value && !messagesLoaded.value) {
+        loadMessages();
+    }
+};
+
+const loadMessages = () => {
+    messagesLoading.value = true;
+
+    Promise.all([
+        messaging.api.templates(true),
+        messaging.api.recipient(profile.id),
+    ])
+        .then(([templatesResponse, recipientResponse]) => {
+            messaging.fill(templatesResponse.data.data, recipientResponse.data);
+            messagesLoaded.value = true;
+        })
+        .finally(() => {
+            messagesLoading.value = false;
+        });
 };
 
 const toggleFinance = () => {

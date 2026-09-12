@@ -2,6 +2,8 @@
 
 namespace App\Domain\Messages\Models;
 
+use App\Domain\Messages\Enums\MessageDispatchStatusEnum;
+use App\Domain\Messages\Enums\MessageTypeEnum;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Yajra\Oci8\Eloquent\OracleEloquent;
@@ -11,12 +13,12 @@ use Yajra\Oci8\Eloquent\OracleEloquent;
  *
  * @property int emsg_stream
  * @property int emsg
- * @property int emsg_type
+ * @property MessageTypeEnum emsg_type
  * @property int emsg_type_sub
  * @property string emsg_date
  * @property string emsg_address
  * @property string emsg_body
- * @property int emsg_status
+ * @property MessageDispatchStatusEnum emsg_status
  * @property string updated_at
  * @method static Builder|ElectronicMessage newModelQuery()
  * @method static Builder|ElectronicMessage newQuery()
@@ -37,17 +39,14 @@ class ElectronicMessage extends OracleEloquent
     public $timestamps = false;
     protected $table = 'EMSG';
     protected $primaryKey = 'emsg';
-    protected $fillable = ['*'];
+    public $sequence = 'EMSG_SEQ';
+    protected $fillable = ['emsg_type', 'emsg_type_sub', 'emsg_date', 'emsg_address', 'emsg_body', 'emsg_status', 'emsg_stream'];
 
     protected $casts = [
         'emsg_stream' => 'integer',
         'emsg' => 'integer',
-        'emsg_type' => 'integer',
+        'emsg_type' => MessageTypeEnum::class,
         'emsg_type_sub' => 'integer',
-        'emsg_status' => 'integer',
+        'emsg_status' => MessageDispatchStatusEnum::class,
     ];
-
-    const EMSG_STATUS_WAIT = 1; // Message waiting to be sent
-    const EMSG_STATUS_TRY = 2; // The message was sent. The service provender received the message
-    const EMSG_STATUS_OPERATOR = 3; // The message was sent by the operator in manual mode
 }
