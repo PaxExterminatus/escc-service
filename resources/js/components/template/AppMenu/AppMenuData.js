@@ -66,12 +66,39 @@ export const appMenuData = [
 
     MenuItem({
         key: 3,
-        label: 'Docs',
+        label: 'Документация',
         icon: 'pi pi-file',
         items: [
             MenuItem({
-                label: 'API',
+                label: 'Руководства',
+                icon: 'pi pi-book',
+                url: '/docs/guides/',
+                target: 'blank',
+                command () {
+                    menu.hide()
+                },
+            }),
+            MenuItem({
+                label: 'Для программистов',
                 icon: 'pi pi-code',
+                url: '/docs/programmers/',
+                target: 'blank',
+                command () {
+                    menu.hide()
+                },
+            }),
+            MenuItem({
+                label: 'Для операторов',
+                icon: 'pi pi-desktop',
+                url: '/docs/operators/',
+                target: 'blank',
+                command () {
+                    menu.hide()
+                },
+            }),
+            MenuItem({
+                label: 'API',
+                icon: 'pi pi-sitemap',
                 url: '/docs/api/',
                 target: 'blank',
                 command () {

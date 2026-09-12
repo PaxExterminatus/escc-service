@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Заказы и логистика — Руководство</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <div class="brand">REVELATION</div>
+  <div class="brand-sub">руководство — бизнес-логика без деталей</div>
+  <nav>
+    <a href="index.html">Обзор</a>
+    <div class="group-label">Бизнес-домены</div>
+    <a href="clients.html">Клиенты и территории</a>
+    <a href="finance.html">Финансы и платежи</a>
+    <a href="catalogue.html">Каталог курсов</a>
+    <a href="logistics.html" class="active">Заказы и логистика</a>
+    <a href="messaging.html">Рассылки и сообщения</a>
+    <a href="marketing.html">Маркетинг-кампании</a>
+    <a href="reports.html">Отчёты и статистика</a>
+    <a href="api.html">API-слой интеграций</a>
+  </nav>
+</aside>
+
+<main class="main">
+  <h1><span class="eyebrow">Домен 04</span>Заказы, склад и почтовая рассылка</h1>
+  <p class="lede">
+    Конвейер "от корзины клиента до физической (или электронной) отправки материалов курса": расчёт почтового
+    тарифа, сборка посылки-контейнера, фиксация отправки с проводкой в бухгалтерию.
+  </p>
+
+  <div class="tier-switch">
+    <a class="current">Руководство</a>
+    <a href="../programmers/logistics.html">Подробнее для программистов &rarr;</a>
+    <a href="../operators/index.html">Для операторов &rarr;</a>
+  </div>
+
+  <div class="exec">
+    <div class="exec-label">Для руководства</div>
+    <div class="exec-row">
+      <span class="k">Что это простыми словами</span>
+      Как заказ клиента превращается в реально отправленную посылку: считаем стоимость доставки, собираем
+      посылку, отправляем, отмечаем как оплаченную.
+    </div>
+    <div class="exec-row">
+      <span class="k">Состояние</span><span class="exec-health h-warn"><i></i>требует внимания</span>
+      Работает, но ставка налога на почтовые тарифы задана в коде <strong>дважды, в двух разных местах, с двумя
+      разными значениями</strong> — нет единого источника истины.
+    </div>
+    <div class="exec-row">
+      <span class="k">Главный риск для бизнеса</span>
+      Риск тихой финансовой неточности: если ставку когда-то поменяют в одном месте и забудут про второе,
+      часть тарифов будет считаться неверно, и никто не заметит, пока не начнут разбираться жалобы клиентов
+      или расхождения в отчётах. Также найден отчётный скрипт с захардкоженным ID одного конкретного клиента —
+      признак разового решения, оставленного в общем инструменте.
+    </div>
+  </div>
+
+  <span class="subsystem-pills-label">Подсистемы (подробности — у программистов)</span>
+  <div class="subsystem-pills">
+    <a class="subsystem-pill" href="../programmers/logistics.html#box">BOX_PKG_UTILS</a>
+    <a class="subsystem-pill" href="../programmers/logistics.html#weborder">WEB_ORDER</a>
+    <a class="subsystem-pill" href="../programmers/logistics.html#fee">POST_FEE_PKG / POSTAL_RATE_CONTROL</a>
+  </div>
+
+  <h2>Жизненный цикл контейнера (заказа)</h2>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 820 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Жизненный цикл контейнера">
+      <g font-size="11.5">
+        <rect x="10" y="20" width="145" height="64" rx="8" class="dg-box"/>
+        <text x="82" y="42" text-anchor="middle" class="dg-text" font-weight="600">1. Создание корзины</text>
+        <text x="82" y="59" text-anchor="middle" class="dg-text-dim" font-size="10">Temporary(-1) /</text>
+        <text x="82" y="73" text-anchor="middle" class="dg-text-dim" font-size="10">InProgress(2)</text>
+
+        <rect x="185" y="20" width="145" height="64" rx="8" class="dg-box"/>
+        <text x="257" y="42" text-anchor="middle" class="dg-text" font-weight="600">2. Почтовая схема</text>
+        <text x="257" y="59" text-anchor="middle" class="dg-text-dim" font-size="10">на руки / email /</text>
+        <text x="257" y="73" text-anchor="middle" class="dg-text-dim" font-size="10">онлайн</text>
+
+        <rect x="360" y="20" width="145" height="64" rx="8" class="dg-box"/>
+        <text x="432" y="42" text-anchor="middle" class="dg-text" font-weight="600">3. Расчёт тарифа</text>
+        <text x="432" y="59" text-anchor="middle" class="dg-text-dim" font-size="10">POST_FEE_PKG</text>
+        <text x="432" y="73" text-anchor="middle" class="dg-text-dim" font-size="10">(бумажные схемы)</text>
+
+        <rect x="535" y="20" width="145" height="64" rx="8" class="dg-box"/>
+        <text x="607" y="42" text-anchor="middle" class="dg-text" font-weight="600">4. Сборка</text>
+        <text x="607" y="59" text-anchor="middle" class="dg-text-dim" font-size="10">Assembling(50) →</text>
+        <text x="607" y="73" text-anchor="middle" class="dg-text-dim" font-size="10">Ready(45)</text>
+
+        <rect x="637" y="140" width="170" height="64" rx="8" class="dg-box-accent"/>
+        <text x="722" y="162" text-anchor="middle" class="dg-text-accent" font-weight="600">5. Отправка</text>
+        <text x="722" y="179" text-anchor="middle" class="dg-text-dim" font-size="10">BOX_SENDDATE → Sent(70)</text>
+        <text x="722" y="193" text-anchor="middle" class="dg-text-dim" font-size="10">+ проводка MONEY_DIST</text>
+
+        <rect x="420" y="140" width="170" height="64" rx="8" class="dg-box"/>
+        <text x="505" y="162" text-anchor="middle" class="dg-text" font-weight="600">6. Очистка связей</text>
+        <text x="505" y="179" text-anchor="middle" class="dg-text-dim" font-size="10">OBJECT_CONTRACT,</text>
+        <text x="505" y="193" text-anchor="middle" class="dg-text-dim" font-size="10">TRANSACTION_LOG</text>
+
+        <rect x="205" y="140" width="170" height="64" rx="8" class="dg-box"/>
+        <text x="290" y="162" text-anchor="middle" class="dg-text" font-weight="600">7. Побочные эффекты</text>
+        <text x="290" y="179" text-anchor="middle" class="dg-text-dim" font-size="10">CLIENT_SUB → Finished(4),</text>
+        <text x="290" y="193" text-anchor="middle" class="dg-text-dim" font-size="10">если это финал курса</text>
+
+        <rect x="10" y="140" width="170" height="64" rx="8" class="dg-box-dead"/>
+        <text x="95" y="162" text-anchor="middle" class="dg-text-dim" font-weight="600">Веб-заказ (авто)</text>
+        <text x="95" y="179" text-anchor="middle" class="dg-text-dim" font-size="10">схлопывает 2-6 в момент</text>
+        <text x="95" y="193" text-anchor="middle" class="dg-text-dim" font-size="10">создания (мёртвый код)</text>
+
+        <path d="M155,52 L185,52" class="dg-arrow"/>
+        <path d="M330,52 L360,52" class="dg-arrow"/>
+        <path d="M505,52 L535,52" class="dg-arrow"/>
+        <path d="M680,84 L722,140" class="dg-arrow-accent"/>
+        <path d="M637,172 L590,172" class="dg-arrow-accent"/>
+        <path d="M420,172 L375,172" class="dg-arrow"/>
+      </g>
+    </svg>
+    <div class="diagram-caption">Пунктирный блок слева — альтернативный (и сейчас неактивный) путь: автосозданный веб-заказ проходит все шаги мгновенно, минуя тариф и сборку.</div>
+  </div>
+
+  <footer class="page-footer">Технические детали (пакеты, таблицы, находки) — на странице <a href="../programmers/logistics.html">Для программистов</a>.</footer>
+</main>
+</div>
+</body>
+</html>

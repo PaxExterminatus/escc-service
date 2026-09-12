@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Документация escc-service</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="layout">
+<main class="main" style="max-width: 900px; margin: 0 auto;">
+  <h1><span class="eyebrow">escc-service</span>Документация</h1>
+  <p class="lede">
+    Три уровня документации — бизнес-логика легаси-схемы REVELATION (на которой построен escc-service) для
+    трёх разных читателей, плюс техническая справка по самому API escc-service.
+  </p>
+
+  <div class="tier-hub-grid">
+    <a class="tier-hub-tile" href="guides/index.html">
+      <h3>📋 Руководства</h3>
+      <p>Для руководства: что делает система простыми словами, текущее состояние и главный риск для бизнеса —
+      по каждой из восьми областей, без технических деталей.</p>
+    </a>
+    <a class="tier-hub-tile" href="programmers/index.html">
+      <h3>💻 Для программистов</h3>
+      <p>Полный технический разбор: PL/SQL-пакеты, таблицы, находки (хаки, мёртвый код, риски безопасности),
+      схемы жизненных циклов.</p>
+    </a>
+    <a class="tier-hub-tile" href="operators/index.html">
+      <h3>🖱️ Для операторов</h3>
+      <p>Короткие пошаговые инструкции по экранам escc-service — что где нажать, без бизнес-контекста.</p>
+    </a>
+    <a class="tier-hub-tile" href="/docs/api" target="_blank">
+      <h3>🔌 API-справочник</h3>
+      <p>Автогенерируемая OpenAPI-документация по эндпоинтам escc-service (Scramble).</p>
+    </a>
+  </div>
+
+  <footer class="page-footer">Источник бизнес-логики: чтение DDL/PL/SQL схемы <code>REVELATION</code> (дамп 2026-09-04).</footer>
+</main>
+</div>
+</body>
+</html>

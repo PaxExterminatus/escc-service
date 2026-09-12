@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Рассылки и сообщения — Руководство</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <div class="brand">REVELATION</div>
+  <div class="brand-sub">руководство — бизнес-логика без деталей</div>
+  <nav>
+    <a href="index.html">Обзор</a>
+    <div class="group-label">Бизнес-домены</div>
+    <a href="clients.html">Клиенты и территории</a>
+    <a href="finance.html">Финансы и платежи</a>
+    <a href="catalogue.html">Каталог курсов</a>
+    <a href="logistics.html">Заказы и логистика</a>
+    <a href="messaging.html" class="active">Рассылки и сообщения</a>
+    <a href="marketing.html">Маркетинг-кампании</a>
+    <a href="reports.html">Отчёты и статистика</a>
+    <a href="api.html">API-слой интеграций</a>
+  </nav>
+</aside>
+
+<main class="main">
+  <h1><span class="eyebrow">Домен 05</span>Рассылки и сообщения</h1>
+  <p class="lede">
+    Три независимых, не связанных друг с другом канала связи с клиентом сосуществуют в одной схеме: очередь
+    <code>EMSG</code> (её и читает наш Laravel-сервис), ручной call-центр с внешним SMS-гейтвеем на компьютере
+    оператора, и низкоуровневая SMTP-библиотека для email "по требованию".
+  </p>
+
+  <div class="tier-switch">
+    <a class="current">Руководство</a>
+    <a href="../programmers/messaging.html">Подробнее для программистов &rarr;</a>
+    <a href="../operators/index.html">Для операторов &rarr;</a>
+  </div>
+
+  <div class="exec">
+    <div class="exec-label">Для руководства</div>
+    <div class="exec-row">
+      <span class="k">Что это простыми словами</span>
+      Автоматические SMS и email клиентам: напоминания о долге, информационные сообщения, уведомления об
+      отправке посылки.
+    </div>
+    <div class="exec-row">
+      <span class="k">Состояние</span><span class="exec-health h-risk"><i></i>требует срочного внимания</span>
+      Из всего, что для этого построено, <strong>реально работает только один сценарий</strong> — уведомление
+      об отправке посылки. Автоматические напоминания о долге и информационные SMS технически существуют в
+      системе, но ни к чему не подключены — то есть попросту не отправляются, хотя выглядят как рабочая
+      функция. Отдельный старый инструмент для ручной отправки SMS через операторов, скорее всего, физически не
+      работает уже много лет (завязан на технологию браузера, отключённую повсеместно с 2010-х).
+    </div>
+    <div class="exec-row">
+      <span class="k">Главный риск для бизнеса</span>
+      Если кто-то в компании считает, что клиентам сейчас автоматически напоминают о долге по SMS — это не так.
+      Отдельно: при восстановлении пароля клиенту <strong>отправляется его реальный пароль в открытом виде по
+      почте</strong>, а сами пароли хранятся и логируются на диск без защиты — прямой риск утечки учётных данных
+      клиентов.
+    </div>
+  </div>
+
+  <span class="subsystem-pills-label">Подсистемы (подробности — у программистов)</span>
+  <div class="subsystem-pills">
+    <a class="subsystem-pill" href="../programmers/messaging.html#pipeline">EMESSAGE_CREATE (EMSG)</a>
+    <a class="subsystem-pill" href="../programmers/messaging.html#dead-pipeline">MESSAGE_* (заброшено)</a>
+    <a class="subsystem-pill" href="../programmers/messaging.html#callcenter">REV_SMS</a>
+    <a class="subsystem-pill" href="../programmers/messaging.html#email">REV_EMAIL</a>
+    <a class="subsystem-pill" href="../programmers/messaging.html#webrequest">REV_WEB_REQUEST</a>
+  </div>
+
+  <h2>Схема пути сообщения</h2>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 820 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Путь сообщения от события до отправки">
+      <g font-size="11.5">
+        <rect x="10" y="20" width="170" height="60" rx="8" class="dg-box-accent"/>
+        <text x="95" y="43" text-anchor="middle" class="dg-text-accent" font-weight="600">Отправлена посылка</text>
+        <text x="95" y="60" text-anchor="middle" class="dg-text-dim" font-size="10">COMMUNICATION.ALERT_SEND_POST_BATCH</text>
+
+        <rect x="220" y="20" width="170" height="60" rx="8" class="dg-box-accent"/>
+        <text x="305" y="43" text-anchor="middle" class="dg-text-accent" font-weight="600">Сборка сообщения</text>
+        <text x="305" y="60" text-anchor="middle" class="dg-text-dim" font-size="10">EMESSAGE_CREATE.BOX_SEND_POSTOFFICE</text>
+
+        <rect x="430" y="20" width="170" height="60" rx="8" class="dg-box-accent"/>
+        <text x="515" y="43" text-anchor="middle" class="dg-text-accent" font-weight="600">Запись в очередь</text>
+        <text x="515" y="60" text-anchor="middle" class="dg-text-dim" font-size="10">EMSG, STATUS=1</text>
+
+        <rect x="640" y="20" width="170" height="60" rx="8" class="dg-box-accent"/>
+        <text x="725" y="43" text-anchor="middle" class="dg-text-accent" font-weight="600">Читает Laravel</text>
+        <text x="725" y="60" text-anchor="middle" class="dg-text-dim" font-size="10">API_MESSAGES_SMS_DAILY</text>
+
+        <path d="M180,50 L220,50" class="dg-arrow-accent"/>
+        <path d="M390,50 L430,50" class="dg-arrow-accent"/>
+        <path d="M600,50 L640,50" class="dg-arrow-accent"/>
+
+        <rect x="10" y="140" width="170" height="60" rx="8" class="dg-box-dead"/>
+        <text x="95" y="163" text-anchor="middle" class="dg-text-dim" font-weight="600">Долг / инфо / коды</text>
+        <text x="95" y="180" text-anchor="middle" class="dg-text-dim" font-size="10">EMESSAGE_CREATE.STREAM</text>
+
+        <rect x="220" y="140" width="170" height="60" rx="8" class="dg-box-dead"/>
+        <text x="305" y="163" text-anchor="middle" class="dg-text-dim" font-weight="600">EMSG, STATUS=3</text>
+        <text x="305" y="180" text-anchor="middle" class="dg-text-dim" font-size="10">Laravel-view это не видит</text>
+
+        <rect x="430" y="140" width="170" height="60" rx="8" class="dg-box-dead"/>
+        <text x="515" y="163" text-anchor="middle" class="dg-text-dim" font-weight="600">EMESSAGE_SEND</text>
+        <text x="515" y="180" text-anchor="middle" class="dg-text-dim" font-size="10">никем не вызывается</text>
+
+        <path d="M180,170 L220,170" class="dg-arrow" stroke-dasharray="3 3"/>
+        <path d="M390,170 L430,170" class="dg-arrow" stroke-dasharray="3 3"/>
+      </g>
+    </svg>
+    <div class="diagram-caption">Верхняя строка (акцент) — единственный реально работающий путь. Нижняя строка (пунктир) — технически существующая, но не подключённая ни к чему ветка.</div>
+  </div>
+
+  <footer class="page-footer">Технические детали (пакеты, таблицы, находки) — на странице <a href="../programmers/messaging.html">Для программистов</a>.</footer>
+</main>
+</div>
+</body>
+</html>

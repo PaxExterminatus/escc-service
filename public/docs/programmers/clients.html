@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Клиенты и территории — REVELATION</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <div class="brand">REVELATION</div>
+  <div class="brand-sub">документация бизнес-логики PL/SQL</div>
+  <nav>
+    <a href="index.html">Обзор</a>
+    <div class="group-label">Бизнес-домены</div>
+    <a href="clients.html" class="active">Клиенты и территории</a>
+    <a href="finance.html">Финансы и платежи</a>
+    <a href="catalogue.html">Каталог курсов</a>
+    <a href="logistics.html">Заказы и логистика</a>
+    <a href="messaging.html">Рассылки и сообщения</a>
+    <a href="marketing.html">Маркетинг-кампании</a>
+    <a href="reports.html">Отчёты и статистика</a>
+    <a href="api.html">API-слой интеграций</a>
+    <div class="group-label">Итого</div>
+    <a href="findings.html">Находки и риски</a>
+  </nav>
+</aside>
+
+<main class="main">
+  <h1><span class="eyebrow">Домен 01</span>Клиенты и территории</h1>
+  <p class="lede">
+    Карточка клиента, географическая иерархия (для расчёта почтовых зон), преподаватели и их назначение на
+    подписки, консультанты (внешние партнёры по продажам), и приём заказов с сайта до момента, когда заявка
+    становится настоящим клиентом.
+  </p>
+
+  <div class="exec">
+    <div class="exec-label">Для руководства</div>
+    <div class="exec-row">
+      <span class="k">Что это простыми словами</span>
+      Единая карточка клиента, которую видит оператор: кто клиент, где живёт, кто его учит, кто его привёл
+      (партнёр-консультант) и что он заказал на сайте.
+    </div>
+    <div class="exec-row">
+      <span class="k">Состояние</span><span class="exec-health h-warn"><i></i>требует внимания</span>
+      Работает, но заявки с сайта сегодня <strong>всегда</strong> обрабатываются вручную операторами — готовая
+      автоматика, которая могла бы сама превращать заявку в клиента и экономить время операторов, в коде есть,
+      но выключена.
+    </div>
+    <div class="exec-row">
+      <span class="k">Главный риск для бизнеса</span>
+      Каждая веб-заявка — это ручной труд, хотя мог бы быть автоматический. Также найден полностью пустой
+      модуль под клиентскую логику (заявлен, но никогда не реализован) — признак недоведённой до конца задачи
+      из прошлого.
+    </div>
+  </div>
+
+  <div class="tier-switch">
+    <a href="../guides/clients.html">&larr; Руководство (для управленцев)</a>
+    <a class="current">Для программистов</a>
+    <a href="../operators/index.html">Для операторов &rarr;</a>
+  </div>
+
+  <div class="toc">
+    <a href="#profile">REV_PROFILE — карточка клиента</a>
+    <a href="#contact">REV_CONTACT — журнал контактов</a>
+    <a href="#territory">rev_territory_tree_v02 — география</a>
+    <a href="#teachers">REV_TEACHERS — преподаватели</a>
+    <a href="#consultant">REV_CONSULTANT — партнёры</a>
+    <a href="#worders">WORDERS / WEB_ORDER — заявки с сайта</a>
+    <a href="#misc">Мелкие пакеты</a>
+  </div>
+
+  <h2 id="profile">REV_PROFILE — карточка клиента</h2>
+  <p>Центральный пакет UI оператора для ведения клиента: общие данные, подписки/посылки, корзина, денежные
+  операции, возвраты, звонки, льготы, контракты — по сути весь "экран клиента" в одном пакете (~46 процедур).</p>
+  <div class="pkg">
+    <span class="pkg-name">REV_PROFILE</span>
+    <div class="pkg-meta">таблицы: CLIENT, CLIENT_PROPERTY, WEB_CLIENT, CLIENT_BASKET, CLIENT_SUB, CONTAINER, MONEY_DIST, MONEY_SOURCE, BENEFIT, ESCC_TYPE/ITEM/CODE и ещё &gt;20</div>
+    <table class="proc-table">
+      <tr><th>Процедура</th><th>Что делает</th></tr>
+      <tr><td class="proc-name">general_frame</td><td>Главный фрейм карточки клиента (вкладки: продукты, контакты, распределения, платежи, возвраты, кампании, ДЗ, консультант, веб)</td></tr>
+      <tr><td class="proc-name">client_properties</td><td>Загрузка/создание профиля, привязка веб-заявки (web_client) к client_id</td></tr>
+      <tr><td class="proc-name">client_search / client_search_list</td><td>Поиск клиента, включая поиск по кодам старой системы ЕШКО (escc_type/item/code)</td></tr>
+      <tr><td class="proc-name">client_update</td><td>Создание/обновление клиента, проверка дублей-"близнецов" (twins_code)</td></tr>
+      <tr><td class="proc-name">basket_list</td><td>Иерархический (CONNECT BY) список позиций корзины клиента</td></tr>
+      <tr><td class="proc-name">container_update</td><td>Создание/обновление посылки, пересчёт льгот при смене состава</td></tr>
+      <tr><td class="proc-name">subscription_update</td><td>Обновление подписки на курс, расчёт долга/доступности блоков</td></tr>
+      <tr><td class="proc-name">distribution_list / payment_list</td><td>Список денежных распределений и платежей клиента</td></tr>
+    </table>
+    <div class="callout dead">
+      <span class="callout-label">Мёртвый код / дубли</span>
+      <p><code>client_update</code> и <code>call_update</code> почти дословно дублируют друг друга (сохранение клиента + проверка twins_code). Вкладки "Домашние задания" и "Консультант" физически подгружаются через iframe из REV_TEACHERS/REV_CONSULTANT, а не прямым PL/SQL-вызовом — межпакетная связь идёт через встроенные URL, а не API.</p>
+    </div>
+    <div class="callout warn">
+      <span class="callout-label">Легаси-миграция в проде</span>
+      <p>Поиск клиента через <code>escc_type/escc_item/escc_code</code> с явным комментарием "типы баз в старой системе ЕШКО" — следы миграции с предыдущей системы, оставленные и работающие в текущем проде.</p>
+    </div>
+  </div>
+
+  <h2 id="contact">REV_CONTACT — журнал контактов</h2>
+  <div class="pkg">
+    <span class="pkg-name">REV_CONTACT</span>
+    <div class="pkg-meta">таблицы: CLIENT_EVENT(_LOG), SYSTEM_BLOB, SUBJECT, BENEFIT, SMS, GMS_MESSAGE, RPT_REPORT</div>
+    <p>Журнал звонков и событий (<code>client_event</code>), рассылка писем/боксов писем, стандартные ответы,
+    SMS-переписка — весь "разговор" с клиентом в одном месте. <code>contact_action</code> — самая насыщенная
+    процедура: смена стоимости подписки, добавление/удаление данных студента, отправка "rest"-писем с разными
+    скидками (0/10/15% — коды <code>S025.01/02/05</code> зашиты через REV_CONST).</p>
+    <div class="callout dead">
+      <span class="callout-label">Мёртвый код</span>
+      <p>В теле пакета лежат 4 полностью закомментированные старые процедуры (<code>answer1_old</code> и др.) — не удалены, просто не вызываются.</p>
+    </div>
+  </div>
+
+  <h2 id="territory">rev_territory_tree_v02 — география</h2>
+  <div class="pkg">
+    <span class="pkg-name">rev_territory_tree_v02</span>
+    <div class="pkg-meta">таблицы: AREA_TREE, AREA_TYPE, ZIPCODE_ZONE, USER_LIST</div>
+    <p>Web-пакет (mod_plsql) для дерева территорий: чтение для UI, поиск по названию (<code>CONNECT BY</code> +
+    <code>stragg</code>), "хлебные крошки" от корня до узла, CRUD узлов, привязанных к почтовым зонам.</p>
+    <div class="callout dead">
+      <span class="callout-label">Дублирование</span>
+      <p><code>get_territory</code> и <code>get_territory_HTTP</code> — практически дословные копии друг друга.</p>
+    </div>
+    <div class="callout warn">
+      <span class="callout-label">Правило в тексте ошибки, не в коде</span>
+      <p>Узел территории физически нельзя удалить, если на него ссылаются адреса клиентов — но это выражено только текстом сообщения об ошибке в <code>WHEN OTHERS</code>, а не явной проверкой в коде.</p>
+    </div>
+  </div>
+
+  <h2 id="teachers">REV_TEACHERS — преподаватели</h2>
+  <div class="pkg">
+    <span class="pkg-name">REV_TEACHERS</span>
+    <div class="pkg-meta">таблицы: teacher, teacher_name, teacher_status, homework, client_sub, category, obj$teacher</div>
+    <p>Учёт карточек преподавателей, назначение/переназначение на подписки учеников, приём и оценка домашних
+    заданий, обмен XML с клиентским JS-интерфейсом.</p>
+    <table class="proc-table">
+      <tr><th>Процедура</th><th>Что делает</th></tr>
+      <tr><td class="proc-name">TeacherChange</td><td>Переназначение преподавателя на активные подписки/ДЗ с учётом статусов курса</td></tr>
+      <tr><td class="proc-name">GetClientItems</td><td>Выборка присланных учеником работ/уроков по категориям для интерфейса преподавателя (~320 строк)</td></tr>
+      <tr><td class="proc-name">SaveHomeWork</td><td>Сохранение/оценка/удаление ДЗ по XML от клиента</td></tr>
+      <tr><td class="proc-name">GetTeacherAlternative</td><td>Подбор свободных альтернативных преподавателей на курсе</td></tr>
+    </table>
+    <div class="callout dead">
+      <span class="callout-label">Заглушка вместо логики</span>
+      <p><code>teachersOperations</code> — тело добавления/правки преподавателя полностью закомментировано, реально выполняется только пустой <code>COMMIT</code> и возврат "ok". Не входит даже в публичную спецификацию пакета.</p>
+    </div>
+    <div class="callout warn">
+      <span class="callout-label">Хак кодировки</span>
+      <p>Повторяющийся приём "избавляемся от бага перекодировок на лету": <code>utl_url.unescape(utl_url.ESCAPE(..., 'WINDOWS-1251'), 'UTF-8')</code> — двойное перекодирование как обход бага получения XML-параметров.</p>
+    </div>
+  </div>
+
+  <h2 id="consultant">REV_CONSULTANT — внешние партнёры</h2>
+  <div class="pkg">
+    <span class="pkg-name">REV_CONSULTANT</span>
+    <div class="pkg-meta">таблицы: CLIENT_CONTRACT(_TYPE/_STATUS), CHANNEL, CLIENT_PAYROLL, CLIENT_BASKET, CLIENT_SUB, CATALOGUE</div>
+    <p><strong>"Консультант" — это не сотрудник</strong>, а внешний реферальный партнёр по продажам курсов,
+    технически представленный обычной записью <code>CLIENT</code> с договором (<code>CLIENT_CONTRACT</code>) и
+    привязанным маркетинговым каналом (<code>CHANNEL</code>) для отслеживания приведённых им клиентов. Пакет
+    считает и фиксирует комиссионные выплаты (<code>CLIENT_PAYROLL</code>) по проданным курсам.</p>
+    <div class="callout warn">
+      <span class="callout-label">Скрытый побочный эффект</span>
+      <p><code>contract_update</code> при первом сохранении договора неявно создаёт <strong>два</strong> канала (Provider, затем Issue) с автогенерируемым кодом <code>'C_' || channel_id</code> — критичная бизнес-логика, спрятанная внутри обычной update-процедуры.</p>
+    </div>
+    <div class="callout warn">
+      <span class="callout-label">Кэш без инвалидации</span>
+      <p>Пакетная переменная <code>dddwContractStatus</code> кэширует справочник статусов один раз на сессию — если справочник изменится, кэш не обновится до переподключения.</p>
+    </div>
+  </div>
+
+  <h2 id="worders">WORDERS / WEB_ORDER — заявки с сайта</h2>
+  <div class="pkg">
+    <span class="pkg-name">WORDERS · WEB_ORDER · REV_API.worder_registration</span>
+    <div class="pkg-meta">таблицы: WORDERS_MAIN/ADDRESSES/SETTINGS/ERRORS, WEB_CLIENT, WEB_BASKET, WEB_ORDER_AUTO_REG</div>
+    <p>Реальная точка входа — <code>REV_API.worder_registration</code>: сайт шлёт сырую строку
+    <code>wid=...;wtype=...;email=...</code>, парсится самописным парсером, проверяется на спам, сохраняется в
+    <code>WORDERS_*</code>, затем копируется в очередь оператора (<code>WEB_CLIENT</code>/<code>WEB_BASKET</code>)
+    через <code>WORDERS.InitializationOneOrder</code> — заказ ждёт <strong>ручной</strong> обработки оператором.</p>
+    <div class="callout dead">
+      <span class="callout-label">Автоматизация есть, но выключена</span>
+      <p><code>WEB_ORDER.AUTO_REG</code> — полностью реализованное автосопоставление заказа с существующим клиентом (по email/телефону) или создание нового — но вызов этой процедуры <strong>закомментирован</strong> в <code>worder_registration</code>, переменная жёстко инициализирована в 0. Все веб-заказы сегодня идут только через ручную очередь.</p>
+    </div>
+    <div class="callout danger">
+      <span class="callout-label">Точечная блокировка в бизнес-коде</span>
+      <p>Хардкод конкретного IP <code>217.112.35.81</code> прямо в проверке спама — единственная защита публичного эндпоинта, кроме словаря спам-слов. Нет проверки токена/подписи запроса вообще.</p>
+    </div>
+  </div>
+
+  <h2 id="misc">Мелкие пакеты домена</h2>
+  <div class="pkg">
+    <span class="pkg-name">ESCC_USER</span>
+    <p>Одна процедура <code>USER_DATA(vUSER_ID, ...)</code> — параметр <code>vUSER_ID</code> полностью
+    игнорируется, запрос жёстко фильтрует <code>WHERE ul.USER_ID = 323</code>.
+    <span class="badge dead">баг/заглушка</span></p>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">ACT_CHANNEL</span>
+    <p>Одна функция <code>CHANNEL_CLONE</code> — клонирует маркетинговый канал под новым кодом.
+    <code>USER_ID</code> нового канала жёстко = <code>200</code> (тот же паттерн "системного пользователя", что
+    и <code>323</code> в ESCC_USER). COMMIT в процедуре отсутствует.</p>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">POST_JOB</span>
+    <p>Отчётность по батчам почтовой рассылки. <span class="badge dead">баг маппинга</span> — в CASE-расшифровке
+    упаковки дублируется <code>WHEN 8</code>, второе значение ("Электронная почта") никогда не сработает.</p>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">ESCC_CLIENT</span>
+    <p>Полностью пустой пакет-заглушка — и спецификация, и тело объявлены, но не содержат ни одной процедуры.
+    Несмотря на говорящее имя, реализация так и не была написана (или была удалена).
+    <span class="badge dead">пустышка</span></p>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">CM_AC</span>
+    <p>Автоматическая кампания взыскания долга (email-напоминания должникам) — одна из <strong>трёх</strong>
+    параллельных реализаций этой задачи в схеме. Полный разбор — на странице
+    <a href="marketing.html#debt-collection">маркетинг-кампаний</a>.</p>
+  </div>
+
+  <footer class="page-footer">См. также: <a href="finance.html">Финансы и платежи</a> — там же живёт функция расчёта долга, которую использует REV_PROFILE.</footer>
+</main>
+</div>
+</body>
+</html>

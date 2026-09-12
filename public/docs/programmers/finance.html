@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Финансы и платежи — REVELATION</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <div class="brand">REVELATION</div>
+  <div class="brand-sub">документация бизнес-логики PL/SQL</div>
+  <nav>
+    <a href="index.html">Обзор</a>
+    <div class="group-label">Бизнес-домены</div>
+    <a href="clients.html">Клиенты и территории</a>
+    <a href="finance.html" class="active">Финансы и платежи</a>
+    <a href="catalogue.html">Каталог курсов</a>
+    <a href="logistics.html">Заказы и логистика</a>
+    <a href="messaging.html">Рассылки и сообщения</a>
+    <a href="marketing.html">Маркетинг-кампании</a>
+    <a href="reports.html">Отчёты и статистика</a>
+    <a href="api.html">API-слой интеграций</a>
+    <div class="group-label">Итого</div>
+    <a href="findings.html">Находки и риски</a>
+  </nav>
+</aside>
+
+<main class="main">
+  <h1><span class="eyebrow">Домен 02</span>Финансы и платежи</h1>
+  <p class="lede">
+    Полный цикл денег курсов дистанционного обучения: приём оплат тремя разными каналами (почтовый перевод,
+    банк, ЕРИП), автоматическая и ручная разноска на счета клиентов, списание при возврате или порче материалов —
+    и всё это через единый бухгалтерский журнал <code>MONEY_DIST</code>.
+  </p>
+
+  <div class="exec">
+    <div class="exec-label">Для руководства</div>
+    <div class="exec-row">
+      <span class="k">Что это простыми словами</span>
+      Всё, что касается денег клиента: получили оплату — списали долг; вернули товар или он потерялся —
+      списали часть долга обратно. Отдельно — обмен данными с ЕРИП (национальная система приёма платежей).
+    </div>
+    <div class="exec-row">
+      <span class="k">Состояние</span><span class="exec-health h-warn"><i></i>требует внимания</span>
+      Основной учёт работает. Автоматическое сопоставление оплаты с клиентом — эвристика "совпала фамилия и
+      ровно совпала сумма"; если не совпало — платёж зависает и ждёт, пока сотрудник разберётся вручную.
+    </div>
+    <div class="exec-row">
+      <span class="k">Главный риск для бизнеса</span>
+      <strong>Пароль к ЕРИП хранится открытым текстом прямо в коде базы данных</strong> — это доступ к каналу
+      приёма платежей всей компании, и он виден каждому, у кого есть доступ на чтение исходников. Кроме того,
+      половина автоматизации обмена с ЕРИП не доделана (заглушки вместо кода) — реальная сумма к оплате туда
+      не передаётся, судя по всему, ЕРИП узнаёт её другим путём. Рекомендация: сменить пароль и вынести секреты
+      из исходников в первую очередь.
+    </div>
+  </div>
+
+  <div class="tier-switch">
+    <a href="../guides/finance.html">&larr; Руководство (для управленцев)</a>
+    <a class="current">Для программистов</a>
+    <a href="../operators/index.html">Для операторов &rarr;</a>
+  </div>
+
+  <div class="toc">
+    <a href="#model">Модель данных</a>
+    <a href="#objtypes">Объектные типы (реконструкция)</a>
+    <a href="#mdepayments">REV_MDEPAYMENTS — ядро</a>
+    <a href="#mdereturns">REV_MDERETURNS — возвраты</a>
+    <a href="#loss">REV_LOSS — списания</a>
+    <a href="#erip">ERIP — интеграция</a>
+    <a href="#misc">Прочие пакеты</a>
+    <a href="#lifecycle">Жизненный цикл долга</a>
+  </div>
+
+  <h2 id="model">Модель данных</h2>
+  <p>Долг клиента считается по бухгалтерскому журналу <code>MONEY_DIST</code> — двойная запись
+  дебет/кредит по номерам счетов из <code>MONEY_ACCOUNT</code>:</p>
+  <table class="proc-table">
+    <tr><th>Код счёта</th><th>Название</th></tr>
+    <tr><td class="proc-name">10</td><td>World (внешний мир — деньги клиента)</td></tr>
+    <tr><td class="proc-name">15</td><td>Transit (деньги неопознанного плательщика)</td></tr>
+    <tr><td class="proc-name">40</td><td>Invoice (выставленный счёт)</td></tr>
+    <tr><td class="proc-name">50</td><td>Return (возврат)</td></tr>
+    <tr><td class="proc-name">60</td><td>Loss (потеря/порча материалов)</td></tr>
+    <tr><td class="proc-name">70</td><td>Material (материалы)</td></tr>
+  </table>
+  <p>Функция <code>UK_Client_Debt(clientID)</code> — официальный расчёт долга — декодирует пару <code>credit||debet</code>:
+  <code>'4070'</code>=выставление счёта, <code>'1040'</code>=оплата посылки, <code>'4010'</code>=потеря материалов,
+  <code>'1015'/'1510'</code>=деньги на курс/клиента, <code>'5040'/'4050'</code>=возврат,
+  <code>'6040'/'4060'</code>=компенсация потери. Именно эту расшифровку мы использовали при построении
+  собственного view <code>API_CLIENT_FINANCE_HISTORY</code> для кабинета.</p>
+
+  <h2 id="objtypes">Объектные типы — восстановлено по вызовам</h2>
+  <div class="callout warn">
+    <span class="callout-label">Важная оговорка</span>
+    <p>Типы <code>OBJ$CLIENT</code>, <code>OBJ$BOX</code>, <code>OBJ$MONEYDIST</code> используются в десятках
+    пакетов, но их собственные тела <strong>не попали в дамп схемы</strong> (не экспортированы). Интерфейс ниже
+    восстановлен по местам вызова — реальная формула внутри методов недоступна напрямую, перепроверяйте перед
+    использованием в проде.</p>
+  </div>
+  <table class="proc-table">
+    <tr><th>Тип / метод</th><th>Назначение</th></tr>
+    <tr><td class="proc-name">OBJ$CLIENT(id).GETTOTALDEBT</td><td>Суммарный долг клиента (отрицательный при задолженности)</td></tr>
+    <tr><td class="proc-name">OBJ$BOX(id).DebtSum</td><td>Долг по конкретному контейнеру (посылке)</td></tr>
+    <tr><td class="proc-name">OBJ$BASKETITEM.DebtSum</td><td>Долг по курсу целиком</td></tr>
+    <tr><td class="proc-name">Obj$MoneyDist(clientId).makeTrans(...)</td><td>Универсальная точка создания проводки в MONEY_DIST</td></tr>
+    <tr><td class="proc-name">Obj$MoneyDist.getBalance(Acc, Obj, ...)</td><td>Баланс по счёту/объекту за период</td></tr>
+    <tr><td class="proc-name">Obj$MoneyDist.getInvoiceMoney/Return/Loss/Assets</td><td>Суммы оплаты/возврата/потери/активов по контейнеру или курсу</td></tr>
+  </table>
+
+  <h2 id="mdepayments">REV_MDEPAYMENTS — бухгалтерский движок</h2>
+  <div class="pkg">
+    <span class="pkg-name">REV_MDEPAYMENTS</span>
+    <div class="pkg-meta">таблицы: MONEY_SOURCE(_INPUT), MONEY_PACK, MONEY_CROSS, MONEY_DIST, BANK_TRANS(_PACK), RETURN_ITEM, CLIENT</div>
+    <p>Самый большой и центральный пакет домена.</p>
+    <table class="proc-table">
+      <tr><th>Процедура</th><th>Что делает</th></tr>
+      <tr><td class="proc-name">LoadPayment</td><td>Импорт входящих платежей: XLS (почтовые переводы) и CSV из ЕРИП, запись в стейджинг, группировка в пачки</td></tr>
+      <tr><td class="proc-name">AutoDistribution(packID)</td><td>Эвристический автоматчинг платежа клиенту по фамилии + точному совпадению суммы с долгом</td></tr>
+      <tr><td class="proc-name">saveuclientpayment / saveunknownpm</td><td>Деньги от неизвестного плательщика — псевдоклиент "UC_...", счёт Transit(15) до опознания</td></tr>
+      <tr><td class="proc-name">save_bank_cross</td><td>Сверка банковских выписок с пачками платежей</td></tr>
+    </table>
+    <div class="callout warn">
+      <span class="callout-label">Логика не там, где ожидаешь</span>
+      <p>Реальная проводка возврата (счета 40↔50) выполняется <strong>здесь</strong>, а не в REV_MDERETURNS —
+      домен "возвраты" разорван между профильным и фактическим пакетом.</p>
+    </div>
+    <div class="callout dead">
+      <span class="callout-label">Ошибки глушатся</span>
+      <p><code>AutoDistribution</code> оборачивает вставку в <code>EXCEPTION WHEN OTHERS THEN ROLLBACK</code> без логирования — платёж просто останется неразнесённым без диагностики.</p>
+    </div>
+    <div class="callout dead">
+      <span class="callout-label">Известный техдолг, признанный в коде</span>
+      <p>Комментарии прямо в спецификации: <code>-- Remove these procedures from this packages --</code> и
+      <code>-- Remove these modules from this packages --</code> — процедуры, которые давно должны были переехать в другой пакет.</p>
+    </div>
+  </div>
+
+  <h2 id="mdereturns">REV_MDERETURNS — регистрация возвратов</h2>
+  <div class="pkg">
+    <span class="pkg-name">REV_MDERETURNS</span>
+    <div class="pkg-meta">таблицы: RETURN_SHIPMENT, RETURN_ITEM, RETURN_CLOSE_MONTH, CRUTCH_RETURN_POSTCODE</div>
+    <p>Логистика возврата ("стол находок" для вернувшихся посылок): регистрация по коду клиента/накладной/штрихкоду,
+    блокировка закрытых дней/месяцев для новых возвратов, построение формы утверждения по позициям.
+    Сам не пишет в <code>MONEY_DIST</code> — только фиксирует факт возврата, деньги проводит REV_MDEPAYMENTS.</p>
+    <div class="callout warn">
+      <span class="callout-label">Костыль в названии таблицы</span>
+      <p><code>CRUTCH_RETURN_POSTCODE</code> — буквально "костыль", временный обходной путь сопоставления
+      13-значного штрихкода посылки с <code>CONTAINER_ID</code>.</p>
+    </div>
+  </div>
+
+  <h2 id="loss">REV_LOSS — списание порчи материалов</h2>
+  <div class="pkg">
+    <span class="pkg-name">REV_LOSS</span>
+    <div class="pkg-meta">таблицы: MONEY_LOSS, MONEY_LOSS_TYPE, CLIENT</div>
+    <p>Единственная точка входа <code>save_loss</code> (add/del/cor): <code>add</code> — дебет Invoice(40)/кредит
+    Loss(60), <code>del</code> — сторно, <code>cor</code> — корректировка суммы. В отличие от
+    <code>AutoDistribution</code>, всё идёт через <code>obj$moneydist(...).makeTrans(...)</code> — это более
+    аккуратный, "новый стиль" кода того же назначения.</p>
+  </div>
+
+  <h2 id="erip">ERIP — интеграция с белорусской системой расчётов</h2>
+  <div class="pkg">
+    <span class="pkg-name">ERIP</span>
+    <div class="pkg-meta">таблицы: ERIP_SETS_CLIENTS, ERIP_SET_INFO, ERIP_TRANSFER_LOG</div>
+    <p>Модель — файлово-пакетная через FTP (<code>ftp.hgrosh.by</code>, внешний агрегатор), не онлайн-API:
+    выгрузка справочника клиентов в CSV, импорт ответных файлов с FTP. Фактический парсинг входящих ЕРИП-платежей
+    выполняет не этот пакет, а <code>REV_MDEPAYMENTS.LoadPayment</code> (читает из того же каталога).</p>
+    <div class="callout danger">
+      <span class="callout-label">Пароль в открытом виде в исходнике</span>
+      <p>FTP-логин/пароль (<code>eftp_user</code>/<code>eftp_pass</code>) заданы константами прямо в
+      <strong>спецификации</strong> пакета — виден любому с доступом на чтение <code>ALL_SOURCE</code>.</p>
+    </div>
+    <div class="callout dead">
+      <span class="callout-label">Половина процедур — пустышки</span>
+      <p><code>erip_upload</code>, <code>erip_ftp_export</code>, <code>erip_download</code>, <code>erip_import</code>
+      — тела <code>BEGIN NULL; END;</code>. Выгрузка клиентов никогда не заполняет реальную сумму к оплате
+      (<code>SUMMA</code>/<code>FINE</code> всегда 0) — судя по всему, ЕРИП узнаёт долг не из выгрузки, а
+      онлайн через <code>API_SERVICE_ACCOUNT.ACCOUNT_CLIENT_TOTAL_DEB</code> (см. <a href="api.html">API-слой</a>).</p>
+    </div>
+  </div>
+
+  <h2 id="misc">Прочие пакеты домена</h2>
+  <div class="pkg">
+    <span class="pkg-name">API_SERVICE_ACCOUNT</span>
+    <p>13 строк: <code>ACCOUNT_CLIENT_TOTAL_DEB(CLIENT_ID)</code> просто вызывает
+    <code>OBJ$CLIENT(CLIENT_ID).GETTOTALDEBT</code>. Судя по соседству в файле с ACTION_PAY/партнёрской
+    отчётностью — фасад для внешнего запроса актуального долга в реальном времени (в т.ч. вероятно, ЕРИП).</p>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">ACTION_PAY</span>
+    <p><strong>Ложный след по имени</strong> — не про оплаты клиентов, а интеграция с партнёрскими CPA-сетями
+    ActionPay/Admitad (плата за лиды вебмастерам): проверка уникальности лида, сверочные отчёты.</p>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">MONEYDIST_PKG_UTILS</span>
+    <p>Две чистые SQL-функции <code>getBalance</code>/<code>getBalanceAcc</code> — тот же расчёт баланса, что
+    делает <code>OBJ$MONEYDIST.getBalance</code>, только без создания объекта. Похоже на "запасной путь".</p>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">MD_PKG_UTILS / MD_PKG</span>
+    <p><strong>Тоже во многом ложный след</strong> — несмотря на имя "MONEYDIST", это в основном
+    маркетинг/CRM-автоматизация (рассылки, дни рождения, бонусы операторам, детекция фейковых заказов). К долгу
+    относится только <code>UPDATE_DEBTORS</code> (пересчёт кэша <code>MONEY_DEBT_CLIENTS</code>: формула
+    <code>DebtSum = ReceivedSum + ReturnedSum + LostSum − InvoicedSum</code>) и <code>GET_LIST_DEBTORS</code>
+    (CSV-отчёт "должники"). <code>CONFIRM_SHIPMENT</code>/<code>CONFIRM_RETURN</code> строят официальный
+    бухгалтерский "Реестр оказанных услуг" — похоже на регуляторную/налоговую отчётность.</p>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">DENOMINATION</span>
+    <p><code>DN10K(sm) = sm/10000</code> — конвертация исторических сумм в "старых рублях" (до деноминации
+    Беларуси 2016 года) для вывода в отчётах.</p>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">RECALCULATION</span>
+    <p><code>KNOWLEDGE_DAY_ADDING</code> — одноразовый промо-хак с жёстко зашитым диапазоном дат
+    01.08.2020–04.10.2020 и конкретными ID акции/товара. <span class="badge dead">гарантированно мёртвый код</span></p>
+  </div>
+
+  <h2 id="lifecycle">Жизненный цикл долга клиента</h2>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 820 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Жизненный цикл долга клиента">
+      <defs>
+        <marker id="arrowF" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-arrowhead"/></marker>
+      </defs>
+      <!-- step boxes row 1 -->
+      <g font-size="11.5">
+        <rect x="10" y="30" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="85" y="55" text-anchor="middle" class="dg-text" font-weight="600">1. Выставление счёта</text>
+        <text x="85" y="72" text-anchor="middle" class="dg-text-dim" font-size="10">CONTAINER → Sent(70)</text>
+        <text x="85" y="86" text-anchor="middle" class="dg-text-dim" font-size="10">дебет 40 Invoice</text>
+
+        <rect x="200" y="30" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="275" y="55" text-anchor="middle" class="dg-text" font-weight="600">2. Поступление денег</text>
+        <text x="275" y="72" text-anchor="middle" class="dg-text-dim" font-size="10">почта / банк / ЕРИП</text>
+        <text x="275" y="86" text-anchor="middle" class="dg-text-dim" font-size="10">MONEY_SOURCE_INPUT</text>
+
+        <rect x="390" y="30" width="150" height="64" rx="8" class="dg-box-accent"/>
+        <text x="465" y="55" text-anchor="middle" class="dg-text-accent" font-weight="600">3. Авторазноска</text>
+        <text x="465" y="72" text-anchor="middle" class="dg-text-dim" font-size="10">AutoDistribution</text>
+        <text x="465" y="86" text-anchor="middle" class="dg-text-dim" font-size="10">код 1040</text>
+
+        <rect x="580" y="30" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="655" y="55" text-anchor="middle" class="dg-text" font-weight="600">4. Ручная разноска</text>
+        <text x="655" y="72" text-anchor="middle" class="dg-text-dim" font-size="10">если авто не сработал</text>
+        <text x="655" y="86" text-anchor="middle" class="dg-text-dim" font-size="10">счёт Transit(15)</text>
+
+        <path d="M160,62 L200,62" class="dg-arrow"/>
+        <path d="M350,62 L390,62" class="dg-arrow"/>
+        <path d="M540,62 L580,62" class="dg-arrow-accent"/>
+      </g>
+
+      <!-- step boxes row 2 -->
+      <g font-size="11.5">
+        <rect x="580" y="140" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="655" y="165" text-anchor="middle" class="dg-text" font-weight="600">5. Возврат (опц.)</text>
+        <text x="655" y="182" text-anchor="middle" class="dg-text-dim" font-size="10">RETURN_ITEM</text>
+        <text x="655" y="196" text-anchor="middle" class="dg-text-dim" font-size="10">40 ↔ 50</text>
+
+        <rect x="390" y="140" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="465" y="165" text-anchor="middle" class="dg-text" font-weight="600">6. Списание (опц.)</text>
+        <text x="465" y="182" text-anchor="middle" class="dg-text-dim" font-size="10">REV_LOSS.save_loss</text>
+        <text x="465" y="196" text-anchor="middle" class="dg-text-dim" font-size="10">40 → 60</text>
+
+        <rect x="200" y="140" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="275" y="165" text-anchor="middle" class="dg-text" font-weight="600">7. Пересчёт кэша</text>
+        <text x="275" y="182" text-anchor="middle" class="dg-text-dim" font-size="10">UPDATE_DEBTORS</text>
+        <text x="275" y="196" text-anchor="middle" class="dg-text-dim" font-size="10">MONEY_DEBT_CLIENTS</text>
+
+        <rect x="10" y="140" width="150" height="64" rx="8" class="dg-box-accent"/>
+        <text x="85" y="165" text-anchor="middle" class="dg-text-accent" font-weight="600">8. Погашение / SMS</text>
+        <text x="85" y="182" text-anchor="middle" class="dg-text-dim" font-size="10">GETTOTALDEBT ≥ 0</text>
+        <text x="85" y="196" text-anchor="middle" class="dg-text-dim" font-size="10">или напоминание</text>
+
+        <path d="M655,94 L655,140" class="dg-arrow"/>
+        <path d="M580,172 L540,172" class="dg-arrow"/>
+        <path d="M390,172 L350,172" class="dg-arrow"/>
+        <path d="M200,172 L160,172" class="dg-arrow-accent"/>
+      </g>
+      <path d="M85,230 L85,260 L655,260 L655,94" class="dg-arrow" fill="none" stroke-dasharray="3 3"/>
+      <text x="370" y="278" text-anchor="middle" class="dg-text-dim" font-size="10.5">погашено не полностью → новый цикл со следующей отправки</text>
+    </svg>
+    <div class="diagram-caption">От выставления счёта до погашения — с двумя опциональными ветками (возврат, списание) и ежедневным пересчётом кэша должников, на котором строятся SMS-напоминания.</div>
+  </div>
+
+  <footer class="page-footer">См. также: <a href="marketing.html#debt-collection">CM_AC / CAMPAIGN_ACCOUNT / CM_DEB</a> — три параллельные реализации автоматической кампании взыскания долга.</footer>
+</main>
+</div>
+</body>
+</html>

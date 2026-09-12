@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Отчёты и статистика — REVELATION</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <div class="brand">REVELATION</div>
+  <div class="brand-sub">документация бизнес-логики PL/SQL</div>
+  <nav>
+    <a href="index.html">Обзор</a>
+    <div class="group-label">Бизнес-домены</div>
+    <a href="clients.html">Клиенты и территории</a>
+    <a href="finance.html">Финансы и платежи</a>
+    <a href="catalogue.html">Каталог курсов</a>
+    <a href="logistics.html">Заказы и логистика</a>
+    <a href="messaging.html">Рассылки и сообщения</a>
+    <a href="marketing.html">Маркетинг-кампании</a>
+    <a href="reports.html" class="active">Отчёты и статистика</a>
+    <a href="api.html">API-слой интеграций</a>
+    <div class="group-label">Итого</div>
+    <a href="findings.html">Находки и риски</a>
+  </nav>
+</aside>
+
+<main class="main">
+  <h1><span class="eyebrow">Домен 07</span>Отчёты и статистика</h1>
+  <p class="lede">
+    Единая универсальная система построения и исполнения отчётов (report engine) поверх таблиц <code>RPT_*</code>,
+    с очередью задач и планировщиком. Диспетчеризация — не статический код, а метаданные: какой PL/SQL считает
+    отчёт, хранится в таблице скриптов, а не в исходниках.
+  </p>
+
+  <div class="exec">
+    <div class="exec-label">Для руководства</div>
+    <div class="exec-row">
+      <span class="k">Что это простыми словами</span>
+      Внутренний инструмент, которым сотрудники строят отчёты компании — ежедневная статистика, финансовые
+      сводки, маркетинговая аналитика по каналам привлечения.
+    </div>
+    <div class="exec-row">
+      <span class="k">Состояние</span><span class="exec-health h-ok"><i></i>в целом в порядке</span>
+      Работает стабильно, самый низкий по значимости риск среди всех восьми разделов системы. Единственная
+      находка — в планировщике регулярных отчётов отключена обработка ошибок.
+    </div>
+    <div class="exec-row">
+      <span class="k">Главный риск для бизнеса</span>
+      Если запланированный отчёт (например, ежедневная статистика) перестанет строиться из-за ошибки — об этом
+      сейчас никто не узнает: сбой проходит тихо, без уведомления ответственных. Риск — не в деньгах напрямую, а
+      в том, что руководство может некоторое время принимать решения по отчётам, которые незаметно перестали
+      обновляться.
+    </div>
+  </div>
+
+  <div class="tier-switch">
+    <a href="../guides/reports.html">&larr; Руководство (для управленцев)</a>
+    <a class="current">Для программистов</a>
+    <a href="../operators/index.html">Для операторов &rarr;</a>
+  </div>
+
+  <div class="toc">
+    <a href="#dispatch">Диспетчеризация "скрипт как данные"</a>
+    <a href="#rev-report">REV_REPORT — ядро</a>
+    <a href="#executors">Отчёты-исполнители</a>
+    <a href="#lifecycle">Жизненный цикл отчёта</a>
+  </div>
+
+  <h2 id="dispatch">Диспетчеризация "скрипт как данные"</h2>
+  <div class="callout warn">
+    <span class="callout-label">Архитектурная особенность, не баг</span>
+    <p><code>REV_EXEC.OnTaskProcess(taskId)</code> подгружает текст PL/SQL-скрипта из таблицы скриптов
+    (<code>REV_SCRIPT.getScript</code>) и выполняет его через <code>EXECUTE IMMEDIATE</code>. Обычно это
+    однострочный вызов конкретной процедуры вида <code>BEGIN STAT_PKG.Daily_Statistics(:taskId); END;</code>.
+    То есть привязка "отчёт → код, который его считает" хранится как данные в БД и правится через
+    административный интерфейс — при отладке нужно смотреть в саму БД, а не только в исходники схемы.</p>
+  </div>
+  <p>Второй слой — сборка файла результата: сырые данные (tab-delimited текст или recordset-BLOB) выгружаются
+  на диск, внешний native-компонент (судя по именам процедур — Delphi-DLL/COM) делает mail-merge шаблона с
+  данными и кладёт готовый файл обратно; Oracle только координирует через файловую систему, сам документы не
+  рендерит.</p>
+
+  <h2 id="rev-report">REV_REPORT — ядро домена</h2>
+  <div class="pkg">
+    <span class="pkg-name">REV_REPORT</span>
+    <div class="pkg-meta">таблицы: RPT_REPORT, RPT_TASK(_RESULT), RPT_SCHEDULER, RPT_PARMS, RPT_CATEGORY, RPT_OUTPUT</div>
+    <p>Разделы: карточки/списки отчётов (CRUD над RPT_REPORT), планировщик (расчёт следующей даты запуска по
+    типу расписания — Daily/Weekly/Monthly/Once), задачи/исполнение (обёрнуто вокруг объектного типа
+    <code>Obj$Task</code> — конструктор <code>Obj$Task(taskId)</code>, методы <code>.Cancel/.Save/.addToResult/.updateLog/.p(name)</code>,
+    сам тип типа в дампе не встречается), категории и превью.</p>
+    <div class="callout dead">
+      <span class="callout-label">Отключённая обработка ошибок в планировщике</span>
+      <p>В <code>job_operation</code> и <code>job_next_runtime</code> блоки <code>EXCEPTION WHEN OTHERS</code>
+      закомментированы целиком — любая ошибка при создании/обновлении задания сейчас падает необработанным
+      исключением, а не откатывается с понятным статусом, как задумывалось изначально (видно по комментариям).</p>
+    </div>
+    <div class="callout dead">
+      <span class="callout-label">Незавершённая фича расписания</span>
+      <p>Ветка "N-й будний день месяца" обрамлена комментарием "ПОКА НЕ ОБРАБАТЫВАЕТСЯ — ЗАКРЫТ ДОСТУП
+      ИНТЕРФЕЙСОМ!!!" и содержит отладочный <code>RAISE_APPLICATION_ERROR</code>, который взорвётся, если код
+      когда-нибудь станет достижим.</p>
+    </div>
+    <div class="callout dead">
+      <span class="callout-label">Дублирующийся legacy-код</span>
+      <p><code>job_operationOLD</code>, <code>job_propertiesOLD</code>, <code>job_next_runtime_old</code> —
+      полные копии текущих процедур, не объявлены в спецификации, явный неудалённый legacy.</p>
+    </div>
+  </div>
+
+  <h2 id="executors">Отчёты-исполнители</h2>
+  <div class="pkg">
+    <span class="pkg-name">STAT_PKG</span>
+    <p>Набор конкретных "репортов-как-код": <code>Daily_Statistics</code>, <code>WeeklyIncoming</code>,
+    <code>Monthly_Statistics</code>, <code>Marketing_Profit_Stat</code> и др. Каждая процедура — самостоятельный
+    ETL, читает параметры через <code>Obj$Task.p(...)</code>, строит tab-delimited текст. Вызывается только через
+    диспетчер (прямых статических вызовов в дампе нет).</p>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">ASMRGA (Marketing Research)</span>
+    <p>Цепочка зависимых отчётов: <code>CREATE_PARENT_ALINE</code> строит служебную таблицу истории статусов
+    подписки, от неё зависят срезы активных студентов по категории/курсу с разбивкой по полу/возрасту/региону.</p>
+    <div class="callout warn">
+      <span class="callout-label">Мягкая зависимость между отчётами</span>
+      <p>Зависимые отчёты проверяют актуальность родительского прогона только предупреждением в лог, не
+      блокируя выполнение — отчёт может тихо посчитаться по протухшим данным.</p>
+    </div>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">MS_PRINT / REV_MATREPORT</span>
+    <p><code>MS_PRINT.NS_LIST</code> — список для печатной (не email) рассылки по дню рождения/долгу/активности.
+    <code>REV_MATREPORT</code> — привязка вопросов анкеты к ячейкам Excel-шаблона, включая
+    <code>storage_create</code> — динамическое (DDL на лету) пересоздание таблицы-пивота с колонкой на каждый
+    вопрос анкеты.</p>
+    <div class="callout warn">
+      <span class="callout-label">Хрупкое кодирование через LIKE-маску</span>
+      <p>В обоих пакетах бизнес-семантика кодируется строковой конкатенацией без <code>ELSE</code>-ветки:
+      <code>CASE credit||debet WHEN '4070' THEN ...</code> (без учёта новых кодов) и
+      <code>TO_CHAR(status||status_old) LIKE '6%'</code> — хрупко к появлению новых кодов справочника.</p>
+    </div>
+  </div>
+
+  <h2 id="lifecycle">Жизненный цикл отчёта</h2>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 820 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Жизненный цикл отчёта">
+      <g font-size="11.5">
+        <rect x="10" y="20" width="150" height="60" rx="8" class="dg-box"/>
+        <text x="85" y="43" text-anchor="middle" class="dg-text" font-weight="600">1. Постановка задачи</text>
+        <text x="85" y="60" text-anchor="middle" class="dg-text-dim" font-size="10">RPT_TASK, Wait/InProgress</text>
+
+        <rect x="200" y="20" width="150" height="60" rx="8" class="dg-box"/>
+        <text x="275" y="43" text-anchor="middle" class="dg-text" font-weight="600">2. Параметры</text>
+        <text x="275" y="60" text-anchor="middle" class="dg-text-dim" font-size="10">RPT_PARMS → task_id</text>
+
+        <rect x="390" y="20" width="150" height="60" rx="8" class="dg-box-accent"/>
+        <text x="465" y="43" text-anchor="middle" class="dg-text-accent" font-weight="600">3. Диспетчеризация</text>
+        <text x="465" y="60" text-anchor="middle" class="dg-text-dim" font-size="10">REV_EXEC.OnTaskProcess</text>
+
+        <rect x="580" y="20" width="150" height="60" rx="8" class="dg-box"/>
+        <text x="655" y="43" text-anchor="middle" class="dg-text" font-weight="600">4. Расчёт данных</text>
+        <text x="655" y="60" text-anchor="middle" class="dg-text-dim" font-size="10">STAT_PKG / ASMRGA / ...</text>
+
+        <rect x="580" y="120" width="150" height="60" rx="8" class="dg-box"/>
+        <text x="655" y="143" text-anchor="middle" class="dg-text" font-weight="600">5. Сборка файла</text>
+        <text x="655" y="160" text-anchor="middle" class="dg-text-dim" font-size="10">внешний merge-движок</text>
+
+        <rect x="390" y="120" width="150" height="60" rx="8" class="dg-box"/>
+        <text x="465" y="143" text-anchor="middle" class="dg-text" font-weight="600">6. Просмотр/выдача</text>
+        <text x="465" y="160" text-anchor="middle" class="dg-text-dim" font-size="10">RPT_OUTPUT</text>
+
+        <rect x="200" y="120" width="150" height="60" rx="8" class="dg-box"/>
+        <text x="275" y="143" text-anchor="middle" class="dg-text" font-weight="600">7. Завершение</text>
+        <text x="275" y="160" text-anchor="middle" class="dg-text-dim" font-size="10">Completed/Canceled/Archived</text>
+
+        <path d="M160,50 L200,50" class="dg-arrow"/>
+        <path d="M350,50 L390,50" class="dg-arrow-accent"/>
+        <path d="M540,50 L580,50" class="dg-arrow"/>
+        <path d="M655,80 L655,120" class="dg-arrow"/>
+        <path d="M580,150 L540,150" class="dg-arrow"/>
+        <path d="M390,150 L350,150" class="dg-arrow"/>
+      </g>
+    </svg>
+  </div>
+
+  <footer class="page-footer">См. также: <a href="marketing.html">Маркетинг-кампании</a> — там же живёт <code>PROFIT_STAT_*</code> отчётность по каналам, которую пересчитывает <code>MD_PKG_UTILS.update_profit_stat_*</code> (см. <a href="finance.html">Финансы</a>).</footer>
+</main>
+</div>
+</body>
+</html>

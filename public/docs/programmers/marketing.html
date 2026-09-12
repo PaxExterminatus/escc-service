@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Маркетинг-кампании — REVELATION</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <div class="brand">REVELATION</div>
+  <div class="brand-sub">документация бизнес-логики PL/SQL</div>
+  <nav>
+    <a href="index.html">Обзор</a>
+    <div class="group-label">Бизнес-домены</div>
+    <a href="clients.html">Клиенты и территории</a>
+    <a href="finance.html">Финансы и платежи</a>
+    <a href="catalogue.html">Каталог курсов</a>
+    <a href="logistics.html">Заказы и логистика</a>
+    <a href="messaging.html">Рассылки и сообщения</a>
+    <a href="marketing.html" class="active">Маркетинг-кампании</a>
+    <a href="reports.html">Отчёты и статистика</a>
+    <a href="api.html">API-слой интеграций</a>
+    <div class="group-label">Итого</div>
+    <a href="findings.html">Находки и риски</a>
+  </nav>
+</aside>
+
+<main class="main">
+  <h1><span class="eyebrow">Домен 06</span>Маркетинговые кампании и сегментация</h1>
+  <p class="lede">
+    Самый большой по числу пакетов домен (24) — и не единая подсистема, а <strong>наслоение минимум четырёх
+    поколений</strong> самодельных email/SMS-рассылочных движков, написанных в разное время поверх одной и той же
+    core-модели. Старые версии не удалены — часть продолжает исполняться, часть осталась только как мёртвый код.
+  </p>
+
+  <div class="exec">
+    <div class="exec-label">Для руководства</div>
+    <div class="exec-row">
+      <span class="k">Что это простыми словами</span>
+      Автоматические маркетинговые рассылки: отбираем группу клиентов по признаку (не студент, скоро день
+      рождения, есть долг) и рассылаем им письма/SMS по расписанию.
+    </div>
+    <div class="exec-row">
+      <span class="k">Состояние</span><span class="exec-health h-warn"><i></i>требует внимания</span>
+      Функция работает, но реализована <strong>четыре раза за разные годы</strong>, и старые версии никто не
+      убрал. Например, кампания "напоминание о долге" сегодня существует в трёх параллельных версиях
+      одновременно, одна из которых заброшена.
+    </div>
+    <div class="exec-row">
+      <span class="k">Главный риск для бизнеса</span>
+      Это годы повторно потраченной работы разработчиков на одну и ту же задачу, и сейчас очень легко случайно
+      сломать "не ту" версию кампании при изменениях, потому что непонятно, какая из нескольких версий
+      действительно активна. Прежде чем инвестировать в доработку рассылок — стоит сначала навести порядок и
+      оставить одну работающую версию каждой кампании.
+    </div>
+  </div>
+
+  <div class="tier-switch">
+    <a href="../guides/marketing.html">&larr; Руководство (для управленцев)</a>
+    <a class="current">Для программистов</a>
+    <a href="../operators/index.html">Для операторов &rarr;</a>
+  </div>
+
+  <div class="toc">
+    <a href="#generations">Четыре поколения</a>
+    <a href="#debt-collection">Взыскание долга как кампания</a>
+    <a href="#key">Ключевые пакеты</a>
+    <a href="#lifecycle">Жизненный цикл кампании</a>
+  </div>
+
+  <h2 id="generations">Четыре поколения одной задачи</h2>
+  <p>Общий принцип везде один: отобрать сегмент клиентов SQL-запросом → создать "рекламный товар" в каталоге →
+  отгрузить его клиенту через <code>obj$box.addProduct</code> с почтовой схемой "email"(11) — <strong>система
+  доставки писем переиспользует складскую/товарную подсистему</strong>: письмо технически является отгруженным
+  контейнером с товаром.</p>
+  <table class="proc-table">
+    <tr><th>Поколение</th><th>Пакеты</th><th>Характер</th></tr>
+    <tr><td>1. EM_*</td><td>EM_MANAGER, EM_MANAGER_CAMP, DATA_MARKETING</td><td>Тегирование клиентов десятками узкоспециализированных SQL-скриптов, синхронизация во внешнюю "Cross DB" по HTTP</td></tr>
+    <tr><td>2. EMT*</td><td>EMT, EMT3, EMT4, EMTC, EMT_GENERAL, EMT_STATS, EMT_PP, EMT_ESCC_EMAILING</td><td>Более развитый список-билдер с таблицей плана; часть синхронизируется через Heterogeneous Services database link <code>@EMS</code></td></tr>
+    <tr><td>3. CM_*</td><td>CM_DEB, CM_HF, CM_ETL, CM_ETLV3</td><td>Stateful-движок поверх CLIENT_CAMPAIGN с именованными шагами и таймерами</td></tr>
+    <tr><td>4. CAMPAIGN_*</td><td>CAMPAIGN_REMAIL, CAMPAIGN_ACCOUNT, CAMPAIGN_ALL</td><td>Оркестрация запуска/эскалации кампаний поколения 3, включая живой движок взыскания долга</td></tr>
+  </table>
+  <p><code>EMS_*</code> (EMS_SYNC, EMS_DATA, EMS_BASE_CLIENT, EMS_UTILITY) — отдельный, более поздний слой ETL
+  выгрузки клиентской базы и статистики кампаний во внешний ESP (метрики <code>CAMP_OPENS</code>,
+  <code>CAMP_BOUNCES</code>, <code>CAMP_UNSUBSCRIBES</code> — классика email-платформ типа MailChimp).</p>
+
+  <div class="callout warn">
+    <span class="callout-label">Три способа внешней синхронизации в одной схеме</span>
+    <p>(1) Heterogeneous DB link <code>@EMS</code> + <code>DBMS_HS_PASSTHROUGH</code> с ручным bind по одному
+    ряду (EMT3) — тяжеловесно и медленно. (2) HTTP GET на internal middleware <code>revapp/dbsync*</code> без
+    проверки полезной нагрузки, только по status_code (EM_MANAGER, CM_ETL, CM_DEB) — реальные данные читаются
+    отдельным процессом на той стороне. (3) Явные ETL-таблицы <code>EMS_DATA*</code> + <code>esccapp/ems/load</code>
+    (EMS_DATA) — самый структурированный и, похоже, самый новый способ.</p>
+  </div>
+
+  <h2 id="debt-collection">Взыскание долга — три параллельные реализации</h2>
+  <div id="debt-collection" class="pkg">
+    <span class="pkg-name">CM_AC · CAMPAIGN_ACCOUNT.DEBT_MANAGER · CM_DEB</span>
+    <p>Кампания взыскания долга (<code>CLIENT_CAMPAIGN.TYPE_ID=11</code>, "EDeb") реализована трижды:</p>
+    <table class="proc-table">
+      <tr><th>Пакет</th><th>Статус</th></tr>
+      <tr><td class="proc-name">CM_AC</td><td>Живой. Оркестратор <code>AC_DEB_RUN_REV</code>: GSV.GSV_ACCOUNT → старт кампании → завершение погасивших → продвижение по шагам → синхронизация с внешней EMS по HTTP</td></tr>
+      <tr><td class="proc-name">CAMPAIGN_ACCOUNT.DEBT_MANAGER</td><td>Живой, но делегирует расчёт даты следующего шага в тот же CM_AC — то есть это надстройка, не альтернатива</td></tr>
+      <tr><td class="proc-name">CM_DEB</td><td><span class="badge dead">заброшен</span> Весь функционал, кроме двух тривиальных функций, закомментирован — рабочей осталась только <code>AC_MOVE</code></td></tr>
+    </table>
+    <div class="callout warn">
+      <span class="callout-label">Магические числа вместо конфигурации</span>
+      <p>В <code>CM_AC</code> бизнес-константы зашиты в функции <code>V()</code> прямо в коде: DELAY=30 дней,
+      MINDEBT=-3, ITERATION_PRODUCT=конкретный ID товара. Ссылка на dev-хост
+      <code>http://dev.office.eshko.net:8080/revapp/dbsync_deb</code> — прямо в проде.</p>
+    </div>
+    <div class="callout dead">
+      <span class="callout-label">Хардкод тестового клиента в живом коде</span>
+      <p><code>CM_DEB.CHOICE_DAY</code> содержит <code>WHERE ms.CLIENT_ID = 2333 --VAL</code> — закомментированный
+      маркер разработчика, оставленный прямо в SQL-запросе.</p>
+    </div>
+  </div>
+
+  <h2 id="key">Ключевые пакеты (детально)</h2>
+  <div class="pkg">
+    <span class="pkg-name">CM_ETL / CM_ETLV3</span>
+    <p>Обе версии управляют <strong>одной и той же</strong> кампанией (TYPE_ID=7, "RemailelTL"), но с
+    несовместимыми множествами имён шагов (<code>RC/G2TM1/G2TM2</code> против <code>ETL3FOTM2/ETL3ROTM2</code>) —
+    явно "v2" и "v3" одного движка, сосуществующие в БД одновременно.</p>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">EM_MANAGER_CAMP</span>
+    <p>Самый большой пакет домена (~3000 строк) — библиотека из ~25 узкоспециализированных
+    процедур-скриптов (должники, "не студенты" до/после даты, активные студенты), каждая заканчивается тем же
+    15-строчным блоком отгрузки контейнера. Много копипасты.</p>
+    <div class="callout dead">
+      <span class="callout-label">Мёртвая процедура</span>
+      <p><code>EMDEB_ADDPRODUCT</code> — рабочий INSERT/LOOP полностью закомментирован, тело реально исполняет
+      только <code>NULL</code>.</p>
+    </div>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">EMT3</span>
+    <p>Крупнейший "рабочий" пакет старого поколения (~840 строк): синхронизация с внешней БД через DB-link
+    <code>@EMS</code>, разметка каждого клиента одним <code>SEND_TYPE</code> (100-430: активный студент/выпускник/
+    отказник/давность заказа).</p>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">EMT_GENERAL.PLAN_EXECUTE</span>
+    <p><span class="badge dead">пустая заглушка</span> Вызывает проверочную функцию, но реального действия не
+    выполняет — похоже на недописанный обобщённый рефакторинг <code>EMT.RUNNER_LIST</code>.</p>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">EMT_ESCC_EMAILING</span>
+    <p>Строит общий бюллетень (<code>ESCC_EMAILING</code>): активные клиенты с email, минус заблокированные/
+    именинники/должники.</p>
+    <div class="callout dead">
+      <span class="callout-label">Копипаста при доработке</span>
+      <p><code>EMT_LOAD_EMAILING</code> и <code>escc_emailing</code> — почти буквально одинаковый 400-строчный
+      SQL продублирован дважды с минорными отличиями, вместо вынесения общей логики.</p>
+    </div>
+  </div>
+
+  <h2 id="lifecycle">Жизненный цикл кампании</h2>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 820 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Жизненный цикл маркетинговой кампании">
+      <g font-size="11.5">
+        <rect x="10" y="20" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="85" y="43" text-anchor="middle" class="dg-text" font-weight="600">1. Сегментация</text>
+        <text x="85" y="60" text-anchor="middle" class="dg-text-dim" font-size="10">EMT3.LIST_CREATE_MAIN</text>
+        <text x="85" y="74" text-anchor="middle" class="dg-text-dim" font-size="10">и др. сегментаторы</text>
+
+        <rect x="200" y="20" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="275" y="43" text-anchor="middle" class="dg-text" font-weight="600">2. Товар-кампания</text>
+        <text x="275" y="60" text-anchor="middle" class="dg-text-dim" font-size="10">CATALOGUE/CONTENT</text>
+
+        <rect x="390" y="20" width="150" height="64" rx="8" class="dg-box-accent"/>
+        <text x="465" y="43" text-anchor="middle" class="dg-text-accent" font-weight="600">3. CLIENT_CAMPAIGN</text>
+        <text x="465" y="60" text-anchor="middle" class="dg-text-dim" font-size="10">Active, STEP='START'</text>
+
+        <rect x="580" y="20" width="150" height="64" rx="8" class="dg-box-accent"/>
+        <text x="655" y="43" text-anchor="middle" class="dg-text-accent" font-weight="600">4. Действие на шаге</text>
+        <text x="655" y="60" text-anchor="middle" class="dg-text-dim" font-size="10">email / звонок</text>
+
+        <rect x="580" y="140" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="655" y="163" text-anchor="middle" class="dg-text" font-weight="600">5. Лог шага</text>
+        <text x="655" y="180" text-anchor="middle" class="dg-text-dim" font-size="10">CLIENT_CAMPAIGN_LOG</text>
+
+        <rect x="390" y="140" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="465" y="163" text-anchor="middle" class="dg-text" font-weight="600">6. Следующий шаг</text>
+        <text x="465" y="180" text-anchor="middle" class="dg-text-dim" font-size="10">или Finished</text>
+
+        <rect x="200" y="140" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="275" y="163" text-anchor="middle" class="dg-text" font-weight="600">7. Синхронизация</text>
+        <text x="275" y="180" text-anchor="middle" class="dg-text-dim" font-size="10">HTTP / DB-link / ETL</text>
+
+        <rect x="10" y="140" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="85" y="163" text-anchor="middle" class="dg-text" font-weight="600">8. Метрики</text>
+        <text x="85" y="180" text-anchor="middle" class="dg-text-dim" font-size="10">открытия/клики/отписки</text>
+
+        <path d="M160,52 L200,52" class="dg-arrow"/>
+        <path d="M350,52 L390,52" class="dg-arrow-accent"/>
+        <path d="M540,52 L580,52" class="dg-arrow-accent"/>
+        <path d="M655,84 L655,140" class="dg-arrow"/>
+        <path d="M580,172 L540,172" class="dg-arrow"/>
+        <path d="M390,172 L350,172" class="dg-arrow"/>
+        <path d="M200,172 L160,172" class="dg-arrow"/>
+      </g>
+    </svg>
+  </div>
+
+  <footer class="page-footer">См. также: <a href="finance.html#lifecycle">Финансы</a> — кампания взыскания долга опирается на данные о долге оттуда.</footer>
+</main>
+</div>
+</body>
+</html>
