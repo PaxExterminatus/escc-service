@@ -3,6 +3,7 @@ import ProfilePage from 'page/ProfilePage'
 import ContainerPage from 'page/ContainerPage';
 import TemplatesPage from 'page/TemplatesPage';
 import DailyMessagingPage from 'page/DailyMessagingPage';
+import InvoiceDailyPage from 'page/InvoiceDailyPage';
 
 export default [
     {
@@ -30,7 +31,12 @@ export default [
                 path: '/container/:id?',
                 name: 'containerShow',
                 component: ContainerPage,
-            }
+            },
+            {
+                path: '/container/invoices/daily',
+                name: 'containerInvoicesDaily',
+                component: InvoiceDailyPage,
+            },
         ],
     },
 

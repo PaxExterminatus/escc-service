@@ -19,8 +19,8 @@
         </Column>
         <Column header="">
             <template #body="{data}">
-                <Button icon="pi pi-pencil" text v-tooltip.top="'Редактировать'" @click="openEdit(data)"/>
-                <Button icon="pi pi-trash" text severity="danger" v-tooltip.top="'Удалить'" @click="remove(data)"/>
+                <Button icon="pi pi-pencil" text v-tooltip.left="'Редактировать'" @click="openEdit(data)"/>
+                <Button icon="pi pi-trash" text severity="danger" v-tooltip.left="'Удалить'" @click="remove(data)"/>
             </template>
         </Column>
     </DataTable>

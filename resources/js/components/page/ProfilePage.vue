@@ -17,7 +17,7 @@
                     type="button"
                     class="p-link p-panel-header-icon p-panel-toggler"
                     :disabled="messagesLoading"
-                    v-tooltip.top="'Обновить принудительно'"
+                    v-tooltip.left="'Обновить принудительно'"
                     @click="loadMessages"
                 >
                     <span :class="messagesLoading ? 'pi pi-spinner pi-spin' : 'pi pi-refresh'"></span>
@@ -41,7 +41,7 @@
                     type="button"
                     class="p-link p-panel-header-icon p-panel-toggler"
                     :disabled="financeLoading"
-                    v-tooltip.top="'Обновить принудительно'"
+                    v-tooltip.left="'Обновить принудительно'"
                     @click="loadFinance"
                 >
                     <span :class="financeLoading ? 'pi pi-spinner pi-spin' : 'pi pi-refresh'"></span>

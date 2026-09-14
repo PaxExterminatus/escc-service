@@ -65,6 +65,23 @@ export const appMenuData = [
     }),
 
     MenuItem({
+        key: 5,
+        label: 'Центр печати',
+        icon: 'pi pi-print',
+        items: [
+            MenuItem({
+                key: 51,
+                label: 'Печать счетов за день',
+                icon: 'pi pi-file-pdf',
+                route: '/container/invoices/daily',
+                command () {
+                    menu.hide()
+                },
+            }),
+        ],
+    }),
+
+    MenuItem({
         key: 3,
         label: 'Документация',
         icon: 'pi pi-file',
@@ -113,4 +130,5 @@ export const defaultExpandedKeys = {
     2: true,
     3: false,
     4: false,
+    5: false,
 };

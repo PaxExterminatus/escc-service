@@ -64,8 +64,8 @@ class TestClientDataSeeder extends Seeder
         $this->enroll($db, $debtorId, $catalogue['course1'], $catalogue['course1_lessons'], chargeSum: 300.00, payments: [
             ['sum' => 60.00, 'daysAgo' => 25, 'desc' => 'Оплата картой, часть 1 (тест)'],
             ['sum' => 40.00, 'daysAgo' => 15, 'desc' => 'Оплата картой, часть 2 (тест)'],
-        ]);
-        $this->enroll($db, $debtorId, $catalogue['course2'], $catalogue['course2_lessons'], chargeSum: 150.00, payments: []);
+        ], sendDaysAgo: 5);
+        $this->enroll($db, $debtorId, $catalogue['course2'], $catalogue['course2_lessons'], chargeSum: 150.00, payments: [], sendDaysAgo: 5);
         // Напоминание о долге — по формату из самого дампа (см. REV_MDEPAYMENTS.client_account_tdc:
         // "DOLG: "||CLIENT.GETTOTALDEBT||" bel.rub; KOD KLIENTA: "||CLCODE).
         $this->createSms($db, '+375293225337', 'DOLG: 350.00 bel.rub; KOD KLIENTA: TEST-DEBTOR-01 (тест)');
@@ -77,10 +77,10 @@ class TestClientDataSeeder extends Seeder
         $this->enroll($db, $payerId, $catalogue['course1'], $catalogue['course1_lessons'], chargeSum: 300.00, payments: [
             ['sum' => 150.00, 'daysAgo' => 25, 'desc' => 'Оплата картой, часть 1 (тест)'],
             ['sum' => 150.00, 'daysAgo' => 15, 'desc' => 'Оплата картой, часть 2 (тест)'],
-        ]);
+        ], sendDaysAgo: 2);
         $this->enroll($db, $payerId, $catalogue['course2'], $catalogue['course2_lessons'], chargeSum: 150.00, payments: [
             ['sum' => 150.00, 'daysAgo' => 10, 'desc' => 'Оплата картой (тест)'],
-        ]);
+        ], sendDaysAgo: 2);
         $this->createSms($db, '+375293225337', 'Спасибо за оплату! Баланс: 0.00 bel.rub; KOD KLIENTA: TEST-PAYER-01 (тест)');
 
         if ($this->command) {
@@ -332,7 +332,8 @@ class TestClientDataSeeder extends Seeder
         int $courseNodeId,
         array $lessonNodeIds,
         float $chargeSum,
-        array $payments
+        array $payments,
+        int $sendDaysAgo = 5
     ): void {
         $courseItemId = (int)$db->selectOne('SELECT S_CLIENT_BASKET.NEXTVAL AS ID FROM DUAL')->id;
         $db->table('CLIENT_BASKET')->insert([
@@ -381,6 +382,7 @@ class TestClientDataSeeder extends Seeder
             'POST_FEE_CLIENT' => 0,
             'POST_PACK' => 0,
             'CONTAINER_DATE' => now()->subDays(30),
+            'SEND_DATE' => now()->subDays($sendDaysAgo),
             'MSG_ID' => 0,
             'MODE_THROW' => 0, // REV_CONST.boxModeThrowOther
             'MODE_SALE' => 2, // REV_CONST.boxModeSaleAtOnce
