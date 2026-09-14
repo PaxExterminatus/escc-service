@@ -12,17 +12,29 @@
                 <Input v-model="container().code" id="containerCode" label="Код"/>
                 <Input v-model="container().created_at" id="containerCreatedAt" label="Дата создания"/>
             </InputGroup>
+
+            <div v-if="container().status === 'Sent'" class="mt-3">
+                <a
+                    :href="invoiceUrl"
+                    target="_blank"
+                    class="p-button p-button-outlined"
+                    v-tooltip.top="'Счёт выставляется в момент отправки контейнера'"
+                >
+                    <span class="pi pi-file-pdf mr-2"></span>Распечатать счёт
+                </a>
+            </div>
         </template>
     </Card>
 </template>
 
 <script setup>
-import {defineEmits, defineProps} from 'vue'
+import {computed, defineEmits, defineProps} from 'vue'
 import Card from 'primevue/card'
 import InputGroup from 'primevue/inputgroup'
 import SplitButton from 'primevue/splitbutton'
 import Input from 'element/Input.vue'
 import {Container} from './Container.js'
+import {invoiceAPI} from 'cmp/invoice'
 
 const props = defineProps({
     container: Container,
@@ -43,6 +55,8 @@ const emit = defineEmits({
 const search = () => {
     emit('search');
 };
+
+const invoiceUrl = computed(() => invoiceAPI.containerInvoiceUrl(container().id));
 
 // Полный список статусов — App\Domain\App\Container\Enums\ContainerStatusEnum (id из REV_CONST.boxStatus*).
 // Stopped/InProgress — через отдельные "stop"/"start" (там же простая семантика "остановить/запустить"),

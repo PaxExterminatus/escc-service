@@ -54,6 +54,11 @@ class Container extends Model
             'client_id' => 'integer',
             'status_id' => ContainerStatusCast::class,
             'container_date' => 'datetime',
+            'invoice_date' => 'datetime',
+            'assemble_date' => 'datetime',
+            'send_date' => 'datetime',
+            'notice_date' => 'datetime',
+            'unload_date' => 'datetime',
         ];
     }
 }

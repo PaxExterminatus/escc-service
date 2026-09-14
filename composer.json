@@ -33,13 +33,15 @@
     "prefer-stable": true,
     "require": {
         "php": "^8.3",
-        "ext-pdo": "*",
+        "ext-iconv": "*",
         "ext-oci8": ">=3.0.1",
-        "laravel/framework": "^v13.15.0",
-        "yajra/laravel-oci8": "^v13.6.0",
+        "ext-pdo": "*",
         "dedoc/scramble": "^v0.13.27",
         "guzzlehttp/guzzle": "^7.5.0",
-        "laravel/tinker": "^v3.0.2"
+        "laravel/framework": "^v13.15.0",
+        "laravel/tinker": "^v3.0.2",
+        "phpoffice/phpword": "^1.4",
+        "yajra/laravel-oci8": "^v13.6.0"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^v3.0.0",

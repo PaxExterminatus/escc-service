@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Находки и риски — REVELATION</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <div class="brand">REVELATION</div>
+  <div class="brand-sub">документация бизнес-логики PL/SQL</div>
+  <nav>
+    <a href="index.html">Обзор</a>
+    <div class="group-label">Бизнес-домены</div>
+    <a href="clients.html">Клиенты и территории</a>
+    <a href="finance.html">Финансы и платежи</a>
+    <a href="catalogue.html">Каталог курсов</a>
+    <a href="logistics.html">Заказы и логистика</a>
+    <a href="messaging.html">Рассылки и сообщения</a>
+    <a href="marketing.html">Маркетинг-кампании</a>
+    <a href="reports.html">Отчёты и статистика</a>
+    <a href="api.html">API-слой интеграций</a>
+    <div class="group-label">Итого</div>
+    <a href="findings.html" class="active">Находки и риски</a>
+  </nav>
+</aside>
+
+<main class="main">
+  <h1><span class="eyebrow">Сводка по всем доменам</span>Находки и риски</h1>
+  <p class="lede">
+    Все находки "неожиданное" со всех восьми доменных страниц, собранные в одном месте и отсортированные по
+    серьёзности. Это чтение исходников без доступа к живой БД — прежде чем действовать по любому из пунктов
+    ниже (особенно security-риски), стоит подтвердить на реальной схеме.
+  </p>
+
+  <div class="tier-switch">
+    <a href="../guides/index.html">&larr; Руководство (для управленцев)</a>
+    <a class="current">Для программистов</a>
+    <a href="../operators/index.html">Для операторов &rarr;</a>
+  </div>
+
+  <div class="legend">
+    <span><i style="background:var(--danger-border)"></i> риск безопасности</span>
+    <span><i style="background:var(--warn-border)"></i> рискованное решение / хак</span>
+    <span><i style="background:var(--dead-border)"></i> мёртвый / отключённый код</span>
+  </div>
+
+  <h2>🔴 Риски безопасности</h2>
+
+  <div class="callout danger">
+    <span class="callout-label">Пароли клиентов хранятся и передаются в открытом виде</span>
+    <p><code>CLIENT.CLIENT_PASSWORD</code> сравнивается как обычная строка без хеширования
+    (<code>REV_WEB_REQUEST.client_page_w</code>). Восстановление пароля <strong>отправляет реальный пароль по
+    email</strong>. Все параметры запроса, включая пароли, построчно логируются в текстовый файл на диске.
+    → <a href="messaging.html#webrequest">Рассылки: REV_WEB_REQUEST</a></p>
+  </div>
+
+  <div class="callout danger">
+    <span class="callout-label">SMTP-пароль в открытом виде в исходном коде</span>
+    <p><code>REV_EMAIL</code>: <code>smtp_password := 'fffa75Ms1'</code> прямо в спецификации пакета — виден
+    всем с доступом на чтение исходников схемы. → <a href="messaging.html#email">Рассылки: REV_EMAIL</a></p>
+  </div>
+
+  <div class="callout danger">
+    <span class="callout-label">FTP-пароль ЕРИП в открытом виде в исходном коде</span>
+    <p><code>ERIP</code>: логин/пароль к <code>ftp.hgrosh.by</code> заданы константами в спецификации пакета.
+    → <a href="finance.html#erip">Финансы: ERIP</a></p>
+  </div>
+
+  <div class="callout danger">
+    <span class="callout-label">Отключена проверка кода доступа к онлайн-курсу</span>
+    <p><code>APISAS_EFRONT.getonlineaccesscourse</code>: <code>IF TRUE THEN --access-px [...]</code> — любой код
+    принимается как верный. Для урока проверка осталась настоящей — непоследовательность.
+    → <a href="api.html#efront">API-слой: APISAS_EFRONT</a></p>
+  </div>
+
+  <div class="callout danger">
+    <span class="callout-label">Тестовые клиенты с вечным доступом и бэкдором сброса</span>
+    <p>ID <code>2333</code>/<code>21673</code> жёстко зашиты как "всегда доверенные" в нескольких местах
+    (200 лет доступа вместо 3); <code>APISAS.RESET_CODE</code> сбрасывает доступ буквально только клиенту 2333
+    вне зависимости от параметра. → <a href="api.html#efront">API-слой: APISAS_EFRONT</a></p>
+  </div>
+
+  <div class="callout danger">
+    <span class="callout-label">Единый предсказуемый пароль для всех аккаунтов внешней LMS Campus</span>
+    <p><code>APISAS_CAMPUS.USER_UPDATE_GETDATA</code> возвращает константу <code>'80295553238'</code> как пароль
+    для каждого синхронизируемого клиента. → <a href="api.html#campus">API-слой: APISAS_CAMPUS</a></p>
+  </div>
+
+  <div class="callout danger">
+    <span class="callout-label">Публичные API-эндпоинты без какой-либо авторизации</span>
+    <p>Ни <code>EFONLINE</code>, ни <code>worder_registration</code>, ни процедуры Campus не проверяют токен,
+    подпись или Basic-Auth. Единственная защита веб-заявок — один захардкоженный заблокированный IP
+    (<code>217.112.35.81</code>) и словарь спам-слов. → <a href="api.html#worder">API-слой</a>,
+    <a href="clients.html#worders">Клиенты: заявки с сайта</a></p>
+  </div>
+
+  <div class="callout danger">
+    <span class="callout-label">Захардкоженный клиент в "параметризованной" процедуре</span>
+    <p><code>ADV_OBJECT_FINANCE.FIN_CREATE(vCLIENT_ID)</code> — параметр игнорируется, фильтр жёстко
+    <code>CLIENT_ID = 2333</code>. → <a href="logistics.html#misc">Логистика: прочие пакеты</a></p>
+  </div>
+
+  <div class="callout danger">
+    <span class="callout-label">Личные контакты разработчиков в бизнес-коде</span>
+    <p>Email <code>dmitry.poltavskiy@eshko.ua</code> как получатель алертов об ошибках Viber-интеграции;
+    upstream-хосты <code>dev.office.eshko.net</code> зашиты в несколько продовых пакетов (GUI-ссылки, CM_AC,
+    WORDER_RANGE_CHK). → <a href="api.html#gms">API-слой</a>, <a href="messaging.html#pipeline">Рассылки</a>,
+    <a href="marketing.html#debt-collection">Маркетинг</a></p>
+  </div>
+
+  <h2>🟡 Рискованные решения и хаки</h2>
+
+  <div class="callout warn">
+    <span class="callout-label">Скрипт как данные — диспетчеризация отчётов через EXECUTE IMMEDIATE</span>
+    <p><code>REV_EXEC.OnTaskProcess</code> выполняет текст скрипта, хранящийся в таблице, а не в исходниках —
+    архитектурная особенность, а не баг, но важно знать при отладке. → <a href="reports.html#dispatch">Отчёты</a></p>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-label">Три независимых способа внешней синхронизации в одной схеме</span>
+    <p>Heterogeneous DB link <code>@EMS</code>, HTTP-пинг на internal middleware, и явные ETL-таблицы — три
+    поколения одной и той же задачи сосуществуют одновременно. → <a href="marketing.html#generations">Маркетинг</a></p>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-label">Магические числа вместо конфигурации — повторяющийся паттерн во всей схеме</span>
+    <p>ID узлов каталога, категорий, товаров, пороги долга — зашиты прямо в SQL/PL/SQL десятками мест
+    (CM_AC, WH, MS_PRINT, RECALCULATION и др.), а не вынесены в справочники или REV_CONST.</p>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-label">Два независимых источника ставки НДС для почтовых тарифов</span>
+    <p><code>POST_FEE_PKG</code> — множитель 1.2 в формуле, <code>POSTAL_RATE_CONTROL</code> — константа 0.2.
+    Нет единой точки истины. → <a href="logistics.html#fee">Логистика: тарифы</a></p>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-label">Коллизия кодов операций в MONEY_DIST.TRANS_TYPE</span>
+    <p><code>mdOperAddMoneyReturn=91</code> совпадает с <code>mdOperSetTicket=91</code> (аналогично 92/93) — одно
+    числовое значение означает два разных типа операций из разных смысловых групп. → <a href="finance.html">Финансы</a></p>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-label">Хрупкое кодирование бизнес-семантики строковой конкатенацией</span>
+    <p><code>CASE credit||debet WHEN '4070' ...</code> и <code>TO_CHAR(status||status_old) LIKE '6%'</code> —
+    без <code>ELSE</code>-ветки, ломается при появлении новых кодов справочника. →
+    <a href="reports.html#executors">Отчёты</a>, <a href="finance.html#model">Финансы</a></p>
+  </div>
+
+  <h2>⚪ Мёртвый и отключённый код</h2>
+
+  <div class="callout dead">
+    <span class="callout-label">Автосоздание клиента из веб-заказа реализовано, но отключено</span>
+    <p><code>WEB_ORDER.AUTO_REG</code> — рабочий код сопоставления/создания клиента, вызов закомментирован в
+    проде. Все веб-заказы сегодня идут только через ручную очередь оператора. → <a href="clients.html#worders">Клиенты</a></p>
+  </div>
+
+  <div class="callout dead">
+    <span class="callout-label">Ручной SMS call-центр физически не может работать в современном браузере</span>
+    <p><code>REV_SMS</code> генерирует VBScript/ActiveX для отправки через стороннее ПО на компьютере оператора
+    — несовместимо с любым браузером, где отключён ActiveX (то есть с любым современным). Плюс вызовы удалённой
+    из Windows команды <code>net send</code>. → <a href="messaging.html#callcenter">Рассылки: call-центр</a></p>
+  </div>
+
+  <div class="callout dead">
+    <span class="callout-label">Рассылка сертификатов выпускникам не работает</span>
+    <p><code>CERTIFICATES_FOR_GRADUATES</code> фиксирует событие о выпуске, но реальная отправка письма с
+    сертификатом закомментирована с пометкой "нужно доп. тестирование". → <a href="catalogue.html#misc">Каталог курсов</a></p>
+  </div>
+
+  <div class="callout dead">
+    <span class="callout-label">Целая параллельная подсистема сообщений (MESSAGE_*) не подключена ни к чему</span>
+    <p>Билдеры контента, триггеры на PK — всё есть, но <code>MESSAGE_BUILD.FLOW</code> нигде не вызывается,
+    кроме одного ручного предпросмотра. → <a href="messaging.html#dead-pipeline">Рассылки</a></p>
+  </div>
+
+  <div class="callout dead">
+    <span class="callout-label">Одна из трёх реализаций взыскания долга — CM_DEB — заброшена</span>
+    <p>Весь функционал, кроме двух тривиальных функций, закомментирован. → <a href="marketing.html#debt-collection">Маркетинг</a></p>
+  </div>
+
+  <div class="callout dead">
+    <span class="callout-label">ЕРИП: половина процедур интеграции — пустые заглушки</span>
+    <p><code>erip_upload/erip_ftp_export/erip_download/erip_import</code> — тела <code>BEGIN NULL; END;</code>.
+    → <a href="finance.html#erip">Финансы: ERIP</a></p>
+  </div>
+
+  <div class="callout dead">
+    <span class="callout-label">get_homework (eFront) валидирует и роняет данные</span>
+    <p>Реальная запись домашнего задания закомментирована — данные от eFront никуда не сохраняются.
+    → <a href="catalogue.html#efront">Каталог курсов: eFront</a></p>
+  </div>
+
+  <div class="callout dead">
+    <span class="callout-label">EMESSAGE_SEND — осиротевший API</span>
+    <p>Ни одна процедура пакета нигде не вызывается во всём дампе — рассчитан на внешнее JSP-приложение,
+    которого нет в этой схеме. → <a href="messaging.html#pipeline">Рассылки</a></p>
+  </div>
+
+  <div class="callout dead">
+    <span class="callout-label">Пустые пакеты-заглушки и заброшенные дубли</span>
+    <p><code>ESCC_CLIENT</code> — полностью пустой, несмотря на говорящее имя.
+    <code>REV_CONTACT</code> хранит 4 полностью закомментированные старые процедуры рядом с рабочими.
+    <code>REV_REPORT</code> — <code>job_operationOLD</code> и другие полные копии текущих процедур.
+    → <a href="clients.html#misc">Клиенты</a>, <a href="reports.html#rev-report">Отчёты</a></p>
+  </div>
+
+  <h2>Как использовать эту сводку</h2>
+  <p>Если готовите ревью безопасности или планируете миграцию — начните с раздела 🔴: это единственные пункты,
+  которые касаются реальных данных клиентов и денег. Разделы 🟡/⚪ — скорее контекст для оценки объёма технического
+  долга, чем немедленные действия.</p>
+
+  <div class="callout warn">
+    <span class="callout-label">Связанный, но отдельный контекст</span>
+    <p>У пары Laravel-приложений <code>escc-service</code>/<code>escc-cabinet</code>, которые читают эту Oracle-схему,
+    есть свой независимый аудит безопасности (открытые PII-эндпоинты без авторизации, MD5-пароли, отключённый
+    SSL) — он не входит в этот PL/SQL-документ, но напрямую связан с частью находок выше (например, отсутствие
+    проверки авторизации в API-слое Oracle усугубляет то же самое на стороне Laravel).</p>
+  </div>
+
+  <footer class="page-footer">Сформировано чтением D:\dev\escc\REVELATION 20260904 1518.sql. См. <a href="index.html">обзор</a> для карты доменов.</footer>
+</main>
+</div>
+</body>
+</html>

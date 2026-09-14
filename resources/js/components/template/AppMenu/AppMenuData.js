@@ -39,13 +39,83 @@ export const appMenuData = [
     }),
 
     MenuItem({
+        key: 4,
+        label: 'Рассылки',
+        icon: 'pi pi-envelope',
+        items: [
+            MenuItem({
+                key: 41,
+                label: 'Шаблоны сообщений',
+                icon: 'pi pi-file-edit',
+                route: '/messages/templates',
+                command () {
+                    menu.hide()
+                },
+            }),
+            MenuItem({
+                key: 42,
+                label: 'Массовые рассылки',
+                icon: 'pi pi-send',
+                route: '/messages/daily',
+                command () {
+                    menu.hide()
+                },
+            }),
+        ],
+    }),
+
+    MenuItem({
+        key: 5,
+        label: 'Центр печати',
+        icon: 'pi pi-print',
+        items: [
+            MenuItem({
+                key: 51,
+                label: 'Печать счетов за день',
+                icon: 'pi pi-file-pdf',
+                route: '/container/invoices/daily',
+                command () {
+                    menu.hide()
+                },
+            }),
+        ],
+    }),
+
+    MenuItem({
         key: 3,
-        label: 'Docs',
+        label: 'Документация',
         icon: 'pi pi-file',
         items: [
             MenuItem({
-                label: 'API',
+                label: 'Руководства',
+                icon: 'pi pi-book',
+                url: '/docs/guides/',
+                target: 'blank',
+                command () {
+                    menu.hide()
+                },
+            }),
+            MenuItem({
+                label: 'Для программистов',
                 icon: 'pi pi-code',
+                url: '/docs/programmers/',
+                target: 'blank',
+                command () {
+                    menu.hide()
+                },
+            }),
+            MenuItem({
+                label: 'Для операторов',
+                icon: 'pi pi-desktop',
+                url: '/docs/operators/',
+                target: 'blank',
+                command () {
+                    menu.hide()
+                },
+            }),
+            MenuItem({
+                label: 'API',
+                icon: 'pi pi-sitemap',
                 url: '/docs/api/',
                 target: 'blank',
                 command () {
@@ -59,4 +129,6 @@ export const appMenuData = [
 export const defaultExpandedKeys = {
     2: true,
     3: false,
+    4: false,
+    5: false,
 };

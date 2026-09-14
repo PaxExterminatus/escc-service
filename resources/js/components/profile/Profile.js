@@ -11,6 +11,10 @@ class Profile {
         this.name_middle = null
         this.birthday = null
         this.sex = null;
+        this.phone = null;
+        this.sms_allowed = false;
+        this.email = null;
+        this.email_allowed = false;
     }
 
     /**
@@ -36,6 +40,10 @@ class Profile {
         this.name_middle = data.name_middle
         this.birthday = data.birthday
         this.sex = profileSex[data.sex]
+        this.phone = data.phone
+        this.sms_allowed = data.sms_allowed
+        this.email = data.email
+        this.email_allowed = data.email_allowed
 
         return this;
     }

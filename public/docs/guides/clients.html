@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Клиенты и территории — Руководство</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <div class="brand">REVELATION</div>
+  <div class="brand-sub">руководство — бизнес-логика без деталей</div>
+  <nav>
+    <a href="index.html">Обзор</a>
+    <div class="group-label">Бизнес-домены</div>
+    <a href="clients.html" class="active">Клиенты и территории</a>
+    <a href="finance.html">Финансы и платежи</a>
+    <a href="catalogue.html">Каталог курсов</a>
+    <a href="logistics.html">Заказы и логистика</a>
+    <a href="messaging.html">Рассылки и сообщения</a>
+    <a href="marketing.html">Маркетинг-кампании</a>
+    <a href="reports.html">Отчёты и статистика</a>
+    <a href="api.html">API-слой интеграций</a>
+  </nav>
+</aside>
+
+<main class="main">
+  <h1><span class="eyebrow">Домен 01</span>Клиенты и территории</h1>
+  <p class="lede">
+    Карточка клиента, географическая иерархия (для расчёта почтовых зон), преподаватели и их назначение на
+    подписки, консультанты (внешние партнёры по продажам), и приём заказов с сайта до момента, когда заявка
+    становится настоящим клиентом.
+  </p>
+
+  <div class="tier-switch">
+    <a class="current">Руководство</a>
+    <a href="../programmers/clients.html">Подробнее для программистов &rarr;</a>
+    <a href="../operators/index.html">Для операторов &rarr;</a>
+  </div>
+
+  <div class="exec">
+    <div class="exec-label">Для руководства</div>
+    <div class="exec-row">
+      <span class="k">Что это простыми словами</span>
+      Единая карточка клиента, которую видит оператор: кто клиент, где живёт, кто его учит, кто его привёл
+      (партнёр-консультант) и что он заказал на сайте.
+    </div>
+    <div class="exec-row">
+      <span class="k">Состояние</span><span class="exec-health h-warn"><i></i>требует внимания</span>
+      Работает, но заявки с сайта сегодня <strong>всегда</strong> обрабатываются вручную операторами — готовая
+      автоматика, которая могла бы сама превращать заявку в клиента и экономить время операторов, в коде есть,
+      но выключена.
+    </div>
+    <div class="exec-row">
+      <span class="k">Главный риск для бизнеса</span>
+      Каждая веб-заявка — это ручной труд, хотя мог бы быть автоматический. Также найден полностью пустой
+      модуль под клиентскую логику (заявлен, но никогда не реализован) — признак недоведённой до конца задачи
+      из прошлого.
+    </div>
+  </div>
+
+  <span class="subsystem-pills-label">Подсистемы (подробности — у программистов)</span>
+  <div class="subsystem-pills">
+    <a class="subsystem-pill" href="../programmers/clients.html#profile">REV_PROFILE</a>
+    <a class="subsystem-pill" href="../programmers/clients.html#contact">REV_CONTACT</a>
+    <a class="subsystem-pill" href="../programmers/clients.html#territory">rev_territory_tree_v02</a>
+    <a class="subsystem-pill" href="../programmers/clients.html#teachers">REV_TEACHERS</a>
+    <a class="subsystem-pill" href="../programmers/clients.html#consultant">REV_CONSULTANT</a>
+    <a class="subsystem-pill" href="../programmers/clients.html#worders">WORDERS / WEB_ORDER</a>
+  </div>
+
+  <footer class="page-footer">Технические детали (пакеты, таблицы, находки) — на странице <a href="../programmers/clients.html">Для программистов</a>.</footer>
+</main>
+</div>
+</body>
+</html>

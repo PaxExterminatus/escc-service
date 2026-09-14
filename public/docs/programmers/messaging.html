@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Рассылки и сообщения — REVELATION</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <div class="brand">REVELATION</div>
+  <div class="brand-sub">документация бизнес-логики PL/SQL</div>
+  <nav>
+    <a href="index.html">Обзор</a>
+    <div class="group-label">Бизнес-домены</div>
+    <a href="clients.html">Клиенты и территории</a>
+    <a href="finance.html">Финансы и платежи</a>
+    <a href="catalogue.html">Каталог курсов</a>
+    <a href="logistics.html">Заказы и логистика</a>
+    <a href="messaging.html" class="active">Рассылки и сообщения</a>
+    <a href="marketing.html">Маркетинг-кампании</a>
+    <a href="reports.html">Отчёты и статистика</a>
+    <a href="api.html">API-слой интеграций</a>
+    <div class="group-label">Итого</div>
+    <a href="findings.html">Находки и риски</a>
+  </nav>
+</aside>
+
+<main class="main">
+  <h1><span class="eyebrow">Домен 05</span>Рассылки и сообщения</h1>
+  <p class="lede">
+    Три независимых, не связанных друг с другом канала связи с клиентом сосуществуют в одной схеме: очередь
+    <code>EMSG</code> (её и читает наш Laravel-сервис), ручной call-центр с внешним SMS-гейтвеем на компьютере
+    оператора, и низкоуровневая SMTP-библиотека для email "по требованию".
+  </p>
+
+  <div class="exec">
+    <div class="exec-label">Для руководства</div>
+    <div class="exec-row">
+      <span class="k">Что это простыми словами</span>
+      Автоматические SMS и email клиентам: напоминания о долге, информационные сообщения, уведомления об
+      отправке посылки.
+    </div>
+    <div class="exec-row">
+      <span class="k">Состояние</span><span class="exec-health h-risk"><i></i>требует срочного внимания</span>
+      Из всего, что для этого построено, <strong>реально работает только один сценарий</strong> — уведомление
+      об отправке посылки. Автоматические напоминания о долге и информационные SMS технически существуют в
+      системе, но ни к чему не подключены — то есть попросту не отправляются, хотя выглядят как рабочая
+      функция. Отдельный старый инструмент для ручной отправки SMS через операторов, скорее всего, физически не
+      работает уже много лет (завязан на технологию браузера, отключённую повсеместно с 2010-х).
+    </div>
+    <div class="exec-row">
+      <span class="k">Главный риск для бизнеса</span>
+      Если кто-то в компании считает, что клиентам сейчас автоматически напоминают о долге по SMS — это не так.
+      Отдельно: при восстановлении пароля клиенту <strong>отправляется его реальный пароль в открытом виде по
+      почте</strong>, а сами пароли хранятся и логируются на диск без защиты — прямой риск утечки учётных данных
+      клиентов.
+    </div>
+  </div>
+
+  <div class="callout danger">
+    <span class="callout-label">Главная находка домена</span>
+    <p>Единственное бизнес-событие, которое сегодня реально и без сбоев наполняет очередь <code>EMSG</code> в
+    статусе, который читает Laravel (<code>EMSG_STATUS=1</code>) — это <strong>факт отправки посылки Белпочтой</strong>
+    (плановая задача <code>COMMUNICATION.ALERT_SEND_POST_BATCH</code> → <code>EMESSAGE_CREATE.BOX_SEND_POSTOFFICE</code>).
+    Остальные сценарии (задолженность, инфосообщения, коды доступа) технически реализованы, но не имеют ни
+    одного вызывающего места в коде — это либо ручной триггер через внешний JSP на dev-хосте, либо заброшенный
+    функционал.</p>
+  </div>
+
+  <div class="tier-switch">
+    <a href="../guides/messaging.html">&larr; Руководство (для управленцев)</a>
+    <a class="current">Для программистов</a>
+    <a href="../operators/index.html">Для операторов &rarr;</a>
+  </div>
+
+  <div class="toc">
+    <a href="#pipeline">Реальный конвейер EMSG</a>
+    <a href="#dead-pipeline">Заброшенная альтернатива: MESSAGE_*</a>
+    <a href="#callcenter">REV_SMS — ручной call-центр</a>
+    <a href="#email">REV_EMAIL — SMTP-библиотека</a>
+    <a href="#webrequest">REV_WEB_REQUEST — вход с сайта</a>
+    <a href="#lifecycle">Схема пути сообщения</a>
+  </div>
+
+  <h2 id="pipeline">Реальный конвейер EMSG</h2>
+  <p>Таблица <code>EMSG</code> — очередь исходящих сообщений (<code>EMSG_TYPE</code>: 1=SMS, 2=EMAIL;
+  <code>EMSG_STATUS</code> используется непоследовательно, см. ниже). Наш Laravel-сервис читает её через view
+  <code>API_MESSAGES_SMS_DAILY</code> (<code>EMSG_TYPE=1 AND EMSG_STATUS=1</code>) — сам её не наполняет.</p>
+  <div class="pkg">
+    <span class="pkg-name">EMESSAGE_CREATE</span>
+    <div class="pkg-meta">таблицы: EMSG_STREAM, EMSG, BATCH_SCHEMA_SEND</div>
+    <table class="proc-table">
+      <tr><th>Процедура</th><th>Что делает</th></tr>
+      <tr><td class="proc-name">STREAM(cause, client, ...)</td><td>Причины 3=долг/4=инфо/5=коды доступа → EMSG_STATUS=3 (не подхватывается Laravel-view!)</td></tr>
+      <tr><td class="proc-name">BOX_SEND_POSTOFFICE</td><td><strong>Единственный живой путь</strong>: массовый INSERT по клиентам, кому сегодня отправлена посылка, EMSG_STATUS=1 — именно это читает Laravel</td></tr>
+    </table>
+    <div class="callout warn">
+      <span class="callout-label">Два конвейера с разной семантикой статуса</span>
+      <p><code>STREAM</code> ставит <code>EMSG_STATUS=3</code>, <code>BOX_SEND_POSTOFFICE</code> — <code>=1</code>.
+      Это фактически два независимых, не согласованных друг с другом способа наполнения одной таблицы.</p>
+    </div>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">EMESSAGE_CONTENT</span>
+    <p>Генерация текста для причин долг/инфо/коды — тексты <strong>захардкожены прямо в PL/SQL</strong>, отдельной
+    таблицы шаблонов нет. Выбор кодировки (<code>PRM_SMSCOUNT</code>) — минимизирует число SMS-частей (GSM7
+    транслит vs UNICODE кириллица), то есть оптимизирует по стоимости отправки.</p>
+    <div class="callout warn">
+      <span class="callout-label">Хардкод в тексте сообщений</span>
+      <p>Номера горячей линии оператора связи (<code>MTS +375296910330</code>) зашиты прямо в текст SMS.</p>
+    </div>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">EMESSAGE_SEND</span>
+    <p>Вопреки названию — <strong>не отправляет</strong> сообщения (нет ни UTL_HTTP, ни UTL_SMTP). Только отдаёт
+    курсор на неотправленные (<code>STREAM_DATA</code>) и принимает callback от внешнего шлюза
+    (<code>SMS_REPLY_*</code> → <code>EMSG_REPLY_HTTP/SERVICE</code>).</p>
+    <div class="callout dead">
+      <span class="callout-label">Осиротевший API</span>
+      <p>Ни одна процедура этого пакета нигде не вызывается во всём дампе — рассчитан на вызов из внешнего
+      JSP-приложения, которого нет в этой схеме. Закомментированная <code>EMAIL_ACTIVECAMPAIGN</code> — старая
+      попытка интеграции с ActiveCampaign через database link <code>@EMS</code>, полностью отключена.</p>
+    </div>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">EMESSAGE_GUI</span>
+    <p>Генератор ссылок для карточки клиента ("отправить сообщение" → внешний JSP).</p>
+    <div class="callout danger">
+      <span class="callout-label">Dev-хост в проде</span>
+      <p>Константа <code>APP_HOST := 'dev.office.eshko.net:8282'</code> зашита прямо в теле пакета — если это
+      боевая схема, все ссылки "отправить сообщение" в GUI ведут на dev-окружение.</p>
+    </div>
+  </div>
+
+  <h2 id="dead-pipeline">Заброшенная альтернатива: подсистема MESSAGE_*</h2>
+  <p>Параллельно с EMSG существует отдельный, более общий набор таблиц (<code>MESSAGE</code>,
+  <code>MESSAGE_FLOW</code>, <code>MESSAGE_TEMPLATE</code>, <code>MESSAGE_CAUSE</code>) и обслуживающих их
+  пакетов — судя по всему, недостроенная попытка заменить EMSG.</p>
+  <div class="pkg">
+    <span class="pkg-name">MESSAGE_BUILD · MESSAGE_BUILD_DATA · MESSAGE_SYSTEM_TRG</span>
+    <p><code>MESSAGE_BUILD.FLOW</code> должен по причине (<code>account_debt</code>, <code>info_client</code>,
+    <code>access_efront</code>, <code>send_lesson</code>) собирать сообщение через
+    <code>MESSAGE_BUILD_DATA.DEBT_SMS/INFO_SMS/ONLINE_ACCESS_SMS</code> и класть в <code>MESSAGE_FLOW</code>
+    (обслуживается триггером из <code>MESSAGE_SYSTEM_TRG</code>).</p>
+    <div class="callout dead">
+      <span class="callout-label">Полностью неактивная цепочка</span>
+      <p><code>MESSAGE_BUILD.FLOW</code> нигде не вызывается во всём дампе, кроме одного ручного вызова
+      <code>PREVIEW</code> из веб-админки (сценарий <code>bill_course</code>). Ветка <code>send_lesson</code> даже
+      не заполняет данные. Раз <code>FLOW</code> не вызывается — триггер <code>MESSAGE_FLOW_TRG</code> тоже
+      фактически никогда не срабатывает. Оба билдера контента (старый EMSG и этот новый) используют общий
+      вспомогательный <code>GETDATA.CLIENT_COMMUNICATION</code> — единственная точка пересечения двух поколений.</p>
+    </div>
+  </div>
+
+  <h2 id="callcenter">REV_SMS — ручной call-центр (отдельный от EMSG)</h2>
+  <div class="pkg">
+    <span class="pkg-name">REV_SMS</span>
+    <div class="pkg-meta">~4000 строк. Своя таблица SMS (не EMSG!), CLIENT_EVENT, BLACK_NUMBER, REGISTRY_FOLDER</div>
+    <p>Административный UI телемаркетинга поверх собственной таблицы <code>SMS</code> — операторы вручную
+    отправляют/принимают SMS в рамках "событий контакта", с балансировкой нагрузки между операторами
+    (<code>CheckAddTelemarketingSMS</code>) и блэклистом номеров.</p>
+    <div class="callout dead">
+      <span class="callout-label">Отправка происходит в браузере оператора, не на сервере</span>
+      <p>Функции пакета генерируют <strong>VBScript/ActiveX</strong>-код (<code>CreateObject("AxSmsServer.MessageDB")</code>)
+      прямо внутри HTML-ответа — реальная отправка идёт через стороннее модемное ПО на компьютере оператора,
+      таблица <code>SMS</code> в Oracle лишь зеркало. Это несовместимо с любым современным браузером
+      (ActiveX отключён везде, кроме legacy IE) — весь механизм, скорее всего, физически не работает уже много лет.</p>
+    </div>
+    <div class="callout dead">
+      <span class="callout-label">net send — удалённая из Windows команда</span>
+      <p><code>sms_wait_notice</code> вызывает <code>WScript.Run("net send ...")</code> для всплывающего окна у
+      оператора — команда Messenger Service удалена из Windows начиная с Vista/2008.</p>
+    </div>
+  </div>
+
+  <h2 id="email">REV_EMAIL — SMTP-библиотека "по требованию"</h2>
+  <div class="pkg">
+    <span class="pkg-name">REV_EMAIL</span>
+    <p>Самодостаточная синхронная SMTP-библиотека (доработанный демо-пакет Oracle) — <code>mail</code>,
+    <code>mail_attach</code>, <code>mail_html</code>. Вложения скачиваются по HTTP и заливаются в письмо base64.
+    Вызывается напрямую из бизнес-кода (например, из REV_WEB_REQUEST при восстановлении пароля), в обход EMSG.</p>
+    <div class="callout danger">
+      <span class="callout-label">Пароль SMTP в открытом виде в исходнике</span>
+      <p>Прямо в спецификации пакета: <code>smtp_host := '10.20.36.64'; smtp_login := 'action@eshko.pro'; smtp_password := 'fffa75Ms1';</code>
+      — виден всем, у кого есть доступ на чтение исходников схемы.</p>
+    </div>
+    <div class="callout dead">
+      <span class="callout-label">mail_html отправляет пустое тело</span>
+      <p>Строка фактической записи данных вложения закомментирована — <code>mail_html</code>/<code>attach_html</code>
+      в текущем виде отправляют письмо с пустым HTML-телом.</p>
+    </div>
+  </div>
+
+  <h2 id="webrequest">REV_WEB_REQUEST — приём заявок и авторизация с сайта</h2>
+  <div class="pkg">
+    <span class="pkg-name">REV_WEB_REQUEST</span>
+    <p>Обработчик XML/CGI-запросов от сайта: заказы, регистрация/авторизация в кабинете, приём ДЗ. Единственная
+    связь с рассылками — прямой вызов <code>rev_email.mail_attach</code> при восстановлении пароля.</p>
+    <div class="callout danger">
+      <span class="callout-label">Пароли в открытом виде — самая заметная находка домена</span>
+      <p><code>client.client_password</code> хранится и сравнивается как обычная строка, без хеширования.
+      Восстановление пароля <strong>отправляет реальный пароль по email</strong> в теле письма. Все параметры
+      запроса, включая пароли, построчно логируются в текстовый файл <code>log_YYYYMMDD.txt</code> на диске —
+      компрометирующий журнал открытым текстом.</p>
+    </div>
+  </div>
+
+  <h2 id="lifecycle">Схема пути сообщения</h2>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 820 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Путь сообщения от события до отправки">
+      <g font-size="11.5">
+        <rect x="10" y="20" width="170" height="60" rx="8" class="dg-box-accent"/>
+        <text x="95" y="43" text-anchor="middle" class="dg-text-accent" font-weight="600">Отправлена посылка</text>
+        <text x="95" y="60" text-anchor="middle" class="dg-text-dim" font-size="10">COMMUNICATION.ALERT_SEND_POST_BATCH</text>
+
+        <rect x="220" y="20" width="170" height="60" rx="8" class="dg-box-accent"/>
+        <text x="305" y="43" text-anchor="middle" class="dg-text-accent" font-weight="600">Сборка сообщения</text>
+        <text x="305" y="60" text-anchor="middle" class="dg-text-dim" font-size="10">EMESSAGE_CREATE.BOX_SEND_POSTOFFICE</text>
+
+        <rect x="430" y="20" width="170" height="60" rx="8" class="dg-box-accent"/>
+        <text x="515" y="43" text-anchor="middle" class="dg-text-accent" font-weight="600">Запись в очередь</text>
+        <text x="515" y="60" text-anchor="middle" class="dg-text-dim" font-size="10">EMSG, STATUS=1</text>
+
+        <rect x="640" y="20" width="170" height="60" rx="8" class="dg-box-accent"/>
+        <text x="725" y="43" text-anchor="middle" class="dg-text-accent" font-weight="600">Читает Laravel</text>
+        <text x="725" y="60" text-anchor="middle" class="dg-text-dim" font-size="10">API_MESSAGES_SMS_DAILY</text>
+
+        <path d="M180,50 L220,50" class="dg-arrow-accent"/>
+        <path d="M390,50 L430,50" class="dg-arrow-accent"/>
+        <path d="M600,50 L640,50" class="dg-arrow-accent"/>
+
+        <rect x="10" y="140" width="170" height="60" rx="8" class="dg-box-dead"/>
+        <text x="95" y="163" text-anchor="middle" class="dg-text-dim" font-weight="600">Долг / инфо / коды</text>
+        <text x="95" y="180" text-anchor="middle" class="dg-text-dim" font-size="10">EMESSAGE_CREATE.STREAM</text>
+
+        <rect x="220" y="140" width="170" height="60" rx="8" class="dg-box-dead"/>
+        <text x="305" y="163" text-anchor="middle" class="dg-text-dim" font-weight="600">EMSG, STATUS=3</text>
+        <text x="305" y="180" text-anchor="middle" class="dg-text-dim" font-size="10">Laravel-view это не видит</text>
+
+        <rect x="430" y="140" width="170" height="60" rx="8" class="dg-box-dead"/>
+        <text x="515" y="163" text-anchor="middle" class="dg-text-dim" font-weight="600">EMESSAGE_SEND</text>
+        <text x="515" y="180" text-anchor="middle" class="dg-text-dim" font-size="10">никем не вызывается</text>
+
+        <path d="M180,170 L220,170" class="dg-arrow" stroke-dasharray="3 3"/>
+        <path d="M390,170 L430,170" class="dg-arrow" stroke-dasharray="3 3"/>
+      </g>
+    </svg>
+    <div class="diagram-caption">Верхняя строка (акцент) — единственный реально работающий путь. Нижняя строка (пунктир) — технически существующая, но не подключённая ни к чему ветка.</div>
+  </div>
+
+  <footer class="page-footer">См. также: <a href="findings.html">Находки и риски</a> — сводка всех security-проблем домена в одном месте.</footer>
+</main>
+</div>
+</body>
+</html>

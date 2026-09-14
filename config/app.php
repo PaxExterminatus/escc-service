@@ -172,6 +172,7 @@ return [
         App\Domain\Cabinet\CabinetServiceProvider::class,
         \App\Domain\App\Profile\AppProfileServiceProvider::class,
         \App\Domain\App\Container\AppContainerServiceProvider::class,
+        \App\Domain\App\Invoice\AppInvoiceServiceProvider::class,
     ],
 
     /*

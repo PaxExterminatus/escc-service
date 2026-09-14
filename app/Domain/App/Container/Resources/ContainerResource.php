@@ -20,6 +20,7 @@ class ContainerResource extends JsonResource
             'code' => $this->container_code,
             'status' => $this->status_id, // строка-имя статуса, см. ContainerStatusCast/ContainerStatusEnum
             'created_at' => $this->container_date?->format('d.m.Y H:i'),
+            'send_date' => $this->send_date?->format('d.m.Y H:i'),
         ];
     }
 }

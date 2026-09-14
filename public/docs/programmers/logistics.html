@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Заказы и логистика — REVELATION</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <div class="brand">REVELATION</div>
+  <div class="brand-sub">документация бизнес-логики PL/SQL</div>
+  <nav>
+    <a href="index.html">Обзор</a>
+    <div class="group-label">Бизнес-домены</div>
+    <a href="clients.html">Клиенты и территории</a>
+    <a href="finance.html">Финансы и платежи</a>
+    <a href="catalogue.html">Каталог курсов</a>
+    <a href="logistics.html" class="active">Заказы и логистика</a>
+    <a href="messaging.html">Рассылки и сообщения</a>
+    <a href="marketing.html">Маркетинг-кампании</a>
+    <a href="reports.html">Отчёты и статистика</a>
+    <a href="api.html">API-слой интеграций</a>
+    <div class="group-label">Итого</div>
+    <a href="findings.html">Находки и риски</a>
+  </nav>
+</aside>
+
+<main class="main">
+  <h1><span class="eyebrow">Домен 04</span>Заказы, склад и почтовая рассылка</h1>
+  <p class="lede">
+    Конвейер "от корзины клиента до физической (или электронной) отправки материалов курса": расчёт почтового
+    тарифа, сборка посылки-контейнера, фиксация отправки с проводкой в бухгалтерию.
+  </p>
+
+  <div class="exec">
+    <div class="exec-label">Для руководства</div>
+    <div class="exec-row">
+      <span class="k">Что это простыми словами</span>
+      Как заказ клиента превращается в реально отправленную посылку: считаем стоимость доставки, собираем
+      посылку, отправляем, отмечаем как оплаченную.
+    </div>
+    <div class="exec-row">
+      <span class="k">Состояние</span><span class="exec-health h-warn"><i></i>требует внимания</span>
+      Работает, но ставка налога на почтовые тарифы задана в коде <strong>дважды, в двух разных местах, с двумя
+      разными значениями</strong> — нет единого источника истины.
+    </div>
+    <div class="exec-row">
+      <span class="k">Главный риск для бизнеса</span>
+      Риск тихой финансовой неточности: если ставку когда-то поменяют в одном месте и забудут про второе,
+      часть тарифов будет считаться неверно, и никто не заметит, пока не начнут разбираться жалобы клиентов
+      или расхождения в отчётах. Также найден отчётный скрипт с захардкоженным ID одного конкретного клиента —
+      признак разового решения, оставленного в общем инструменте.
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-label">Не всё, что называется похоже — про логистику</span>
+    <p>Часть пакетов из этого домена (<code>REV_MARKET</code>, <code>WH</code>) вопреки названиям относится к
+    соседним, но иным поддоменам: <code>REV_MARKET</code> — рекламная логистика (промо-материалы по почтовым
+    отделениям), <code>WH</code> ("data WareHouse") — ETL для маркетинговой сегментации клиентов, а не складской
+    учёт. <code>REV_GENERAL</code>/<code>REV_GENERAL_BS</code> — вообще общий UI-фреймворк админки, не логистика.
+    Не путайте при навигации по коду.</p>
+  </div>
+
+  <div class="tier-switch">
+    <a href="../guides/logistics.html">&larr; Руководство (для управленцев)</a>
+    <a class="current">Для программистов</a>
+    <a href="../operators/index.html">Для операторов &rarr;</a>
+  </div>
+
+  <div class="toc">
+    <a href="#box">BOX_PKG_UTILS — точка отправки</a>
+    <a href="#weborder">WEB_ORDER — автосоздание из веб-заказа</a>
+    <a href="#fee">POST_FEE_PKG / POSTAL_RATE_CONTROL — тарифы</a>
+    <a href="#misc">Прочие пакеты</a>
+    <a href="#lifecycle">Жизненный цикл контейнера</a>
+  </div>
+
+  <h2 id="box">BOX_PKG_UTILS — точка отправки</h2>
+  <div class="pkg">
+    <span class="pkg-name">BOX_PKG_UTILS</span>
+    <div class="pkg-meta">таблицы: CONTAINER, CLIENT_BASKET, CLIENT_SUB, CONTAINER_DEBT, OBJECT_CONTRACT, MONEY_DIST</div>
+    <p>Ядро "точки отправки" контейнера. <code>BOX_SENDDATE(containerID)</code> — главная процедура: переводит
+    <code>CONTAINER.STATUS_ID</code> в <code>boxStatusSent(70)</code>, ставит <code>SEND_DATE</code>, при
+    <code>CONTAINER_COST&gt;0</code> создаёт бухгалтерскую проводку через <code>Obj$MoneyDist</code>, закрывает
+    <code>CONTAINER_DEBT</code>, чистит "хвосты" по позициям корзины. Дополнительно — побочные эффекты на статус
+    подписки (при "полном комплекте" или последнем блоке помесячного курса переводит <code>CLIENT_SUB</code> в
+    завершённое состояние).</p>
+    <table class="proc-table">
+      <tr><th>Функция</th><th>Что делает</th></tr>
+      <tr><td class="proc-name">BOX_CHECK_CATEGORY</td><td>Есть ли в контейнере товар заданной категории</td></tr>
+      <tr><td class="proc-name">BoxLastPaymentDate</td><td>Дата последнего успешного платежа по контейнеру</td></tr>
+    </table>
+    <div class="callout warn">
+      <span class="callout-label">Магический префикс категории</span>
+      <p>Код "последнего юнита" курса строится как строка <code>'18.' || LTRIM(...)</code> — префикс
+      <code>18.</code> зашит в PL/SQL для сопоставления с <code>CATEGORY.CATEGORY_CODE</code>, привязка к
+      структуре кода категорий нигде явно не документирована.</p>
+    </div>
+  </div>
+
+  <h2 id="weborder">WEB_ORDER — автосоздание клиента из веб-заказа</h2>
+  <div class="pkg">
+    <span class="pkg-name">WEB_ORDER</span>
+    <div class="pkg-meta">таблицы: WORDERS_MAIN, CLIENT, CLIENT_PROPERTY, WEB_ORDER_AUTO_REG(_ERROR)</div>
+    <p><code>AUTO_REG(WID)</code> сопоставляет клиента по email/телефону: уникальное совпадение по телефону →
+    дозаполняет email; уникальное по email → дозаполняет телефон; оба совпали на одном клиенте → выбор его;
+    совпадений нет → <code>AUTO_REG_CLIENT_CREATE</code>. После определения клиента контейнер создаётся сразу со
+    статусом <code>Sent(70)</code>, почтовой схемой "email"(11) — весь конвейер сборки/тарифа обходится, посылка
+    считается отправленной в момент создания.</p>
+    <div class="callout warn">
+      <span class="callout-label">Неоднозначные случаи не обрабатываются</span>
+      <p>Если email матчит нескольких клиентов — ветки в <code>CASE</code> нет, <code>CLIENT_ID</code> остаётся
+      NULL, ошибка ловится только общим <code>WHEN OTHERS</code> и логируется в <code>WEB_ORDER_AUTO_ERROR</code>.
+      Подробный разбор всей цепочки заявка→клиент — на странице <a href="clients.html#worders">Клиенты</a>.</p>
+    </div>
+  </div>
+
+  <h2 id="fee">POST_FEE_PKG / POSTAL_RATE_CONTROL — почтовые тарифы</h2>
+  <div class="pkg">
+    <span class="pkg-name">POST_FEE_PKG</span>
+    <div class="pkg-meta">таблица: POST_FEE</div>
+    <p><code>POST_FEE(post_schema, weight, cost, ...)</code> маппит схему доставки на код тарифа и одну из двух
+    моделей веса. Итог умножается на <strong>захардкоженный коэффициент 1.2</strong> (НДС/наценка не из
+    справочника).</p>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">POSTAL_RATE_CONTROL</span>
+    <p><code>GET_COST(code, addNds=1)</code> — читает тариф, опционально добавляет НДС через
+    <strong>отдельно захардкоженную</strong> константу <code>NDS := 0.2</code>.</p>
+    <div class="callout warn">
+      <span class="callout-label">Два независимых источника ставки НДС</span>
+      <p>POST_FEE_PKG использует множитель <code>1.2</code> прямо в формуле, POSTAL_RATE_CONTROL — отдельную
+      константу <code>0.2</code>. Единой точки истины по ставке налога для почтовых тарифов нет — при изменении
+      ставки нужно помнить про оба места.</p>
+    </div>
+  </div>
+
+  <h2 id="misc">Прочие пакеты</h2>
+  <div class="pkg">
+    <span class="pkg-name">WH</span>
+    <p>Вопреки названию — не склад. Единственная процедура <code>CLIENT_CATEGOTY_CREATE</code> (опечатка в
+    имени) перестраивает таблицу-витрину <code>WH_CLIENT_CATEGORY</code> (TRUNCATE + INSERT) для маркетинговой
+    сегментации по интересам; список категорий (Красота и здоровье, Программирование и т.д.) зашит ID прямо в SQL.</p>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">REV_MARKET</span>
+    <p>Не про заказы учеников — рекламная логистика: управление точками распространения листовок (почтовые
+    отделения с остатками рекламных материалов). Есть редкая точка интеграции с внешней БД через
+    database link <code>market_p@stock</code> (файл <code>MARKET_P.DBF</code> — легаси-система учёта остатков).</p>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">ADV_OBJECT_FINANCE / ADVOBJ_FININF</span>
+    <p>Два практически дублирующих друг друга генератора HTML-выписки по клиенту (курсы, оплаты, возвраты,
+    остаток долга) в <code>EMT3_CLIENT_MESSAGE</code>.</p>
+    <div class="callout danger">
+      <span class="callout-label">Захардкоженный клиент в проде</span>
+      <p><code>ADV_OBJECT_FINANCE.FIN_CREATE(vCLIENT_ID)</code> — параметр игнорируется, фильтр жёстко
+      <code>AND cs.CLIENT_ID = 2333</code>. Похоже на одноразовый скрипт для конкретного клиента, оставленный в
+      проде под видом параметризованной процедуры. <code>ADVOBJ_FININF</code> — корректно параметризованная,
+      более поздняя версия того же самого — оба сосуществуют.</p>
+    </div>
+  </div>
+  <div class="pkg">
+    <span class="pkg-name">REV_GENERAL / REV_GENERAL_BS</span>
+    <p>Общий UI-фреймворк админки (HTML-обвязка, верхнее меню, права доступа, логирование действий) — включён
+    в этот домен по заданию, но прямого отношения к логистике не имеет. Реальная логика сборки партии/возврата
+    посылок физически находится в <code>REV_PROCESSING</code> и <code>REV_WEB</code> (не разбирались отдельно).</p>
+  </div>
+
+  <h2 id="lifecycle">Жизненный цикл контейнера (заказа)</h2>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 820 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Жизненный цикл контейнера">
+      <g font-size="11.5">
+        <rect x="10" y="20" width="145" height="64" rx="8" class="dg-box"/>
+        <text x="82" y="42" text-anchor="middle" class="dg-text" font-weight="600">1. Создание корзины</text>
+        <text x="82" y="59" text-anchor="middle" class="dg-text-dim" font-size="10">Temporary(-1) /</text>
+        <text x="82" y="73" text-anchor="middle" class="dg-text-dim" font-size="10">InProgress(2)</text>
+
+        <rect x="185" y="20" width="145" height="64" rx="8" class="dg-box"/>
+        <text x="257" y="42" text-anchor="middle" class="dg-text" font-weight="600">2. Почтовая схема</text>
+        <text x="257" y="59" text-anchor="middle" class="dg-text-dim" font-size="10">на руки / email /</text>
+        <text x="257" y="73" text-anchor="middle" class="dg-text-dim" font-size="10">онлайн</text>
+
+        <rect x="360" y="20" width="145" height="64" rx="8" class="dg-box"/>
+        <text x="432" y="42" text-anchor="middle" class="dg-text" font-weight="600">3. Расчёт тарифа</text>
+        <text x="432" y="59" text-anchor="middle" class="dg-text-dim" font-size="10">POST_FEE_PKG</text>
+        <text x="432" y="73" text-anchor="middle" class="dg-text-dim" font-size="10">(бумажные схемы)</text>
+
+        <rect x="535" y="20" width="145" height="64" rx="8" class="dg-box"/>
+        <text x="607" y="42" text-anchor="middle" class="dg-text" font-weight="600">4. Сборка</text>
+        <text x="607" y="59" text-anchor="middle" class="dg-text-dim" font-size="10">Assembling(50) →</text>
+        <text x="607" y="73" text-anchor="middle" class="dg-text-dim" font-size="10">Ready(45)</text>
+
+        <rect x="637" y="140" width="170" height="64" rx="8" class="dg-box-accent"/>
+        <text x="722" y="162" text-anchor="middle" class="dg-text-accent" font-weight="600">5. Отправка</text>
+        <text x="722" y="179" text-anchor="middle" class="dg-text-dim" font-size="10">BOX_SENDDATE → Sent(70)</text>
+        <text x="722" y="193" text-anchor="middle" class="dg-text-dim" font-size="10">+ проводка MONEY_DIST</text>
+
+        <rect x="420" y="140" width="170" height="64" rx="8" class="dg-box"/>
+        <text x="505" y="162" text-anchor="middle" class="dg-text" font-weight="600">6. Очистка связей</text>
+        <text x="505" y="179" text-anchor="middle" class="dg-text-dim" font-size="10">OBJECT_CONTRACT,</text>
+        <text x="505" y="193" text-anchor="middle" class="dg-text-dim" font-size="10">TRANSACTION_LOG</text>
+
+        <rect x="205" y="140" width="170" height="64" rx="8" class="dg-box"/>
+        <text x="290" y="162" text-anchor="middle" class="dg-text" font-weight="600">7. Побочные эффекты</text>
+        <text x="290" y="179" text-anchor="middle" class="dg-text-dim" font-size="10">CLIENT_SUB → Finished(4),</text>
+        <text x="290" y="193" text-anchor="middle" class="dg-text-dim" font-size="10">если это финал курса</text>
+
+        <rect x="10" y="140" width="170" height="64" rx="8" class="dg-box-dead"/>
+        <text x="95" y="162" text-anchor="middle" class="dg-text-dim" font-weight="600">Веб-заказ (авто)</text>
+        <text x="95" y="179" text-anchor="middle" class="dg-text-dim" font-size="10">схлопывает 2-6 в момент</text>
+        <text x="95" y="193" text-anchor="middle" class="dg-text-dim" font-size="10">создания (мёртвый код)</text>
+
+        <path d="M155,52 L185,52" class="dg-arrow"/>
+        <path d="M330,52 L360,52" class="dg-arrow"/>
+        <path d="M505,52 L535,52" class="dg-arrow"/>
+        <path d="M680,84 L722,140" class="dg-arrow-accent"/>
+        <path d="M637,172 L590,172" class="dg-arrow-accent"/>
+        <path d="M420,172 L375,172" class="dg-arrow"/>
+      </g>
+    </svg>
+    <div class="diagram-caption">Пунктирный блок слева — альтернативный (и сейчас неактивный) путь: автосозданный веб-заказ проходит все шаги мгновенно, минуя тариф и сборку.</div>
+  </div>
+
+  <footer class="page-footer">См. также: <a href="finance.html">Финансы</a> — проводка при отправке (шаг 5) описана там подробнее.</footer>
+</main>
+</div>
+</body>
+</html>

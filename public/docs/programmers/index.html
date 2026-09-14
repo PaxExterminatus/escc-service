@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REVELATION — документация бизнес-логики</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <div class="brand">REVELATION</div>
+  <div class="brand-sub">документация бизнес-логики PL/SQL</div>
+  <nav>
+    <a href="index.html" class="active">Обзор</a>
+    <div class="group-label">Бизнес-домены</div>
+    <a href="clients.html">Клиенты и территории</a>
+    <a href="finance.html">Финансы и платежи</a>
+    <a href="catalogue.html">Каталог курсов</a>
+    <a href="logistics.html">Заказы и логистика</a>
+    <a href="messaging.html">Рассылки и сообщения</a>
+    <a href="marketing.html">Маркетинг-кампании</a>
+    <a href="reports.html">Отчёты и статистика</a>
+    <a href="api.html">API-слой интеграций</a>
+    <div class="group-label">Итого</div>
+    <a href="findings.html">Находки и риски</a>
+  </nav>
+</aside>
+
+<main class="main">
+  <h1><span class="eyebrow">Legacy Oracle CRM/ERP</span>Что такое REVELATION</h1>
+  <p class="lede">
+    Схема Oracle <code>REVELATION</code> (база <code>victory</code>) — многолетняя CRM/ERP-система компании
+    дистанционного образования (курсы по почте и онлайн, бренд ЕШКО). Это не одна программа, а несколько
+    поколений PL/SQL-кода поверх общей модели данных: клиент → заказ (контейнер) → деньги → уроки → рассылки.
+    Документ ниже — карта того, что реально делает эта бизнес-логика, построенная чтением DDL и PL/SQL
+    напрямую из дампа схемы (431 таблица, ~150 пакетов).
+  </p>
+
+  <div class="tier-switch">
+    <a href="../guides/index.html">&larr; Руководство (для управленцев)</a>
+    <a class="current">Для программистов</a>
+    <a href="../operators/index.html">Для операторов &rarr;</a>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat"><div class="n">~150</div><div class="l">PL/SQL-пакетов</div></div>
+    <div class="stat"><div class="n">431</div><div class="l">таблицы</div></div>
+    <div class="stat"><div class="n">8</div><div class="l">бизнес-доменов</div></div>
+    <div class="stat"><div class="n">5</div><div class="l">внешних интеграций</div></div>
+  </div>
+
+  <h2>Карта доменов</h2>
+  <p>Каждый домен — отдельная страница: назначение, разбор ключевых пакетов, схема главного бизнес-процесса,
+  и раздел "неожиданное" — хаки, мёртвый код, риски безопасности, найденные при чтении исходников.</p>
+
+  <div class="domain-grid">
+    <a class="domain-tile" href="clients.html">
+      <div class="tnum">01</div>
+      <h3>Клиенты и территории</h3>
+      <p>Карточка клиента, география, преподаватели, консультанты (внешние партнёры), веб-заказы с сайта.</p>
+    </a>
+    <a class="domain-tile" href="finance.html">
+      <div class="tnum">02</div>
+      <h3>Финансы и платежи</h3>
+      <p>Приём оплат (почта, банк, ЕРИП), разноска на счета, возвраты, списания, бухгалтерский журнал MONEY_DIST.</p>
+    </a>
+    <a class="domain-tile" href="catalogue.html">
+      <div class="tnum">03</div>
+      <h3>Каталог курсов</h3>
+      <p>Структура курсов/уроков, расчёт цены, доступ к онлайн-урокам, интеграция с LMS eFront.</p>
+    </a>
+    <a class="domain-tile" href="logistics.html">
+      <div class="tnum">04</div>
+      <h3>Заказы и логистика</h3>
+      <p>Жизненный цикл посылки (контейнера) — от корзины до отправки Белпочтой, почтовые тарифы.</p>
+    </a>
+    <a class="domain-tile" href="messaging.html">
+      <div class="tnum">05</div>
+      <h3>Рассылки и сообщения</h3>
+      <p>Очередь SMS/Email (EMSG), ручной call-центр, конкурирующая недостроенная MESSAGE_*-подсистема.</p>
+    </a>
+    <a class="domain-tile" href="marketing.html">
+      <div class="tnum">06</div>
+      <h3>Маркетинг-кампании</h3>
+      <p>4 поколения движков сегментации и рассылок (EM_/EMT/CM_/CAMPAIGN_), взыскание долга как кампания.</p>
+    </a>
+    <a class="domain-tile" href="reports.html">
+      <div class="tnum">07</div>
+      <h3>Отчёты и статистика</h3>
+      <p>Универсальный report engine с очередью задач, планировщиком и сборкой файлов через внешний движок.</p>
+    </a>
+    <a class="domain-tile" href="api.html">
+      <div class="tnum">08</div>
+      <h3>API-слой интеграций</h3>
+      <p>5 независимых внешних интеграций: наш Laravel-сервис, eFront, Campus, Oktell, Viber/Hyber.</p>
+    </a>
+  </div>
+
+  <h2>Как всё связано</h2>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 860 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Схема связей доменов REVELATION">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" class="dg-arrowhead"/>
+        </marker>
+        <marker id="arrowAccent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" class="dg-arrowhead-accent"/>
+        </marker>
+      </defs>
+
+      <!-- core -->
+      <rect x="330" y="250" width="200" height="70" rx="10" class="dg-box-accent"/>
+      <text x="430" y="278" text-anchor="middle" class="dg-text-accent" font-size="13" font-weight="700">Ядро REVELATION</text>
+      <text x="430" y="296" text-anchor="middle" class="dg-text-dim" font-size="11">CLIENT · CONTAINER · MONEY_DIST</text>
+
+      <!-- domain nodes around -->
+      <!-- clients (top-left) -->
+      <rect x="60" y="70" width="170" height="56" rx="9" class="dg-box"/>
+      <text x="145" y="94" text-anchor="middle" class="dg-text" font-size="12.5" font-weight="600">Клиенты</text>
+      <text x="145" y="111" text-anchor="middle" class="dg-text-dim" font-size="10.5">карточка, территории</text>
+
+      <!-- catalogue (top) -->
+      <rect x="345" y="60" width="170" height="56" rx="9" class="dg-box"/>
+      <text x="430" y="84" text-anchor="middle" class="dg-text" font-size="12.5" font-weight="600">Каталог курсов</text>
+      <text x="430" y="101" text-anchor="middle" class="dg-text-dim" font-size="10.5">курсы, уроки, eFront</text>
+
+      <!-- logistics (top-right) -->
+      <rect x="630" y="70" width="170" height="56" rx="9" class="dg-box"/>
+      <text x="715" y="94" text-anchor="middle" class="dg-text" font-size="12.5" font-weight="600">Заказы и логистика</text>
+      <text x="715" y="111" text-anchor="middle" class="dg-text-dim" font-size="10.5">посылка, почта</text>
+
+      <!-- finance (right) -->
+      <rect x="660" y="266" width="170" height="56" rx="9" class="dg-box"/>
+      <text x="745" y="290" text-anchor="middle" class="dg-text" font-size="12.5" font-weight="600">Финансы</text>
+      <text x="745" y="307" text-anchor="middle" class="dg-text-dim" font-size="10.5">оплаты, долг</text>
+
+      <!-- reports (bottom-right) -->
+      <rect x="630" y="440" width="170" height="56" rx="9" class="dg-box"/>
+      <text x="715" y="464" text-anchor="middle" class="dg-text" font-size="12.5" font-weight="600">Отчёты</text>
+      <text x="715" y="481" text-anchor="middle" class="dg-text-dim" font-size="10.5">report engine</text>
+
+      <!-- marketing (bottom) -->
+      <rect x="345" y="452" width="170" height="56" rx="9" class="dg-box"/>
+      <text x="430" y="476" text-anchor="middle" class="dg-text" font-size="12.5" font-weight="600">Маркетинг-кампании</text>
+      <text x="430" y="493" text-anchor="middle" class="dg-text-dim" font-size="10.5">сегментация, EM_/EMT/CM_</text>
+
+      <!-- messaging (bottom-left) -->
+      <rect x="60" y="440" width="170" height="56" rx="9" class="dg-box"/>
+      <text x="145" y="464" text-anchor="middle" class="dg-text" font-size="12.5" font-weight="600">Рассылки</text>
+      <text x="145" y="481" text-anchor="middle" class="dg-text-dim" font-size="10.5">EMSG SMS/Email</text>
+
+      <!-- api layer (left) -->
+      <rect x="30" y="266" width="170" height="56" rx="9" class="dg-box"/>
+      <text x="115" y="290" text-anchor="middle" class="dg-text" font-size="12.5" font-weight="600">API-слой</text>
+      <text x="115" y="307" text-anchor="middle" class="dg-text-dim" font-size="10.5">внешние интеграции</text>
+
+      <!-- connections to core -->
+      <path d="M230,110 L345,255" class="dg-arrow"/>
+      <path d="M430,116 L430,250" class="dg-arrow"/>
+      <path d="M660,105 L520,255" class="dg-arrow"/>
+      <path d="M660,290 L530,285" class="dg-arrow"/>
+      <path d="M660,455 L520,320" class="dg-arrow"/>
+      <path d="M430,452 L430,320" class="dg-arrow"/>
+      <path d="M230,455 L345,320" class="dg-arrow"/>
+      <path d="M200,295 L330,285" class="dg-arrow-accent"/>
+
+      <!-- external ring -->
+      <rect x="0" y="10" width="150" height="34" rx="8" class="dg-box-ext"/>
+      <text x="75" y="31" text-anchor="middle" class="dg-text-dim" font-size="10.5">Laravel escc-service</text>
+
+      <rect x="360" y="10" width="150" height="34" rx="8" class="dg-box-ext"/>
+      <text x="435" y="31" text-anchor="middle" class="dg-text-dim" font-size="10.5">eFront / Campus (LMS)</text>
+
+      <rect x="710" y="10" width="150" height="34" rx="8" class="dg-box-ext"/>
+      <text x="785" y="31" text-anchor="middle" class="dg-text-dim" font-size="10.5">Oktell / Viber-Hyber</text>
+
+      <rect x="30" y="530" width="150" height="24" rx="8" class="dg-box-ext"/>
+      <text x="105" y="546" text-anchor="middle" class="dg-text-dim" font-size="10">ЕРИП / hgrosh.by</text>
+
+      <path d="M75,44 L115,266" class="dg-arrow" stroke-dasharray="3 3"/>
+      <path d="M435,44 L430,60" class="dg-arrow" stroke-dasharray="3 3"/>
+      <path d="M785,44 L115,290" class="dg-arrow" stroke-dasharray="3 3"/>
+      <path d="M105,530 L745,322" class="dg-arrow" stroke-dasharray="3 3"/>
+    </svg>
+    <div class="diagram-caption">Восемь доменов группируются вокруг общего ядра (клиент/заказ/деньги); внешние системы почти всегда заходят через API-слой (акцентная связь слева) — кроме ЕРИП, который ходит прямо в финансы по FTP.</div>
+  </div>
+
+  <h2>Как читать документацию</h2>
+  <p>Каждая доменная страница построена одинаково:</p>
+  <ol>
+    <li><strong>Назначение</strong> — что домен делает для бизнеса, в 2-3 предложениях.</li>
+    <li><strong>Пакеты</strong> — разбор ключевых PL/SQL-пакетов: назначение, процедуры/функции, таблицы.</li>
+    <li><strong>Главный процесс</strong> — блок-схема основного бизнес-цикла домена.</li>
+    <li><strong>Находки</strong> — цветные плашки: <span class="badge danger">риск</span> для дыр безопасности,
+      <span class="badge warn">хак</span> для рискованных решений, <span class="badge dead">мёртвый код</span> для
+      неработающей/отключённой логики.</li>
+  </ol>
+
+  <div class="callout warn">
+    <span class="callout-label">Как собрана эта документация</span>
+    Всё содержимое построено автоматизированным чтением DDL/PL/SQL прямо из дампа схемы (без доступа к живой
+    базе) — в основном достоверно, но местами это реконструкция по косвенным признакам (например, объектные типы
+    <code>OBJ$CLIENT</code>/<code>OBJ$BOX</code>/<code>OBJ$MONEYDIST</code> активно используются во всей схеме,
+    но их собственные тела в дамп не попали — их интерфейс восстановлен по вызовам). Перед тем как полагаться на
+    конкретную деталь в продовом решении — стоит перепроверить на живой БД.
+  </div>
+
+  <footer class="page-footer">Сформировано чтением D:\dev\escc\REVELATION 20260904 1518.sql (dbForge-дамп схемы victory/REVELATION, снят 2026-09-04).</footer>
+</main>
+</div>
+</body>
+</html>

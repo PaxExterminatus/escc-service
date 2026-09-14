@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API-слой интеграций — REVELATION</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <div class="brand">REVELATION</div>
+  <div class="brand-sub">документация бизнес-логики PL/SQL</div>
+  <nav>
+    <a href="index.html">Обзор</a>
+    <div class="group-label">Бизнес-домены</div>
+    <a href="clients.html">Клиенты и территории</a>
+    <a href="finance.html">Финансы и платежи</a>
+    <a href="catalogue.html">Каталог курсов</a>
+    <a href="logistics.html">Заказы и логистика</a>
+    <a href="messaging.html">Рассылки и сообщения</a>
+    <a href="marketing.html">Маркетинг-кампании</a>
+    <a href="reports.html">Отчёты и статистика</a>
+    <a href="api.html" class="active">API-слой интеграций</a>
+    <div class="group-label">Итого</div>
+    <a href="findings.html">Находки и риски</a>
+  </nav>
+</aside>
+
+<main class="main">
+  <h1><span class="eyebrow">Домен 08 · ключевой раздел</span>API-слой интеграций</h1>
+  <p class="lede">
+    Под общим ярлыком "API" в схеме скрываются <strong>пять независимых, не связанных друг с другом
+    интеграций</strong> разного возраста: call-центр (Oktell), мессенджинг (Viber через Hyber), две разные
+    учебные LMS (eFront и Campus), и публичный сайт. Слой чистых READ-ONLY view <code>API_*</code>, на котором
+    построен наш Laravel-сервис — самый новый и самый чистый способ; всё описанное ниже — гораздо более старые
+    и "грязные" способы того же самого.
+  </p>
+
+  <div class="exec">
+    <div class="exec-label">Для руководства</div>
+    <div class="exec-row">
+      <span class="k">Что это простыми словами</span>
+      Все "двери", через которые внешние системы обращаются в эту базу данных: наш собственный личный кабинет,
+      две разные платформы онлайн-обучения, телефония call-центра, сервис Viber-рассылок.
+    </div>
+    <div class="exec-row">
+      <span class="k">Состояние</span><span class="exec-health h-risk"><i></i>требует срочного внимания</span>
+      Это <strong>раздел с самой высокой концентрацией рисков безопасности во всей системе</strong>. Пять
+      "дверей" построены в разное время, без единого стандарта защиты — у нескольких из них нет вообще никакой
+      проверки того, кто стучится.
+    </div>
+    <div class="exec-row">
+      <span class="k">Главный риск для бизнеса</span>
+      Найдено: отключённая проверка кода доступа к курсу; тестовые учётные записи с бессрочным доступом,
+      оставленные в боевой системе; один и тот же предсказуемый пароль, выдаваемый абсолютно всем клиентам при
+      синхронизации с внешней платформой обучения; публичная точка приёма заявок с сайта вообще без проверки
+      подлинности запроса (кроме одного заблокированного IP-адреса). Если планируется расширять интеграции или
+      открывать систему более широкому кругу партнёров — начинать нужно именно с ревизии этого раздела.
+    </div>
+  </div>
+
+  <div class="tier-switch">
+    <a href="../guides/api.html">&larr; Руководство (для управленцев)</a>
+    <a class="current">Для программистов</a>
+    <a href="../operators/index.html">Для операторов &rarr;</a>
+  </div>
+
+  <div class="toc">
+    <a href="#integrations">Пять интеграций</a>
+    <a href="#efront">APISAS_EFRONT — детально</a>
+    <a href="#gms">REV_API_GMS — Viber/Hyber</a>
+    <a href="#campus">APISAS_CAMPUS</a>
+    <a href="#worder">REV_API — веб-заявки</a>
+    <a href="#lifecycle">Типичный вызов снаружи</a>
+  </div>
+
+  <h2 id="integrations">Пять интеграций одним взглядом</h2>
+  <table class="proc-table">
+    <tr><th>Интеграция</th><th>Пакеты</th><th>Направление</th><th>Механизм</th></tr>
+    <tr><td>Call-центр Oktell</td><td>rev_api_service</td><td>Oktell → Revelation</td><td>AJAX-обработчик CRM-панели, XML с ФИО/телефоном звонящего</td></tr>
+    <tr><td>Viber/SMS через Hyber</td><td>REV_API_GMS, REV_API_TOOLS</td><td>оба направления</td><td>Исходящее — HTTPS POST с Basic-Auth; входящее — вебхук CLOB in/out</td></tr>
+    <tr><td>LMS eFront</td><td>APISAS_EFRONT</td><td>eFront → Revelation</td><td>Прямой вызов PL/SQL-процедуры, ответ через таблицу-"почтовый ящик"</td></tr>
+    <tr><td>LMS Campus</td><td>APISAS_CAMPUS</td><td>оба направления</td><td>Push по HTTP + pull через REF CURSOR</td></tr>
+    <tr><td>Публичный сайт</td><td>REV_API (worder_registration)</td><td>сайт → Revelation</td><td>Самописный формат <code>key=value;...</code>, без токена/подписи</td></tr>
+  </table>
+  <div class="callout warn">
+    <span class="callout-label">Общих черт немного</span>
+    <p>Часть кода использует парольную конвенцию Revelation <code>rev_util.parm</code> (пары массивов имя/значение)
+    для собственного AJAX-слоя внутренней CRM-панели — это внутренний UI-механизм, не внешний API. В дампе нет
+    <code>GRANT</code>/<code>CREATE SYNONYM</code> — кто именно физически имеет право звать эти процедуры снаружи,
+    по одному дампу не восстановить.</p>
+  </div>
+
+  <h2 id="efront">APISAS_EFRONT — интеграция с eFront (детально)</h2>
+  <div class="pkg">
+    <span class="pkg-name">APISAS_EFRONT</span>
+    <div class="pkg-meta">таблицы: API_EFRONT_DATA, CLIENT_SUB_ONLINE_ACCESS(_ERROR/_LOG)</div>
+    <p>Единственное место в дампе, где что-либо пишет в <code>API_EFRONT_DATA</code>. Ни одного
+    <code>UTL_HTTP</code>-вызова наружу в пакете нет — направление вызова <strong>eFront → Revelation</strong>
+    (LMS сама вызывает хранимую процедуру через JDBC/OCI-мост, минуя HTTP).</p>
+    <p>Точка входа: <code>EFONLINE(cl_code, rq_type, rq_code, node_id, lesson_item)</code> — простые скаляры,
+    <strong>без какой-либо проверки авторизации внутри процедуры</strong>.</p>
+    <p>Механизм — "почтовый ящик" в таблице (PK по <code>CLIENT_ID</code>, одна строка на клиента, история не
+    хранится): старый ответ удаляется, считается новый XML по <code>rq_type</code> (<code>data</code>=список
+    курсов, <code>code</code>=проверка доступа, <code>reset</code>=сброс), конвертируется в BLOB и одним
+    <code>INSERT</code> кладётся обратно. Даже фатальная ошибка результируется строкой в этой же таблице (код
+    ошибки 6 + трейс), а не пробрасывается наружу.</p>
+    <div class="callout warn">
+      <span class="callout-label">Важно для интеграции с нашим Laravel</span>
+      <p><code>API_EFRONT_DATA</code> — не пассивный кэш, а результат <em>последнего</em> запроса. Строка
+      появляется/обновляется только когда eFront реально вызвал <code>EFONLINE</code> для этого клиента — нет
+      фонового обновления/TTL. Для клиента, который давно не заходил в eFront, строки может не быть вовсе, либо
+      она устаревшая.</p>
+    </div>
+    <div class="callout danger">
+      <span class="callout-label">Отключена проверка кода доступа к курсу</span>
+      <p>В <code>getonlineaccesscourse</code>: <code>IF TRUE THEN --access-px [online_acc_code = acc_code]</code>
+      — любой код доступа к курсу принимается как верный. Для урока проверка (<code>getonlineaccesslesson</code>)
+      осталась настоящей.</p>
+    </div>
+    <div class="callout danger">
+      <span class="callout-label">Тестовые ID клиентов с вечным доступом в проде</span>
+      <p><code>2333</code> и <code>21673</code> зашиты как "тестовые клиенты" — получают доступ на 200 лет
+      вместо обычных 3 (<code>get_test_client</code>). Отдельно — <code>APISAS.RESET_CODE</code> буквально
+      делает <code>UPDATE ... WHERE CLIENT_ID = 2333</code> вне зависимости от переданного параметра.</p>
+    </div>
+    <div class="callout dead">
+      <span class="callout-label">get_homework ничего не сохраняет</span>
+      <p>Валидирует пришедшее от eFront домашнее задание и... ничего не пишет — реальный <code>INSERT</code>
+      закомментирован, возвращается просто "1"/"0".</p>
+    </div>
+    <div class="callout dead">
+      <span class="callout-label">Логирование вызовов отключено</span>
+      <p>Таблица <code>APISAS_LOG</code> создана, но ни один пакет в неё не пишет. Единственный след —
+      закомментированный вызов <code>--APISAS.LOG_ADD(...)</code> — раньше у APISAS была процедура логирования,
+      сейчас в пакете осталась только RESET_CODE.</p>
+    </div>
+  </div>
+
+  <h2 id="gms">REV_API_GMS — Viber/SMS через шлюз Hyber</h2>
+  <div class="pkg">
+    <span class="pkg-name">REV_API_GMS · REV_API_TOOLS</span>
+    <div class="pkg-meta">таблицы: GMS_MESSAGE(_DETAILS), GMS_STATUS, GMS_HYBERSTATUS</div>
+    <table class="proc-table">
+      <tr><th>Процедура</th><th>Что делает</th></tr>
+      <tr><td class="proc-name">MSG_PUTOFUSERMESSAGE</td><td>Оператор вручную отправляет сообщение — валидация условий, запись в GMS_MESSAGE(status=0)</td></tr>
+      <tr><td class="proc-name">MSG_SENTOFMSG</td><td>Батч-джоб: берёт неотправленные, HTTPS POST через REV_API_TOOLS.API_authBasicHTTPS</td></tr>
+      <tr><td class="proc-name">CallbackInfo(CLOB in, CLOB out)</td><td>Входящий вебхук от Hyber — статусы доставки, обновляет GMS_MESSAGE/CLIENT_EVENT</td></tr>
+    </table>
+    <div class="callout warn">
+      <span class="callout-label">Комментарий не поспевает за реальностью</span>
+      <p><code>REV_API_TOOLS.API_authBasicHTTPS</code> подписан комментарием "отправка запросов API esputnik",
+      но единственный текущий вызывающий шлёт запросы в Viber/Hyber — след смены SMS/Viber-провайдера без
+      актуализации документации в коде.</p>
+    </div>
+    <div class="callout danger">
+      <span class="callout-label">Личный email разработчика в проде</span>
+      <p>При ошибках пакет шлёт письмо на жёстко зашитый адрес <code>dmitry.poltavskiy@eshko.ua</code>.</p>
+    </div>
+  </div>
+
+  <h2 id="campus">APISAS_CAMPUS — вторая учебная платформа</h2>
+  <div class="pkg">
+    <span class="pkg-name">APISAS_CAMPUS</span>
+    <p>Отдельная от eFront внешняя учебная платформа "Campus". <code>USER_UPDATE_CALL</code> — Revelation сам
+    дёргает наружу (<code>UTL_HTTP</code> GET на жёстко зашитый внутренний IP <code>10.20.36.107:8080</code>);
+    <code>USER_UPDATE_GETDATA</code>/<code>LIST_COURSE_LESSON</code> — отдают курсор/XML для вытягивания
+    кампусом (двусторонняя интеграция: push уведомлением, pull через REF CURSOR).</p>
+    <div class="callout danger">
+      <span class="callout-label">Единый предсказуемый пароль для всех аккаунтов</span>
+      <p><code>USER_UPDATE_GETDATA</code> возвращает буквально константу <code>'80295553238' AS PASSWORD</code>
+      для <strong>каждого</strong> синхронизируемого клиента — общий, предсказуемый секрет для инициализации
+      учётки во внешней системе.</p>
+    </div>
+  </div>
+
+  <h2 id="worder">REV_API — приём веб-заявок с сайта</h2>
+  <p>Полный разбор цепочки "заявка → клиент" — на странице <a href="clients.html#worders">Клиенты и территории</a>.
+  Здесь — только выводы, важные с точки зрения API-контракта.</p>
+  <div class="callout danger">
+    <span class="callout-label">Нет проверки авторизации/подписи запроса вообще</span>
+    <p>Ни <code>EFONLINE</code>, ни <code>worder_registration</code>, ни процедуры <code>APISAS_CAMPUS</code> не
+    проверяют ни токен, ни подпись, ни даже Basic-Auth со стороны вызывающего. Единственная "защита" публичного
+    веб-эндпоинта — один захардкоженный заблокированный IP и словарь спам-слов.</p>
+  </div>
+  <div class="callout ok">
+    <span class="callout-label">Но хотя бы не SQL-инъекция</span>
+    <p>Самописный парсер параметров (<code>subGetValueFromName</code>, ручной <code>INSTR</code>/<code>SUBSTR</code>
+    вместо query-string/JSON) хрупок к спецсимволам в значениях, но результат идёт в bind-переменные, а не в
+    динамический SQL — <code>EXECUTE IMMEDIATE</code> с конкатенацией пользовательского ввода в проверенных
+    пакетах API-слоя не встретился.</p>
+  </div>
+
+  <h2 id="lifecycle">Типичный вызов снаружи — два паттерна</h2>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 820 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Два паттерна внешнего вызова API">
+      <g font-size="11">
+        <text x="10" y="18" class="dg-text-dim" font-size="11" font-weight="700">A) eFront → EFONLINE ("почтовый ящик", без авторизации)</text>
+        <rect x="10" y="30" width="150" height="56" rx="8" class="dg-box"/>
+        <text x="85" y="53" text-anchor="middle" class="dg-text" font-weight="600" font-size="11">1. Студент в eFront</text>
+        <text x="85" y="70" text-anchor="middle" class="dg-text-dim" font-size="10">открывает урок</text>
+
+        <rect x="200" y="30" width="150" height="56" rx="8" class="dg-box-accent"/>
+        <text x="275" y="53" text-anchor="middle" class="dg-text-accent" font-weight="600" font-size="11">2. EFONLINE(...)</text>
+        <text x="275" y="70" text-anchor="middle" class="dg-text-dim" font-size="10">без проверки прав</text>
+
+        <rect x="390" y="30" width="150" height="56" rx="8" class="dg-box"/>
+        <text x="465" y="53" text-anchor="middle" class="dg-text" font-weight="600" font-size="11">3. delete+insert</text>
+        <text x="465" y="70" text-anchor="middle" class="dg-text-dim" font-size="10">API_EFRONT_DATA</text>
+
+        <rect x="580" y="30" width="150" height="56" rx="8" class="dg-box"/>
+        <text x="655" y="53" text-anchor="middle" class="dg-text" font-weight="600" font-size="11">4. Читает наружу</text>
+        <text x="655" y="70" text-anchor="middle" class="dg-text-dim" font-size="10">по CLIENT_ID</text>
+
+        <path d="M160,58 L200,58" class="dg-arrow-accent"/>
+        <path d="M350,58 L390,58" class="dg-arrow"/>
+        <path d="M540,58 L580,58" class="dg-arrow"/>
+
+        <text x="10" y="140" class="dg-text-dim" font-size="11" font-weight="700">B) Viber/Hyber (исходящее сообщение, есть авторизация)</text>
+        <rect x="10" y="152" width="150" height="56" rx="8" class="dg-box"/>
+        <text x="85" y="175" text-anchor="middle" class="dg-text" font-weight="600" font-size="11">1. Оператор жмёт "отправить"</text>
+        <text x="85" y="192" text-anchor="middle" class="dg-text-dim" font-size="10">MSG_PUTOFUSERMESSAGE</text>
+
+        <rect x="200" y="152" width="150" height="56" rx="8" class="dg-box"/>
+        <text x="275" y="175" text-anchor="middle" class="dg-text" font-weight="600" font-size="11">2. GMS_MESSAGE</text>
+        <text x="275" y="192" text-anchor="middle" class="dg-text-dim" font-size="10">status=0</text>
+
+        <rect x="390" y="152" width="150" height="56" rx="8" class="dg-box"/>
+        <text x="465" y="175" text-anchor="middle" class="dg-text" font-weight="600" font-size="11">3. MSG_SENTOFMSG</text>
+        <text x="465" y="192" text-anchor="middle" class="dg-text-dim" font-size="10">батч-джоб</text>
+
+        <rect x="580" y="152" width="150" height="56" rx="8" class="dg-box-accent"/>
+        <text x="655" y="175" text-anchor="middle" class="dg-text-accent" font-weight="600" font-size="11">4. HTTPS + Basic-Auth</text>
+        <text x="655" y="192" text-anchor="middle" class="dg-text-dim" font-size="10">API_authBasicHTTPS</text>
+
+        <rect x="580" y="232" width="150" height="56" rx="8" class="dg-box"/>
+        <text x="655" y="255" text-anchor="middle" class="dg-text" font-weight="600" font-size="11">5. CallbackInfo</text>
+        <text x="655" y="272" text-anchor="middle" class="dg-text-dim" font-size="10">статус доставки</text>
+
+        <path d="M160,180 L200,180" class="dg-arrow"/>
+        <path d="M350,180 L390,180" class="dg-arrow"/>
+        <path d="M540,180 L580,180" class="dg-arrow-accent"/>
+        <path d="M655,208 L655,232" class="dg-arrow"/>
+      </g>
+    </svg>
+    <div class="diagram-caption">Паттерн A (eFront) — простейший и без авторизации. Паттерн B (Viber) — единственный в этом домене с настоящей HTTPS Basic-Auth и обратным вебхуком.</div>
+  </div>
+
+  <footer class="page-footer">См. также: <a href="findings.html">Находки и риски</a> — этот домен даёт больше всего критичных находок безопасности во всей схеме.</footer>
+</main>
+</div>
+</body>
+</html>

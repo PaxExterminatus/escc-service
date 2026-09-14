@@ -22,6 +22,22 @@ class MobileTeleSystemsProvider implements MessagingProviderInterface
     }
 
     /**
+     * @return array{status: int, reason: string}
+     */
+    function sendOne(string $address, string $body, string $extraId, string $name): array
+    {
+        $message = (new DailyMessage)->fill([
+            'id' => $extraId,
+            'address' => $address,
+            'body' => $body,
+        ]);
+
+        $response = $this->massSending([$message], $name)['response'];
+
+        return ['status' => $response->status(), 'reason' => $response->reason()];
+    }
+
+    /**
      * @param DailyMessage[] $messages
      * @return array{response: PromiseInterface|Response, request: array}
      */

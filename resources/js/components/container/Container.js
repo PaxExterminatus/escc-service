@@ -9,6 +9,7 @@ class Container {
         this.code = null
         this.created_at = null
         this.status = null
+        this.send_date = null
     }
 
     /**
@@ -33,6 +34,7 @@ class Container {
         this.code = data.code
         this.created_at = data.created_at
         this.status = data.status
+        this.send_date = data.send_date
 
         return this;
     }

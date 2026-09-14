@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Маркетинг-кампании — Руководство</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <div class="brand">REVELATION</div>
+  <div class="brand-sub">руководство — бизнес-логика без деталей</div>
+  <nav>
+    <a href="index.html">Обзор</a>
+    <div class="group-label">Бизнес-домены</div>
+    <a href="clients.html">Клиенты и территории</a>
+    <a href="finance.html">Финансы и платежи</a>
+    <a href="catalogue.html">Каталог курсов</a>
+    <a href="logistics.html">Заказы и логистика</a>
+    <a href="messaging.html">Рассылки и сообщения</a>
+    <a href="marketing.html" class="active">Маркетинг-кампании</a>
+    <a href="reports.html">Отчёты и статистика</a>
+    <a href="api.html">API-слой интеграций</a>
+  </nav>
+</aside>
+
+<main class="main">
+  <h1><span class="eyebrow">Домен 06</span>Маркетинговые кампании и сегментация</h1>
+  <p class="lede">
+    Самый большой по числу пакетов домен (24) — и не единая подсистема, а <strong>наслоение минимум четырёх
+    поколений</strong> самодельных email/SMS-рассылочных движков, написанных в разное время поверх одной и той же
+    core-модели. Старые версии не удалены — часть продолжает исполняться, часть осталась только как мёртвый код.
+  </p>
+
+  <div class="tier-switch">
+    <a class="current">Руководство</a>
+    <a href="../programmers/marketing.html">Подробнее для программистов &rarr;</a>
+    <a href="../operators/index.html">Для операторов &rarr;</a>
+  </div>
+
+  <div class="exec">
+    <div class="exec-label">Для руководства</div>
+    <div class="exec-row">
+      <span class="k">Что это простыми словами</span>
+      Автоматические маркетинговые рассылки: отбираем группу клиентов по признаку (не студент, скоро день
+      рождения, есть долг) и рассылаем им письма/SMS по расписанию.
+    </div>
+    <div class="exec-row">
+      <span class="k">Состояние</span><span class="exec-health h-warn"><i></i>требует внимания</span>
+      Функция работает, но реализована <strong>четыре раза за разные годы</strong>, и старые версии никто не
+      убрал. Например, кампания "напоминание о долге" сегодня существует в трёх параллельных версиях
+      одновременно, одна из которых заброшена.
+    </div>
+    <div class="exec-row">
+      <span class="k">Главный риск для бизнеса</span>
+      Это годы повторно потраченной работы разработчиков на одну и ту же задачу, и сейчас очень легко случайно
+      сломать "не ту" версию кампании при изменениях, потому что непонятно, какая из нескольких версий
+      действительно активна. Прежде чем инвестировать в доработку рассылок — стоит сначала навести порядок и
+      оставить одну работающую версию каждой кампании.
+    </div>
+  </div>
+
+  <span class="subsystem-pills-label">Подсистемы (подробности — у программистов)</span>
+  <div class="subsystem-pills">
+    <a class="subsystem-pill" href="../programmers/marketing.html#generations">EM_* / EMT* / CM_* / CAMPAIGN_*</a>
+    <a class="subsystem-pill" href="../programmers/marketing.html#debt-collection">Взыскание долга (CM_AC)</a>
+    <a class="subsystem-pill" href="../programmers/marketing.html#key">EMT3 / EM_MANAGER_CAMP</a>
+  </div>
+
+  <h2>Жизненный цикл кампании</h2>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 820 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Жизненный цикл маркетинговой кампании">
+      <g font-size="11.5">
+        <rect x="10" y="20" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="85" y="43" text-anchor="middle" class="dg-text" font-weight="600">1. Сегментация</text>
+        <text x="85" y="60" text-anchor="middle" class="dg-text-dim" font-size="10">EMT3.LIST_CREATE_MAIN</text>
+        <text x="85" y="74" text-anchor="middle" class="dg-text-dim" font-size="10">и др. сегментаторы</text>
+
+        <rect x="200" y="20" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="275" y="43" text-anchor="middle" class="dg-text" font-weight="600">2. Товар-кампания</text>
+        <text x="275" y="60" text-anchor="middle" class="dg-text-dim" font-size="10">CATALOGUE/CONTENT</text>
+
+        <rect x="390" y="20" width="150" height="64" rx="8" class="dg-box-accent"/>
+        <text x="465" y="43" text-anchor="middle" class="dg-text-accent" font-weight="600">3. CLIENT_CAMPAIGN</text>
+        <text x="465" y="60" text-anchor="middle" class="dg-text-dim" font-size="10">Active, STEP='START'</text>
+
+        <rect x="580" y="20" width="150" height="64" rx="8" class="dg-box-accent"/>
+        <text x="655" y="43" text-anchor="middle" class="dg-text-accent" font-weight="600">4. Действие на шаге</text>
+        <text x="655" y="60" text-anchor="middle" class="dg-text-dim" font-size="10">email / звонок</text>
+
+        <rect x="580" y="140" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="655" y="163" text-anchor="middle" class="dg-text" font-weight="600">5. Лог шага</text>
+        <text x="655" y="180" text-anchor="middle" class="dg-text-dim" font-size="10">CLIENT_CAMPAIGN_LOG</text>
+
+        <rect x="390" y="140" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="465" y="163" text-anchor="middle" class="dg-text" font-weight="600">6. Следующий шаг</text>
+        <text x="465" y="180" text-anchor="middle" class="dg-text-dim" font-size="10">или Finished</text>
+
+        <rect x="200" y="140" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="275" y="163" text-anchor="middle" class="dg-text" font-weight="600">7. Синхронизация</text>
+        <text x="275" y="180" text-anchor="middle" class="dg-text-dim" font-size="10">HTTP / DB-link / ETL</text>
+
+        <rect x="10" y="140" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="85" y="163" text-anchor="middle" class="dg-text" font-weight="600">8. Метрики</text>
+        <text x="85" y="180" text-anchor="middle" class="dg-text-dim" font-size="10">открытия/клики/отписки</text>
+
+        <path d="M160,52 L200,52" class="dg-arrow"/>
+        <path d="M350,52 L390,52" class="dg-arrow-accent"/>
+        <path d="M540,52 L580,52" class="dg-arrow-accent"/>
+        <path d="M655,84 L655,140" class="dg-arrow"/>
+        <path d="M580,172 L540,172" class="dg-arrow"/>
+        <path d="M390,172 L350,172" class="dg-arrow"/>
+        <path d="M200,172 L160,172" class="dg-arrow"/>
+      </g>
+    </svg>
+  </div>
+
+  <footer class="page-footer">Технические детали (пакеты, таблицы, находки) — на странице <a href="../programmers/marketing.html">Для программистов</a>.</footer>
+</main>
+</div>
+</body>
+</html>

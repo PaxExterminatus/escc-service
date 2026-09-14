@@ -2,6 +2,7 @@
 
 namespace App\Domain\Messages\Services\DataManagement;
 
+use App\Domain\Messages\Enums\MessageDispatchStatusEnum;
 use App\Domain\Messages\Models\DailyMessage;
 use App\Domain\Messages\Models\ElectronicMessage;
 use Illuminate\Support\Collection;
@@ -9,7 +10,7 @@ use Illuminate\Support\Collection;
 class DailyMessagingUpdateStatusService
 {
     /**
-     * @param DailyMessage[]|Collection $messages
+     * @param Collection $messages
      * @return void
      */
     function massSendingSuccess(Collection $messages): void
@@ -19,7 +20,7 @@ class DailyMessagingUpdateStatusService
 
         foreach ($eMessages as $eMessage)
         {
-            $eMessage->emsg_status = ElectronicMessage::EMSG_STATUS_TRY;
+            $eMessage->emsg_status = MessageDispatchStatusEnum::sent;
             $eMessage->save();
         }
     }

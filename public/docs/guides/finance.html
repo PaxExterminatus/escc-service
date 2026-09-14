@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Финансы и платежи — Руководство</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <div class="brand">REVELATION</div>
+  <div class="brand-sub">руководство — бизнес-логика без деталей</div>
+  <nav>
+    <a href="index.html">Обзор</a>
+    <div class="group-label">Бизнес-домены</div>
+    <a href="clients.html">Клиенты и территории</a>
+    <a href="finance.html" class="active">Финансы и платежи</a>
+    <a href="catalogue.html">Каталог курсов</a>
+    <a href="logistics.html">Заказы и логистика</a>
+    <a href="messaging.html">Рассылки и сообщения</a>
+    <a href="marketing.html">Маркетинг-кампании</a>
+    <a href="reports.html">Отчёты и статистика</a>
+    <a href="api.html">API-слой интеграций</a>
+  </nav>
+</aside>
+
+<main class="main">
+  <h1><span class="eyebrow">Домен 02</span>Финансы и платежи</h1>
+  <p class="lede">
+    Полный цикл денег курсов дистанционного обучения: приём оплат тремя разными каналами (почтовый перевод,
+    банк, ЕРИП), автоматическая и ручная разноска на счета клиентов, списание при возврате или порче материалов —
+    и всё это через единый бухгалтерский журнал <code>MONEY_DIST</code>.
+  </p>
+
+  <div class="tier-switch">
+    <a class="current">Руководство</a>
+    <a href="../programmers/finance.html">Подробнее для программистов &rarr;</a>
+    <a href="../operators/index.html">Для операторов &rarr;</a>
+  </div>
+
+  <div class="exec">
+    <div class="exec-label">Для руководства</div>
+    <div class="exec-row">
+      <span class="k">Что это простыми словами</span>
+      Всё, что касается денег клиента: получили оплату — списали долг; вернули товар или он потерялся —
+      списали часть долга обратно. Отдельно — обмен данными с ЕРИП (национальная система приёма платежей).
+    </div>
+    <div class="exec-row">
+      <span class="k">Состояние</span><span class="exec-health h-warn"><i></i>требует внимания</span>
+      Основной учёт работает. Автоматическое сопоставление оплаты с клиентом — эвристика "совпала фамилия и
+      ровно совпала сумма"; если не совпало — платёж зависает и ждёт, пока сотрудник разберётся вручную.
+    </div>
+    <div class="exec-row">
+      <span class="k">Главный риск для бизнеса</span>
+      <strong>Пароль к ЕРИП хранится открытым текстом прямо в коде базы данных</strong> — это доступ к каналу
+      приёма платежей всей компании, и он виден каждому, у кого есть доступ на чтение исходников. Кроме того,
+      половина автоматизации обмена с ЕРИП не доделана (заглушки вместо кода) — реальная сумма к оплате туда
+      не передаётся, судя по всему, ЕРИП узнаёт её другим путём. Рекомендация: сменить пароль и вынести секреты
+      из исходников в первую очередь.
+    </div>
+  </div>
+
+  <span class="subsystem-pills-label">Подсистемы (подробности — у программистов)</span>
+  <div class="subsystem-pills">
+    <a class="subsystem-pill" href="../programmers/finance.html#mdepayments">REV_MDEPAYMENTS</a>
+    <a class="subsystem-pill" href="../programmers/finance.html#mdereturns">REV_MDERETURNS</a>
+    <a class="subsystem-pill" href="../programmers/finance.html#loss">REV_LOSS</a>
+    <a class="subsystem-pill" href="../programmers/finance.html#erip">ERIP</a>
+  </div>
+
+  <h2>Жизненный цикл долга клиента</h2>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 820 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Жизненный цикл долга клиента">
+      <defs>
+        <marker id="arrowF" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="dg-arrowhead"/></marker>
+      </defs>
+      <g font-size="11.5">
+        <rect x="10" y="30" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="85" y="55" text-anchor="middle" class="dg-text" font-weight="600">1. Выставление счёта</text>
+        <text x="85" y="72" text-anchor="middle" class="dg-text-dim" font-size="10">CONTAINER → Sent(70)</text>
+        <text x="85" y="86" text-anchor="middle" class="dg-text-dim" font-size="10">дебет 40 Invoice</text>
+
+        <rect x="200" y="30" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="275" y="55" text-anchor="middle" class="dg-text" font-weight="600">2. Поступление денег</text>
+        <text x="275" y="72" text-anchor="middle" class="dg-text-dim" font-size="10">почта / банк / ЕРИП</text>
+        <text x="275" y="86" text-anchor="middle" class="dg-text-dim" font-size="10">MONEY_SOURCE_INPUT</text>
+
+        <rect x="390" y="30" width="150" height="64" rx="8" class="dg-box-accent"/>
+        <text x="465" y="55" text-anchor="middle" class="dg-text-accent" font-weight="600">3. Авторазноска</text>
+        <text x="465" y="72" text-anchor="middle" class="dg-text-dim" font-size="10">AutoDistribution</text>
+        <text x="465" y="86" text-anchor="middle" class="dg-text-dim" font-size="10">код 1040</text>
+
+        <rect x="580" y="30" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="655" y="55" text-anchor="middle" class="dg-text" font-weight="600">4. Ручная разноска</text>
+        <text x="655" y="72" text-anchor="middle" class="dg-text-dim" font-size="10">если авто не сработал</text>
+        <text x="655" y="86" text-anchor="middle" class="dg-text-dim" font-size="10">счёт Transit(15)</text>
+
+        <path d="M160,62 L200,62" class="dg-arrow"/>
+        <path d="M350,62 L390,62" class="dg-arrow"/>
+        <path d="M540,62 L580,62" class="dg-arrow-accent"/>
+      </g>
+
+      <g font-size="11.5">
+        <rect x="580" y="140" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="655" y="165" text-anchor="middle" class="dg-text" font-weight="600">5. Возврат (опц.)</text>
+        <text x="655" y="182" text-anchor="middle" class="dg-text-dim" font-size="10">RETURN_ITEM</text>
+        <text x="655" y="196" text-anchor="middle" class="dg-text-dim" font-size="10">40 ↔ 50</text>
+
+        <rect x="390" y="140" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="465" y="165" text-anchor="middle" class="dg-text" font-weight="600">6. Списание (опц.)</text>
+        <text x="465" y="182" text-anchor="middle" class="dg-text-dim" font-size="10">REV_LOSS.save_loss</text>
+        <text x="465" y="196" text-anchor="middle" class="dg-text-dim" font-size="10">40 → 60</text>
+
+        <rect x="200" y="140" width="150" height="64" rx="8" class="dg-box"/>
+        <text x="275" y="165" text-anchor="middle" class="dg-text" font-weight="600">7. Пересчёт кэша</text>
+        <text x="275" y="182" text-anchor="middle" class="dg-text-dim" font-size="10">UPDATE_DEBTORS</text>
+        <text x="275" y="196" text-anchor="middle" class="dg-text-dim" font-size="10">MONEY_DEBT_CLIENTS</text>
+
+        <rect x="10" y="140" width="150" height="64" rx="8" class="dg-box-accent"/>
+        <text x="85" y="165" text-anchor="middle" class="dg-text-accent" font-weight="600">8. Погашение / SMS</text>
+        <text x="85" y="182" text-anchor="middle" class="dg-text-dim" font-size="10">GETTOTALDEBT ≥ 0</text>
+        <text x="85" y="196" text-anchor="middle" class="dg-text-dim" font-size="10">или напоминание</text>
+
+        <path d="M655,94 L655,140" class="dg-arrow"/>
+        <path d="M580,172 L540,172" class="dg-arrow"/>
+        <path d="M390,172 L350,172" class="dg-arrow"/>
+        <path d="M200,172 L160,172" class="dg-arrow-accent"/>
+      </g>
+      <path d="M85,230 L85,260 L655,260 L655,94" class="dg-arrow" fill="none" stroke-dasharray="3 3"/>
+      <text x="370" y="278" text-anchor="middle" class="dg-text-dim" font-size="10.5">погашено не полностью → новый цикл со следующей отправки</text>
+    </svg>
+    <div class="diagram-caption">От выставления счёта до погашения — с двумя опциональными ветками (возврат, списание) и ежедневным пересчётом кэша должников, на котором строятся SMS-напоминания.</div>
+  </div>
+
+  <footer class="page-footer">Технические детали (пакеты, таблицы, находки) — на странице <a href="../programmers/finance.html">Для программистов</a>.</footer>
+</main>
+</div>
+</body>
+</html>

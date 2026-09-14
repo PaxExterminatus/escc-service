@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API-слой интеграций — Руководство</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <div class="brand">REVELATION</div>
+  <div class="brand-sub">руководство — бизнес-логика без деталей</div>
+  <nav>
+    <a href="index.html">Обзор</a>
+    <div class="group-label">Бизнес-домены</div>
+    <a href="clients.html">Клиенты и территории</a>
+    <a href="finance.html">Финансы и платежи</a>
+    <a href="catalogue.html">Каталог курсов</a>
+    <a href="logistics.html">Заказы и логистика</a>
+    <a href="messaging.html">Рассылки и сообщения</a>
+    <a href="marketing.html">Маркетинг-кампании</a>
+    <a href="reports.html">Отчёты и статистика</a>
+    <a href="api.html" class="active">API-слой интеграций</a>
+  </nav>
+</aside>
+
+<main class="main">
+  <h1><span class="eyebrow">Домен 08 · ключевой раздел</span>API-слой интеграций</h1>
+  <p class="lede">
+    Под общим ярлыком "API" в схеме скрываются <strong>пять независимых, не связанных друг с другом
+    интеграций</strong> разного возраста: call-центр (Oktell), мессенджинг (Viber через Hyber), две разные
+    учебные LMS (eFront и Campus), и публичный сайт. Слой чистых READ-ONLY view <code>API_*</code>, на котором
+    построен наш Laravel-сервис — самый новый и самый чистый способ; всё описанное ниже — гораздо более старые
+    и "грязные" способы того же самого.
+  </p>
+
+  <div class="tier-switch">
+    <a class="current">Руководство</a>
+    <a href="../programmers/api.html">Подробнее для программистов &rarr;</a>
+    <a href="../operators/index.html">Для операторов &rarr;</a>
+  </div>
+
+  <div class="exec">
+    <div class="exec-label">Для руководства</div>
+    <div class="exec-row">
+      <span class="k">Что это простыми словами</span>
+      Все "двери", через которые внешние системы обращаются в эту базу данных: наш собственный личный кабинет,
+      две разные платформы онлайн-обучения, телефония call-центра, сервис Viber-рассылок.
+    </div>
+    <div class="exec-row">
+      <span class="k">Состояние</span><span class="exec-health h-risk"><i></i>требует срочного внимания</span>
+      Это <strong>раздел с самой высокой концентрацией рисков безопасности во всей системе</strong>. Пять
+      "дверей" построены в разное время, без единого стандарта защиты — у нескольких из них нет вообще никакой
+      проверки того, кто стучится.
+    </div>
+    <div class="exec-row">
+      <span class="k">Главный риск для бизнеса</span>
+      Найдено: отключённая проверка кода доступа к курсу; тестовые учётные записи с бессрочным доступом,
+      оставленные в боевой системе; один и тот же предсказуемый пароль, выдаваемый абсолютно всем клиентам при
+      синхронизации с внешней платформой обучения; публичная точка приёма заявок с сайта вообще без проверки
+      подлинности запроса (кроме одного заблокированного IP-адреса). Если планируется расширять интеграции или
+      открывать систему более широкому кругу партнёров — начинать нужно именно с ревизии этого раздела.
+    </div>
+  </div>
+
+  <span class="subsystem-pills-label">Подсистемы (подробности — у программистов)</span>
+  <div class="subsystem-pills">
+    <a class="subsystem-pill" href="../programmers/api.html#efront">APISAS_EFRONT</a>
+    <a class="subsystem-pill" href="../programmers/api.html#gms">REV_API_GMS (Viber/Hyber)</a>
+    <a class="subsystem-pill" href="../programmers/api.html#campus">APISAS_CAMPUS</a>
+    <a class="subsystem-pill" href="../programmers/api.html#worder">REV_API (веб-заявки)</a>
+  </div>
+
+  <h2>Типичный вызов снаружи — два паттерна</h2>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 820 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Два паттерна внешнего вызова API">
+      <g font-size="11">
+        <text x="10" y="18" class="dg-text-dim" font-size="11" font-weight="700">A) eFront → EFONLINE ("почтовый ящик", без авторизации)</text>
+        <rect x="10" y="30" width="150" height="56" rx="8" class="dg-box"/>
+        <text x="85" y="53" text-anchor="middle" class="dg-text" font-weight="600" font-size="11">1. Студент в eFront</text>
+        <text x="85" y="70" text-anchor="middle" class="dg-text-dim" font-size="10">открывает урок</text>
+
+        <rect x="200" y="30" width="150" height="56" rx="8" class="dg-box-accent"/>
+        <text x="275" y="53" text-anchor="middle" class="dg-text-accent" font-weight="600" font-size="11">2. EFONLINE(...)</text>
+        <text x="275" y="70" text-anchor="middle" class="dg-text-dim" font-size="10">без проверки прав</text>
+
+        <rect x="390" y="30" width="150" height="56" rx="8" class="dg-box"/>
+        <text x="465" y="53" text-anchor="middle" class="dg-text" font-weight="600" font-size="11">3. delete+insert</text>
+        <text x="465" y="70" text-anchor="middle" class="dg-text-dim" font-size="10">API_EFRONT_DATA</text>
+
+        <rect x="580" y="30" width="150" height="56" rx="8" class="dg-box"/>
+        <text x="655" y="53" text-anchor="middle" class="dg-text" font-weight="600" font-size="11">4. Читает наружу</text>
+        <text x="655" y="70" text-anchor="middle" class="dg-text-dim" font-size="10">по CLIENT_ID</text>
+
+        <path d="M160,58 L200,58" class="dg-arrow-accent"/>
+        <path d="M350,58 L390,58" class="dg-arrow"/>
+        <path d="M540,58 L580,58" class="dg-arrow"/>
+
+        <text x="10" y="140" class="dg-text-dim" font-size="11" font-weight="700">B) Viber/Hyber (исходящее сообщение, есть авторизация)</text>
+        <rect x="10" y="152" width="150" height="56" rx="8" class="dg-box"/>
+        <text x="85" y="175" text-anchor="middle" class="dg-text" font-weight="600" font-size="11">1. Оператор жмёт "отправить"</text>
+        <text x="85" y="192" text-anchor="middle" class="dg-text-dim" font-size="10">MSG_PUTOFUSERMESSAGE</text>
+
+        <rect x="200" y="152" width="150" height="56" rx="8" class="dg-box"/>
+        <text x="275" y="175" text-anchor="middle" class="dg-text" font-weight="600" font-size="11">2. GMS_MESSAGE</text>
+        <text x="275" y="192" text-anchor="middle" class="dg-text-dim" font-size="10">status=0</text>
+
+        <rect x="390" y="152" width="150" height="56" rx="8" class="dg-box"/>
+        <text x="465" y="175" text-anchor="middle" class="dg-text" font-weight="600" font-size="11">3. MSG_SENTOFMSG</text>
+        <text x="465" y="192" text-anchor="middle" class="dg-text-dim" font-size="10">батч-джоб</text>
+
+        <rect x="580" y="152" width="150" height="56" rx="8" class="dg-box-accent"/>
+        <text x="655" y="175" text-anchor="middle" class="dg-text-accent" font-weight="600" font-size="11">4. HTTPS + Basic-Auth</text>
+        <text x="655" y="192" text-anchor="middle" class="dg-text-dim" font-size="10">API_authBasicHTTPS</text>
+
+        <rect x="580" y="232" width="150" height="56" rx="8" class="dg-box"/>
+        <text x="655" y="255" text-anchor="middle" class="dg-text" font-weight="600" font-size="11">5. CallbackInfo</text>
+        <text x="655" y="272" text-anchor="middle" class="dg-text-dim" font-size="10">статус доставки</text>
+
+        <path d="M160,180 L200,180" class="dg-arrow"/>
+        <path d="M350,180 L390,180" class="dg-arrow"/>
+        <path d="M540,180 L580,180" class="dg-arrow-accent"/>
+        <path d="M655,208 L655,232" class="dg-arrow"/>
+      </g>
+    </svg>
+    <div class="diagram-caption">Паттерн A (eFront) — простейший и без авторизации. Паттерн B (Viber) — единственный в этом домене с настоящей HTTPS Basic-Auth и обратным вебхуком.</div>
+  </div>
+
+  <footer class="page-footer">Технические детали (пакеты, таблицы, находки) — на странице <a href="../programmers/api.html">Для программистов</a>.</footer>
+</main>
+</div>
+</body>
+</html>
