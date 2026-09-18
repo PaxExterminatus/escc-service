@@ -4,12 +4,18 @@ import ContainerPage from 'page/ContainerPage';
 import TemplatesPage from 'page/TemplatesPage';
 import DailyMessagingPage from 'page/DailyMessagingPage';
 import InvoiceDailyPage from 'page/InvoiceDailyPage';
+import TagsPage from 'page/TagsPage';
 
 export default [
     {
         path: '/',
         name: 'home',
         component: AppPage,
+    },
+    {
+        path: '/tags',
+        name: 'tags',
+        component: TagsPage,
     },
     {
         path: '/clients',
@@ -45,7 +51,7 @@ export default [
         name: 'messages',
         children: [
             {
-                path: '/messages/templates',
+                path: '/messages/templates/:code?',
                 name: 'messagesTemplates',
                 component: TemplatesPage,
             },

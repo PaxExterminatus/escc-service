@@ -4,6 +4,9 @@
 html
     height: 100%
     font-family: "Comfortaa", sans-serif !important
+    // Липкий app-header перекрывает верх страницы — без этого scrollIntoView (см.
+    // AnchorMenuComponent) подводил бы заголовок ровно под шапку, а не под неё.
+    scroll-padding-top: 3.5rem
 body
     height: 100%
     margin: 0
@@ -13,7 +16,20 @@ body
     height: 100%
     padding: 0.75rem 1rem
 .app-header
-    margin-bottom: 1rem
+    position: sticky
+    top: 0
+    z-index: 200
+    display: flex
+    align-items: center
+    justify-content: space-between
+    min-height: 3.5rem
+    margin: -0.75rem -1rem 1rem
+    padding: 0.75rem 1rem
+    background: var(--surface-ground)
+
+#app-header-end
+    display: flex
+    align-items: center
 
 .main-menu-bar
     .p-sidebar-content
@@ -25,6 +41,11 @@ body
     gap: 1rem
     flex: 1
     height: 100%
+
+.app-footer
+    margin-top: 1rem
+    padding-top: 1rem
+    border-top: 1px solid var(--surface-border)
 
 .p-component
     font-family: "Comfortaa", sans-serif

@@ -30,6 +30,7 @@
     "dependencies": {
         "@unhead/vue": "^1.9.4",
         "@vitejs/plugin-vue": "^5.0.4",
+        "docx-preview": "^0.4.0",
         "node.js": "0.0.1-security",
         "pdfjs-dist": "^4.0.379",
         "primeflex": "^3.3.1",

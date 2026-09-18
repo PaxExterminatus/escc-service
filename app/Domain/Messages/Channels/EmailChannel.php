@@ -9,6 +9,9 @@ use App\Domain\Messages\ValueObjects\EmailAddress;
 
 class EmailChannel implements MessageChannel
 {
+    /** Тема письма, когда шаблон не выбран и своей темы нет */
+    public const DEFAULT_SUBJECT = 'Сообщение';
+
     public function code(): string
     {
         return 'email';
@@ -34,8 +37,12 @@ class EmailChannel implements MessageChannel
         return $communication->subscriber_email_status && EmailAddress::isValid($communication->client_email);
     }
 
+    /**
+     * $body приходит уже собранным html (см. EmailComposer::composeFromText) — отправляем
+     * как html, иначе получатель увидит исходник разметки вместо письма.
+     */
     public function send(string $address, string $body, array $context = []): array
     {
-        return MailProvider::make()->sendOne($address, $context['subject'] ?? 'Сообщение', $body);
+        return MailProvider::make()->sendHtml($address, $context['subject'] ?? self::DEFAULT_SUBJECT, $body);
     }
 }

@@ -44,15 +44,6 @@ export const appMenuData = [
         icon: 'pi pi-envelope',
         items: [
             MenuItem({
-                key: 41,
-                label: 'Шаблоны сообщений',
-                icon: 'pi pi-file-edit',
-                route: '/messages/templates',
-                command () {
-                    menu.hide()
-                },
-            }),
-            MenuItem({
                 key: 42,
                 label: 'Массовые рассылки',
                 icon: 'pi pi-send',
@@ -74,6 +65,32 @@ export const appMenuData = [
                 label: 'Печать счетов за день',
                 icon: 'pi pi-file-pdf',
                 route: '/container/invoices/daily',
+                command () {
+                    menu.hide()
+                },
+            }),
+        ],
+    }),
+
+    MenuItem({
+        key: 6,
+        label: 'Шаблоны',
+        icon: 'pi pi-file-edit',
+        items: [
+            MenuItem({
+                key: 61,
+                label: 'Редактор шаблонов',
+                icon: 'pi pi-file-edit',
+                route: '/messages/templates',
+                command () {
+                    menu.hide()
+                },
+            }),
+            MenuItem({
+                key: 62,
+                label: 'Теги Данных',
+                icon: 'pi pi-tags',
+                route: '/tags',
                 command () {
                     menu.hide()
                 },
@@ -131,4 +148,5 @@ export const defaultExpandedKeys = {
     3: false,
     4: false,
     5: false,
+    6: false,
 };

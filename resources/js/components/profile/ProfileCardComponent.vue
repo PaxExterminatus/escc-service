@@ -30,7 +30,7 @@
 
                 <InputGroup>
                     <Input v-model="profile().phone" id="clientPhone" label="Телефон"/>
-                    <InputGroupAddon>
+                    <InputGroupAddon class="contact-toggle-addon">
                         <ToggleButton
                             class="contact-toggle"
                             v-tooltip.left="'Клиент дал согласие на отправку SMS?'"
@@ -46,7 +46,7 @@
 
                 <InputGroup>
                     <Input v-model="profile().email" id="clientEmail" label="Email"/>
-                    <InputGroupAddon>
+                    <InputGroupAddon class="contact-toggle-addon">
                         <ToggleButton
                             class="contact-toggle"
                             v-tooltip.left="'Клиент дал согласие на отправку Email?'"
@@ -102,6 +102,7 @@ const birthdayLabel = computed(() => {
 
 const emit = defineEmits({
     search: null,
+    contactsUpdated: null,
 });
 
 const search = () => {
@@ -125,6 +126,7 @@ const saveCommunication = () => {
     persistCommunication()
         .then(() => {
             showSuccess('Контакты сохранены.');
+            emit('contactsUpdated');
         })
         .catch((error) => {
             showError(error.response?.data?.message ?? 'Не удалось сохранить.');
@@ -143,6 +145,7 @@ const toggleSms = (value) => {
     persistCommunication()
         .then(() => {
             showSuccess('Согласие на SMS сохранено.');
+            emit('contactsUpdated');
         })
         .catch((error) => {
             showError(error.response?.data?.message ?? 'Не удалось сохранить.');
@@ -161,6 +164,7 @@ const toggleEmail = (value) => {
     persistCommunication()
         .then(() => {
             showSuccess('Согласие на Email сохранено.');
+            emit('contactsUpdated');
         })
         .catch((error) => {
             showError(error.response?.data?.message ?? 'Не удалось сохранить.');
@@ -176,7 +180,7 @@ const toggleEmail = (value) => {
     padding: 0.75rem;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 0.75rem;
 }
 
 .contacts-toolbar {
@@ -185,7 +189,25 @@ const toggleEmail = (value) => {
     background: transparent;
 }
 
+/*
+ * .p-inputgroup-addon несёт собственный вертикальный паддинг (12px сверху/снизу) — этого
+ * достаточно, чтобы даже с align-self:flex-end (см. override-vueprime.sass) собственная
+ * ("естественная") высота addon'а — кнопка + паддинг — всё равно оказалась больше высоты
+ * соседнего инпута. Обнуляем паддинг точечно у ЭТОГО addon'а, не трогая .p-inputgroup-addon
+ * глобально (другие места могут на него полагаться — иконки-префиксы и т.п.).
+ */
+.contact-toggle-addon {
+    height: 44px;
+    padding: 0;
+}
+
+.contact-toggle {
+    display: flex;
+    height: 44px;
+}
+
 .contact-toggle :deep(.p-button) {
+    height: 100%;
     padding: 0.35rem 0.6rem;
     min-width: 0;
     font-size: 0.85rem;

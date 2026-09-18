@@ -3,62 +3,12 @@ import axios from 'axios';
 class MessagingAPI {
 
     routers = {
-        templates: () => `/api/messages/templates`,
-        template: (id) => `/api/messages/templates/${id}`,
-        templateRender: (id) => `/api/messages/templates/${id}/render`,
         recipient: (clientId) => `/api/messages/recipient/${clientId}`,
         send: () => `/api/messages/send`,
         daily: (type) => `/api/messages/daily/${type}`,
         dailySend: (type) => `/api/messages/daily/${type}/send`,
         dailyTxt: (type) => `/api/messages/daily/${type}/txt`,
     };
-
-    /**
-     * @param {boolean} activeOnly
-     * @return {Promise<axios.AxiosResponse<{data: MessageTemplateData[]}>>}
-     */
-    templates(activeOnly = false)
-    {
-        return axios.get(this.routers.templates(), {params: {active_only: activeOnly}});
-    }
-
-    /**
-     * @param {{code: string, name: string, body: string, is_active: boolean}} payload
-     * @return {Promise<axios.AxiosResponse<{data: MessageTemplateData}>>}
-     */
-    createTemplate(payload)
-    {
-        return axios.post(this.routers.templates(), payload);
-    }
-
-    /**
-     * @param {number} id
-     * @param {{code: string, name: string, body: string, is_active: boolean}} payload
-     * @return {Promise<axios.AxiosResponse<{data: MessageTemplateData}>>}
-     */
-    updateTemplate(id, payload)
-    {
-        return axios.put(this.routers.template(id), payload);
-    }
-
-    /**
-     * @param {number} id
-     * @return {Promise<axios.AxiosResponse<void>>}
-     */
-    deleteTemplate(id)
-    {
-        return axios.delete(this.routers.template(id));
-    }
-
-    /**
-     * @param {number} templateId
-     * @param {string|number} clientId
-     * @return {Promise<axios.AxiosResponse<{body: string}>>}
-     */
-    renderTemplate(templateId, clientId)
-    {
-        return axios.get(this.routers.templateRender(templateId), {params: {client_id: clientId}});
-    }
 
     /**
      * @param {string|number} clientId

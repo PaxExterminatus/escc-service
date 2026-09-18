@@ -44,16 +44,10 @@
 .p-tabmenu .p-tabmenu-nav .p-tabmenuitem .p-menuitem-link .p-menuitem-icon
     width: 1rem
 
-.p-button-loading-icon
-    position: absolute
-
-.p-button.p-button-loading-label-only .p-button-label
-    margin-left: 0
-
 .p-message.p-message-error
     border: none
 
-.p-dialog .p-dialog-content
+.lesson-reader-dialog .p-dialog-content
     height: 100%
     padding: 0
     overflow: hidden
@@ -92,6 +86,23 @@
         background: transparent
         border-radius: 0
         padding: 0 0.5rem
+
+// FloatLabel в заполненном/сфокусированном состоянии поднимает подпись на top: -0.75rem
+// от края СВОЕЙ ЖЕ обёртки (см. тему PrimeVue) — то есть каждый FloatLabel сам по себе
+// "торчит" вверх независимо от gap/margin соседей. Раньше это компенсировали вручную
+// в каждом месте (gap-5, pt-3 и т.п.) — на месте, где забыли, подпись наезжает. Резервируем
+// место один раз здесь, глобально, чтобы это больше никогда не приходилось подбирать руками.
+.p-float-label
+    margin-top: 1.25rem
+
+// Из-за margin-top выше строка с FloatLabel-полем стала выше самого видимого инпута
+// (наверху освободилось место под подпись). InputGroup по умолчанию растягивает все
+// дочерние элементы (align-items: stretch) на высоту строки — обычная кнопка/SplitButton
+// рядом с таким полем послушно растягивается на всю строку и визуально становится выше
+// соседнего инпута. У них нет своей FloatLabel, растягивать их незачем — прижимаем к
+// низу, тогда их собственная (не растянутая) высота совпадает с видимым полем ввода.
+.p-inputgroup > .p-splitbutton, .p-inputgroup > .p-button, .p-inputgroup > .p-inputgroup-addon
+    align-self: flex-end
 
 @media screen and (max-width: 768px)
     .p-inputgroup

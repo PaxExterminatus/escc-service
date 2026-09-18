@@ -3,13 +3,17 @@
         <ProgressSpinner style="width: 40px; height: 40px" strokeWidth="4"/>
     </div>
     <div v-else class="flex flex-column gap-3 p-2">
-        <SelectButton
-            v-model="channel"
-            :options="channelOptions"
-            optionLabel="label"
-            optionValue="value"
-            :allowEmpty="false"
-        />
+        <div class="flex align-items-center gap-3">
+            <SelectButton
+                v-model="channel"
+                :options="channelOptions"
+                optionLabel="label"
+                optionValue="value"
+                :allowEmpty="false"
+            />
+
+            <Button label="Отправить" :disabled="!canSend" :loading="sending" @click="send"/>
+        </div>
 
         <div class="text-sm text-color-secondary">
             {{ selectedChannel?.label }}: {{ selectedChannel?.address ?? '—' }}
@@ -30,11 +34,8 @@
             @change="applyTemplate"
         />
 
-        <Textarea v-model="body" rows="4" autoResize :disabled="renderingTemplate"/>
-
-        <div>
-            <Button label="Отправить" :disabled="!canSend" :loading="sending" @click="send"/>
-        </div>
+        <SmsBodyEditor v-if="channel === 'sms'" v-model="body" id="messagePanelBody" label="Текст SMS" :disabled="renderingTemplate" :client-id="clientId"/>
+        <EmailBodyEditor v-else-if="channel === 'email'" v-model="body" id="messagePanelBody" label="Текст письма" :disabled="renderingTemplate" :client-id="clientId" :template-id="templateId" @send="send"/>
     </div>
 </template>
 
@@ -43,11 +44,13 @@ import {computed, defineProps, ref, watch} from 'vue'
 import ProgressSpinner from 'primevue/progressspinner'
 import SelectButton from 'primevue/selectbutton'
 import Dropdown from 'primevue/dropdown'
-import Textarea from 'primevue/textarea'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
 import {showError, showSuccess} from 'app/toast'
 import {Messaging} from './Messaging.js'
+import SmsBodyEditor from './SmsBodyEditorComponent.vue'
+import EmailBodyEditor from './EmailBodyEditorComponent.vue'
+import {templateAPI} from 'cmp/templates'
 
 const props = defineProps({
     messaging: Messaging,
@@ -83,7 +86,7 @@ const applyTemplate = () => {
 
     renderingTemplate.value = true;
 
-    props.messaging.api.renderTemplate(template.id, props.clientId)
+    templateAPI.render(template.id, props.clientId)
         .then((response) => {
             body.value = response.data.body;
         })
@@ -97,6 +100,14 @@ const applyTemplate = () => {
 };
 
 const send = () => {
+    // Кнопка "Отправить" в предпросмотре письма вызывает эту же функцию — повторяем ту же
+    // проверку, что и disabled на обычной кнопке, иначе оттуда можно отправить без согласия
+    // клиента на канал или пустое тело.
+    if (!canSend.value) {
+        showError('Отправка недоступна: клиент не дал согласие на этот канал, либо текст пуст.');
+        return;
+    }
+
     sending.value = true;
 
     props.messaging.api.send({

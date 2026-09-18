@@ -28,6 +28,7 @@ export default defineConfig({
             'cmp': __dirname + '/resources/js/components',
             'page': __dirname + '/resources/js/components/page',
             'element': __dirname + '/resources/js/components/element',
+            'utils': __dirname + '/resources/js/utils',
         },
     },
 });

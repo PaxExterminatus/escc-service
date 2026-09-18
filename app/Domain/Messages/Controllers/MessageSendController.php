@@ -4,10 +4,13 @@ namespace App\Domain\Messages\Controllers;
 
 use App\Domain\Messages\Channels\MessageChannelRegistry;
 use App\Domain\Messages\Enums\MessageDispatchStatusEnum;
+use App\Domain\Messages\Enums\MessageTypeEnum;
 use App\Domain\Messages\Models\ClientCommunication;
 use App\Domain\Messages\Models\ElectronicMessage;
-use App\Domain\Messages\Models\MessageTemplate;
+use App\Domain\Templates\Models\Template;
 use App\Domain\Messages\Requests\SendMessageRequest;
+use App\Domain\Templates\Services\EmailComposer;
+use App\Domain\Templates\Services\TagResolver;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 
@@ -29,7 +32,7 @@ class MessageSendController extends Controller
     }
 
     /** Send one message to a client over any registered channel */
-    public function send(SendMessageRequest $request): JsonResponse
+    public function send(SendMessageRequest $request, EmailComposer $composer, TagResolver $resolver): JsonResponse
     {
         $data = $request->validated();
 
@@ -42,8 +45,13 @@ class MessageSendController extends Controller
         $template = null;
 
         if (!empty($data['template_id'])) {
-            $template = MessageTemplate::where('template_id', $data['template_id'])->firstOrFail();
+            $template = Template::where('template_id', $data['template_id'])->firstOrFail();
             $body = $template->render($data['params'] ?? []);
+        }
+
+        if ($channel->type() === MessageTypeEnum::email) {
+            $params = $resolver->resolveForClient($data['client_id']);
+            $body = $composer->composeFromText((string) $body, $params, $template?->wrapper_id, $template?->wrapper_auto ?? false);
         }
 
         $address = $channel->address($communication);

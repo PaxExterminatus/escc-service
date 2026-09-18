@@ -4,11 +4,18 @@ namespace App\Domain\App\Invoice\Controllers;
 
 use App\Domain\App\Container\Enums\ContainerStatusEnum;
 use App\Domain\App\Container\Models\Container;
-use App\Domain\App\Invoice\Services\InvoiceRenderer;
 use App\Domain\App\Profile\Models\Profile;
+use App\Domain\Messages\Channels\EmailChannel;
+use App\Domain\Messages\Models\ClientCommunication;
+use App\Domain\Messages\Services\Senders\Mail\MailProvider;
+use App\Domain\Templates\Enums\TemplateOperationEnum;
+use App\Domain\Templates\Services\DocumentRenderer;
+use App\Domain\Templates\Services\EmailComposer;
+use App\Domain\Templates\Services\TagResolver;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class InvoiceController extends Controller
@@ -19,15 +26,59 @@ class InvoiceController extends Controller
      * Печать доступна только для отправленных контейнеров (REV_CONST.boxStatusSent = 70) —
      * именно на этом шаге в легаси выставляется счёт (см. документацию домена "Финансы").
      */
-    public function show(int $id, InvoiceRenderer $renderer): BinaryFileResponse
+    public function show(int $id, TagResolver $tags, DocumentRenderer $renderer): BinaryFileResponse
     {
         $container = Container::where('container_id', $id)->firstOrFail();
 
         abort_if(!$this->isInvoiceable($container), 422, 'Счёт можно распечатать только для отправленного контейнера.');
 
-        $path = $renderer->render(collect([$container]));
+        $path = $renderer->render(TemplateOperationEnum::invoice, $this->rowsFor(collect([$container]), $tags));
 
         return response()->download($path, "invoice-{$container->container_id}.docx")->deleteFileAfterSend();
+    }
+
+    /**
+     * Предпросмотр письма со счётом для конкретного контейнера — то же, что реально уйдёт
+     * при sendEmail(), но без отправки (реальные данные клиента/счёта, обёрнутые в обёртку письма).
+     */
+    public function emailPreview(int $id, EmailComposer $composer): JsonResponse
+    {
+        $container = Container::where('container_id', $id)->firstOrFail();
+
+        abort_if(!$this->isInvoiceable($container), 422, 'Письмо можно посмотреть только для отправленного контейнера.');
+
+        return response()->json(['html' => $composer->composeForContainer($container)['html']]);
+    }
+
+    /**
+     * Отправить счёт по email вместо печати — то же тело письма (html-шаблон операции,
+     * обёрнутый в общие шапку/футер), с приложенным docx-документом счёта.
+     */
+    public function sendEmail(int $id, TagResolver $tags, DocumentRenderer $renderer, EmailComposer $composer): JsonResponse
+    {
+        $container = Container::where('container_id', $id)->firstOrFail();
+
+        abort_if(!$this->isInvoiceable($container), 422, 'Письмо можно отправить только по отправленному контейнеру.');
+
+        $communication = ClientCommunication::where('client_id', $container->client_id)->firstOrFail();
+        $email = new EmailChannel();
+
+        abort_if(!$email->isAllowed($communication), 422, 'Клиент не дал согласие на Email либо адрес некорректен.');
+
+        $composed = $composer->composeForContainer($container);
+        $documentPath = $renderer->render(TemplateOperationEnum::invoice, $this->rowsFor(collect([$container]), $tags));
+
+        $result = MailProvider::make()->sendHtml(
+            $email->address($communication),
+            $composed['subject'],
+            $composed['html'],
+            $documentPath,
+            "invoice-{$container->container_id}.docx"
+        );
+
+        @unlink($documentPath);
+
+        return response()->json(['response' => $result]);
     }
 
     /**
@@ -63,15 +114,24 @@ class InvoiceController extends Controller
     /**
      * Печать всех счетов за период одним файлом
      */
-    public function rangePrint(string $from, string $to, InvoiceRenderer $renderer): BinaryFileResponse
+    public function rangePrint(string $from, string $to, TagResolver $tags, DocumentRenderer $renderer): BinaryFileResponse
     {
         $containers = $this->containersForRange($from, $to)->get();
 
         abort_if($containers->isEmpty(), 422, 'За этот период нет отправленных контейнеров.');
 
-        $path = $renderer->render($containers);
+        $path = $renderer->render(TemplateOperationEnum::invoice, $this->rowsFor($containers, $tags));
 
         return response()->download($path, "invoices-{$from}_{$to}.docx")->deleteFileAfterSend();
+    }
+
+    /**
+     * @param Collection<int, Container> $containers
+     * @return array<int, array<string, string>>
+     */
+    protected function rowsFor(Collection $containers, TagResolver $tags): array
+    {
+        return $containers->map(fn (Container $container) => $tags->resolveForContainer($container))->all();
     }
 
     protected function containersForRange(string $from, string $to)

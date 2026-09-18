@@ -173,6 +173,8 @@ return [
         \App\Domain\App\Profile\AppProfileServiceProvider::class,
         \App\Domain\App\Container\AppContainerServiceProvider::class,
         \App\Domain\App\Invoice\AppInvoiceServiceProvider::class,
+        \App\Domain\Templates\TemplatesServiceProvider::class,
+        \App\Domain\App\Course\AppCourseServiceProvider::class,
     ],
 
     /*

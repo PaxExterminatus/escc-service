@@ -4,6 +4,8 @@ class InvoiceAPI {
 
     routers = {
         containerInvoice: (id) => `/api/invoice/container/${id}`,
+        containerInvoiceEmailPreview: (id) => `/api/invoice/container/${id}/email-preview`,
+        containerInvoiceEmail: (id) => `/api/invoice/container/${id}/email`,
         range: (from, to) => `/api/invoice/range/${from}/${to}`,
         rangePrint: (from, to) => `/api/invoice/range/${from}/${to}/print`,
     };
@@ -15,6 +17,28 @@ class InvoiceAPI {
     containerInvoiceUrl(id)
     {
         return this.routers.containerInvoice(id);
+    }
+
+    /**
+     * Предпросмотр письма со счётом для контейнера (без отправки)
+     *
+     * @param {string|int} id
+     * @return {Promise<axios.AxiosResponse<{html: string}>>}
+     */
+    containerInvoiceEmailPreview(id)
+    {
+        return axios.get(this.routers.containerInvoiceEmailPreview(id));
+    }
+
+    /**
+     * Отправить счёт по email вместо печати
+     *
+     * @param {string|int} id
+     * @return {Promise<axios.AxiosResponse<{response: {status: number, reason: string}}>>}
+     */
+    sendContainerInvoiceEmail(id)
+    {
+        return axios.post(this.routers.containerInvoiceEmail(id));
     }
 
     /**

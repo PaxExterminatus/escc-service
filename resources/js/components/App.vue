@@ -3,6 +3,7 @@
 
     <header class="app-header">
         <Button icon="pi pi-bars" severity="secondary" raised v-tooltip.right="'Меню'" @click="menu.show()"/>
+        <div id="app-header-end"></div>
     </header>
 
     <div class="app-body">
@@ -10,6 +11,8 @@
             <router-view/>
         </div>
     </div>
+
+    <footer class="app-footer"></footer>
 
     <AppMenuComponent/>
 </template>

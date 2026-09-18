@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Domain\Messages\Requests;
+namespace App\Domain\Templates\Requests;
 
 use App\Base\ApplicationProgrammingInterfaceRequest;
 
 /**
  * @property int client_id
  */
-class RenderMessageTemplateRequest extends ApplicationProgrammingInterfaceRequest
+class RenderTemplateRequest extends ApplicationProgrammingInterfaceRequest
 {
     public function rules(): array
     {
