@@ -1,40 +1,57 @@
 <template>
-    <!-- Тот же липкий app-header, где уже живёт бургер основного меню (см. App.vue) — оба
-    бургера в одной строке: слева обычное меню, справа — оглавление текущей страницы. -->
+    <!-- Сама кнопка-переключатель живёт внутри липкого app-header (см. App.vue), рядом с
+    бургером основного меню — не отдельной плавающей карточкой над страницей. -->
     <Teleport to="#app-header-end">
-        <Button
-            icon="pi pi-bars"
-            rounded
-            severity="secondary"
-            v-tooltip.left="'Оглавление'"
-            @click="open = !open"
-        />
+        <button class="anchor-menu-header" type="button" @click="open = !open">
+            <span class="anchor-menu-icon"><span class="pi pi-compass"></span></span>
+            <span class="anchor-menu-title">Навигация</span>
+            <span class="anchor-menu-badge">{{ items.length + 1 }}</span>
+            <span class="anchor-menu-chevron pi" :class="open ? 'pi-chevron-up' : 'pi-chevron-down'"></span>
+        </button>
     </Teleport>
 
-    <div v-if="open" class="anchor-menu-panel">
-        <Menu :model="menuModel"/>
+    <!-- Раскрывшийся список — уже не часть шапки (сломал бы её высоту/раскладку), поэтому
+    оверлей, повешенный сразу под ней. -->
+    <div v-if="open" class="anchor-menu-body" :style="{top: headerOffset}">
+        <a class="anchor-menu-item" href="#" @click.prevent="scrollToTop">
+            <span class="pi pi-arrow-up anchor-menu-item-icon"></span>
+            <span>Наверх</span>
+        </a>
+
+        <a
+            v-for="item in items"
+            :key="item.id"
+            class="anchor-menu-item"
+            :class="{'anchor-menu-item-active': item.id === activeId}"
+            :href="'#' + item.id"
+            @click="onItemClick($event, item)"
+        >
+            <span :class="item.icon ?? 'pi pi-circle-fill'" class="anchor-menu-item-icon"></span>
+            <span>{{ item.text }}</span>
+        </a>
     </div>
 </template>
 
 <script setup>
 /**
- * Липкое меню-якорь: само находит заголовки (h1/h2) внутри переданного контейнера и строит
- * по ним список пунктов с плавной прокруткой. Ничего не хардкодит про конкретную страницу —
- * появится новый заголовок в контейнере, появится и пункт меню.
+ * Липкое меню-якорь: само находит заголовки (h1) внутри переданного контейнера и строит по
+ * ним список пунктов с плавной прокруткой, плюс фиксированный первый пункт "Наверх". Ничего
+ * не хардкодит про конкретную страницу — появится новый заголовок в контейнере, появится и
+ * пункт меню.
  *
- * Сама кнопка-бургер телепортируется в липкий app-header (см. App.vue) — там же, где бургер
- * основного меню, только справа. Панель списка — оверлей (position: fixed) поверх содержимого
- * страницы, повешенный сразу под шапкой; на мобильном по умолчанию свёрнута, на десктопе открыта.
+ * Оформление — карточка-аккордеон: строка "Навигация [N] ⌄" сама по себе служит переключателем
+ * (никакого отдельного бургера в шапке — это отдельная сущность от главного меню приложения,
+ * см. App.vue), список раскрывается вниз под ней. Панель — оверлей (position: fixed) поверх
+ * содержимого страницы, повешенный сразу под шапкой; на мобильном по умолчанию свёрнута, на
+ * десктопе открыта.
  */
 import {computed, defineProps, onBeforeUnmount, ref, watch} from 'vue'
-import Menu from 'primevue/menu'
-import Button from 'primevue/button'
 
 const props = defineProps({
     // DOM-элемент (или CSS-селектор), внутри которого искать заголовки — обычно template ref
     // на контейнер с содержимым страницы. Без него — вся страница.
     container: {type: [Object, String], default: null},
-    selector: {type: String, default: 'h1, h2'},
+    selector: {type: String, default: 'h1'},
 });
 
 // Насколько px от верха вьюпорта считается "текущим" заголовком — чуть больше высоты самого
@@ -48,6 +65,25 @@ const open = ref(window.matchMedia('(min-width: 768px)').matches);
 
 const items = ref([]);
 const activeId = ref(null);
+
+// Реальная высота .app-header, а не захардкоженное число: у неё только min-height (см.
+// resources/sass/template/base.sass) — если содержимое шапки становится выше (перенос строки,
+// другой набор кнопок на узком экране), фиксированный top оставлял бы верх панели под шапкой.
+const headerOffset = ref('3.5rem');
+let headerResizeObserver = null;
+
+const updateHeaderOffset = () => {
+    const header = document.querySelector('.app-header');
+    if (!header) return;
+
+    headerOffset.value = `${header.getBoundingClientRect().height}px`;
+
+    // Тот же отступ — в scroll-padding-top документа, чтобы стандартный переход браузера по
+    // #якорю (href, см. onItemClick/scrollToTop) сам подводил заголовок под шапку, а не под
+    // неё. В resources/sass/template/base.sass значение захардкожено (3.5rem) на случай, если
+    // этот компонент ещё не смонтирован — здесь оно только уточняется под реальную высоту.
+    document.documentElement.style.scrollPaddingTop = headerOffset.value;
+};
 
 let mutationObserver = null;
 let nextAnchorId = 0;
@@ -75,11 +111,7 @@ const scan = () => {
             // (см. LazyPanelComponent) — тот же значок переносится в пункт меню.
             const icon = el.querySelector('[class*="pi-"]')?.className ?? null;
 
-            // h2 (вложенные вкладки вроде "Доступные теги" внутри "Отправка сообщений") —
-            // подпункт, отступается в меню от заголовков верхнего уровня (h1).
-            const level = el.tagName === 'H2' ? 2 : 1;
-
-            return {id: el.id, text: el.textContent.trim(), icon, el, level};
+            return {id: el.id, text: el.textContent.trim(), icon, el};
         });
 
     updateActive();
@@ -119,72 +151,55 @@ const updateActive = () => {
 };
 
 /**
- * Прокрутка к заголовку — вынесена отдельно, чтобы звать её и сразу, и после анимации.
+ * Переход к якорю — обычная навигация браузера по #id (тот же самый механизм, что у любой
+ * ссылки на якорь на странице): сам корректно упирается в конец документа без переполнения и
+ * учитывает scroll-padding-top (см. updateHeaderOffset), поэтому никакой ручной анимации или
+ * "запаса высоты" не требуется — раньше scrollIntoView({behavior:'smooth'}) с этим запасом
+ * иногда перелистывал ниже, чем нужно (гонка между анимацией и таймером удаления запаса).
  *
- * Если заголовок ближе к концу страницы, чем высота вьюпорта, браузеру физически некуда
- * докрутить — контента ниже просто не хватает, чтобы поднять заголовок к самому верху
- * (упирается в максимум scrollHeight, заголовок застревает выше середины экрана). Временно
- * добавляем внизу страницы запас высоты в один экран — ровно на время прокрутки, — и убираем
- * его, когда анимация точно уже закончилась (обычная прокрутка успевшую позицию не потеряет:
- * заголовок никогда не на самом last экране, места и без запаса остаётся достаточно).
+ * Единственное, что здесь всё же нужно сделать самим: если заголовок принадлежит свёрнутой
+ * вкладке (LazyPanelComponent), сначала раскрыть её (клик по заголовку) и подождать конца
+ * transition — иначе браузер перейдёт по ссылке до того, как высота панели встанет на место, и
+ * промахнётся. Если вкладка уже раскрыта — событию не мешаем, переход происходит нативно по
+ * href, без preventDefault.
  */
-const scrollToHeading = (item) => {
-    const spacer = document.createElement('div');
-    spacer.style.height = '100vh';
-    spacer.setAttribute('aria-hidden', 'true');
-    document.body.appendChild(spacer);
-
-    item.el.scrollIntoView({behavior: 'smooth', block: 'start'});
-
-    setTimeout(() => spacer.remove(), 800);
-};
-
-/**
- * Если вкладка (LazyPanelComponent) свёрнута — заголовок кликом её раскрывает, ровно как
- * обычный клик пользователя по заголовку. Клик не шлётся, если уже раскрыта — иначе это был
- * бы переключатель "туда-обратно" и раскрытую вкладку он бы, наоборот, свернул.
- *
- * Раскрытие анимированно меняет высоту панели — если прокручивать сразу (или через один
- * кадр), целимся в позицию заголовка ДО анимации, и в процессе нижние заголовки "уезжают"
- * вниз, из-за чего страница выглядит так, будто сначала прыгнула не туда, а потом сама себя
- * поправила. Ждём конца transition у содержимого панели и только потом скроллим.
- */
-const scrollTo = (item) => {
+const onItemClick = (event, item) => {
     const content = item.el.closest('.p-panel')?.querySelector('.p-toggleable-content');
     const wasCollapsed = content && content.offsetHeight === 0;
 
-    if (!wasCollapsed) {
-        scrollToHeading(item);
-        return;
-    }
+    if (!wasCollapsed) return;
 
+    event.preventDefault();
     item.el.click();
+
+    // Если хеш и так уже совпадает с целью — обычное присваивание hash не переходит повторно
+    // (браузер не видит изменения), поэтому в этом случае просто scrollIntoView без анимации —
+    // тот же "мгновенный" эффект, что и у обычного перехода по ссылке.
+    const jump = () => {
+        if (window.location.hash === `#${item.id}`) {
+            item.el.scrollIntoView({block: 'start'});
+        } else {
+            window.location.hash = item.id;
+        }
+    };
 
     const onTransitionEnd = () => {
         content.removeEventListener('transitionend', onTransitionEnd);
         clearTimeout(fallback);
-        scrollToHeading(item);
+        jump();
     };
 
     // Фолбэк на случай, если transitionend не придёт (уменьшенная анимация, другой механизм
-    // раскрытия) — тогда просто скроллим по таймауту, не оставляя клик без реакции вовсе.
+    // раскрытия) — тогда просто переходим по таймауту, не оставляя клик без реакции вовсе.
     const fallback = setTimeout(() => {
         content.removeEventListener('transitionend', onTransitionEnd);
-        scrollToHeading(item);
+        jump();
     }, 400);
 
     content.addEventListener('transitionend', onTransitionEnd);
 };
 
-const menuModel = computed(() => items.value.map((item) => ({
-    label: item.text,
-    icon: item.icon,
-    class: [
-        item.id === activeId.value ? 'anchor-menu-item-active' : '',
-        item.level === 2 ? 'anchor-menu-item-sub' : '',
-    ].filter(Boolean).join(' '),
-    command: () => scrollTo(item),
-})));
+const scrollToTop = () => window.scrollTo(0, 0);
 
 const setupMutationObserver = () => {
     mutationObserver?.disconnect();
@@ -215,38 +230,135 @@ watch(() => props.container, () => {
     setupMutationObserver();
 }, {immediate: true});
 
+updateHeaderOffset();
+
+const header = document.querySelector('.app-header');
+
+if (header) {
+    headerResizeObserver = new ResizeObserver(updateHeaderOffset);
+    headerResizeObserver.observe(header);
+}
+
 window.addEventListener('scroll', onScroll, {passive: true});
+window.addEventListener('resize', updateHeaderOffset);
 
 onBeforeUnmount(() => {
     mutationObserver?.disconnect();
+    headerResizeObserver?.disconnect();
     window.removeEventListener('scroll', onScroll);
+    window.removeEventListener('resize', updateHeaderOffset);
 });
 </script>
 
 <style scoped>
-/* Бургер живёт в липком app-header (см. App.vue) — сама панель всё равно оверлей поверх
-   содержимого страницы, повешенный сразу под шапкой. */
-.anchor-menu-panel {
+.anchor-menu-header {
+    --anchor-accent: #e0384f;
+    --anchor-bg-header: #2c1520;
+    --anchor-border: rgba(224, 56, 79, 0.45);
+
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.4rem 0.75rem;
+    background: var(--anchor-bg-header);
+    border: 1px solid var(--anchor-border);
+    border-radius: 999px;
+    cursor: pointer;
+    color: #f2e8ea;
+    font-family: inherit;
+    font-size: 0.85rem;
+}
+
+.anchor-menu-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: var(--anchor-accent);
+    color: #fff;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+}
+
+.anchor-menu-title {
+    font-weight: 700;
+}
+
+.anchor-menu-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.3rem;
+    height: 1.3rem;
+    padding: 0 0.35rem;
+    border-radius: 999px;
+    background: var(--anchor-accent);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.anchor-menu-chevron {
+    color: #cfa7ae;
+}
+
+/* Раскрывшийся список — уже не внутри шапки, оверлей поверх содержимого страницы, повешенный
+   сразу под ней (см. headerOffset). */
+.anchor-menu-body {
+    --anchor-accent: #e0384f;
+    --anchor-bg: #241019;
+    --anchor-border: rgba(224, 56, 79, 0.45);
+
     position: fixed;
-    top: 3.5rem;
     right: 1rem;
     z-index: 150;
-    width: 15rem;
+    width: 16rem;
     max-width: calc(100vw - 2rem);
+    max-height: 60vh;
+    overflow-y: auto;
+    margin-top: 0.5rem;
+
+    background: var(--anchor-bg);
+    border: 1px solid var(--anchor-border);
+    border-radius: 16px;
+    padding: 0.4rem 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
-.anchor-menu-panel :deep(.p-menu) {
-    width: 100%;
+.anchor-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.55rem 0.9rem;
+    color: #e7d9dd;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+    font-size: 0.9rem;
 }
 
-.anchor-menu-panel :deep(.anchor-menu-item-active .p-menuitem-link) {
-    color: var(--primary-color);
+.anchor-menu-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.anchor-menu-item-icon {
+    width: 1rem;
+    text-align: center;
+    color: var(--anchor-accent);
+    flex-shrink: 0;
+    font-size: 0.85rem;
+}
+
+.anchor-menu-item-active {
+    border-left-color: var(--anchor-accent);
+    background: rgba(224, 56, 79, 0.12);
+    color: #fff;
     font-weight: 600;
 }
 
-/* h2 (вложенные вкладки вроде "Доступные теги") — подпункт меню, с отступом от h1 */
-.anchor-menu-panel :deep(.anchor-menu-item-sub .p-menuitem-link) {
-    padding-left: 2rem;
-    font-size: 0.85rem;
+.anchor-menu-item-active .anchor-menu-item-icon {
+    color: #fff;
 }
 </style>

@@ -175,6 +175,7 @@ return [
         \App\Domain\App\Invoice\AppInvoiceServiceProvider::class,
         \App\Domain\Templates\TemplatesServiceProvider::class,
         \App\Domain\App\Course\AppCourseServiceProvider::class,
+        \App\Domain\Scheduler\SchedulerServiceProvider::class,
     ],
 
     /*

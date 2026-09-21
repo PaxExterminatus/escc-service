@@ -18,7 +18,7 @@
                     :loading="coursesLoading"
                     @reload="loadCourses"
                 >
-                    <ClientCoursesPanel ref="coursesPanelRef" :client-id="profile.id"/>
+                    <ClientCoursesTable ref="coursesPanelRef" :client-id="profile.id"/>
                 </LazyPanel>
 
                 <LazyPanel
@@ -63,7 +63,7 @@ import Toolbar from 'primevue/toolbar'
 import {ProfileCard, Profile} from 'cmp/profile'
 import {FinanceHistoryTable, FinanceHistory} from 'cmp/finance'
 import {MessagesPanel, Messaging} from 'cmp/messages'
-import {ClientCoursesPanel} from 'cmp/course'
+import {ClientCoursesTable} from 'cmp/course'
 import {templateAPI} from 'cmp/templates'
 import {AnchorMenu, LazyPanel} from 'cmp/element'
 

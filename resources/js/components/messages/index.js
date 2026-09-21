@@ -1,4 +1,5 @@
 import MessagesPanel from './MessagesPanelComponent.vue'
+import MessageHistoryTable from './MessageHistoryTableComponent.vue'
 import SmsBodyEditor from './SmsBodyEditorComponent.vue'
 import EmailBodyEditor from './EmailBodyEditorComponent.vue'
 import {messagingAPI} from './MessagingAPI.js';
@@ -8,6 +9,7 @@ export {
     Messaging,
     messagingAPI,
     MessagesPanel,
+    MessageHistoryTable,
     SmsBodyEditor,
     EmailBodyEditor,
 }

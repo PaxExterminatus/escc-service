@@ -2,6 +2,8 @@
 
 namespace App\Console;
 
+use App\Domain\Scheduler\Enums\ScheduledTaskEnum;
+use App\Domain\Scheduler\Models\ScheduledTaskSchedule;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -24,11 +26,21 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // Время запуска и признак включённости настраиваются через UI (см.
+        // App\Domain\Scheduler\Controllers\ScheduledTaskController) и хранятся в
+        // ScheduledTaskSchedule; сам набор задач задаёт ScheduledTaskEnum. Пока задача не
+        // настраивалась вручную, строки нет — используется значение по умолчанию из enum.
+        $rows = ScheduledTaskSchedule::all()->keyBy('task_id');
 
-        $schedule->call(function () {
-          \Log::info('schedule call');
-        })->everySecond();
+        foreach (ScheduledTaskEnum::cases() as $task) {
+            $row = $rows->get($task->value);
+
+            if ($row && ! $row->is_enabled) {
+                continue;
+            }
+
+            $schedule->command($task->command())->dailyAt($row->run_time ?? $task->defaultTime());
+        }
     }
 
     /**

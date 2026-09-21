@@ -17,12 +17,19 @@ use Illuminate\Support\Facades\DB;
  *   CLIENT                                  — включая CLIENT_BIRTHDAY/CLIENT_SEX для Profile
  *   CLIENT_PROPERTY                         — телефон/email клиента
  *   CLIENT_BASKET, CLIENT_SUB, CONTAINER     — 2 курса на клиента, каждый свой заказ
- *   CATALOGUE, CATEGORY, PRODUCT_CATEGORY    — 2 тестовых курса, по 1-2 урока, категории
  *   MONEY_DIST, MONEY_SOURCE                 — начисления, оплаты и записи-погашения
  *                                               (см. enroll() — COURSE_NAME в
  *                                               API_CLIENT_FINANCE_HISTORY находится через них)
  *   API_EFRONT_DATA                          — по записи на клиента
  *   EMSG                                     — по SMS на клиента, адресовано на его CLIENT_PROPERTY.CLIENT_MPHONE
+ *
+ * Курсы, на которые записываются тестовые клиенты, — РЕАЛЬНЫЕ (см. pickRealCourses(): два
+ * самых недавно добавленных активных продукта из уже импортированного CATALOGUE, см. память
+ * project_local_reference_data_import), а не выдуманные CATALOGUE-записи, как было раньше.
+ * Реальный состав курса (какие уроки внутри — таблица CATALOGUE_CONTENT) сознательно не
+ * импортирован (та же память, 1.26М строк) — поэтому у тестовых заказов ниже нет вложенных
+ * уроков (CLIENT_BASKET для урока внутри контейнера просто не создаётся), честно, а не
+ * выдуманными node_id.
  *
  * Требует, чтобы ReferenceDataSeeder уже был применён (иначе упадёт по FK):
  *   php artisan db:seed --class="Database\Seeders\ReferenceDataSeeder"
@@ -30,9 +37,7 @@ use Illuminate\Support\Facades\DB;
  *
  * Тестовые клиенты (TEST-DEBTOR-01, TEST-PAYER-01) при каждом запуске удаляются
  * (resetClient) и создаются заново — так повторный прогон всегда даёт состояние,
- * соответствующее текущему коду сидера, без ручных SQL-патчей. Общий тестовый каталог
- * курсов/уроков/категорий (ensureTestCatalogue) — общая опорная структура на оба клиента,
- * остаётся идемпотентным (создаётся один раз, повторные запуски не трогают).
+ * соответствующее текущему коду сидера, без ручных SQL-патчей.
  *
  * Только для локальной тестовой XE — см. GuardsAgainstNonTestDatabase::guardTestDatabaseOnly().
  */
@@ -42,165 +47,106 @@ class TestClientDataSeeder extends Seeder
 
     protected string $connection = 'oracle';
 
-    // Категория из API_CLIENT_COURSES_LESSONS: "... CATEGORY_ID IN (3, 4, 11053)".
-    // Берём 3 как якорь для тестовых уроков.
-    protected const LESSON_CATEGORY_ID = 3;
-
-    // Категория из API_COURSES_CATEGORY: "... PARENT_ID IN (14592, 14712, 14953)".
-    // Берём 14592 как якорь для тестового дерева категорий курса.
-    protected const COURSE_ROOT_CATEGORY_ID = 14592;
-
     public function run(): void
     {
         $this->guardTestDatabaseOnly($this->connection);
         $db = DB::connection($this->connection);
 
-        $catalogue = $this->ensureTestCatalogue($db);
-
+        // Оба клиента сначала полностью сбрасываются (в т.ч. их CLIENT_BASKET/CLIENT_SUB,
+        // ссылавшиеся на старые фиктивные курсы) — только после этого можно безопасно
+        // удалить сами фиктивные CATALOGUE-записи, ничем больше не занятые.
         $this->resetClient($db, 'TEST-DEBTOR-01');
+        $this->resetClient($db, 'TEST-PAYER-01');
+        $this->purgeFakeCatalogue($db);
+
+        $catalogue = $this->pickRealCourses($db);
+
         $debtorId = $this->createClient($db, 'Иван', 'Должников', 'TEST-DEBTOR-01', sex: 1, birthday: now()->subYears(30));
         $this->createClientProperty($db, $debtorId, phone: '+375293225337', email: 'debtor.test@example.invalid');
         // Курс 1: оплатил только частично, двумя платежами. Курс 2: не заплатил вообще.
-        $this->enroll($db, $debtorId, $catalogue['course1'], $catalogue['course1_lessons'], chargeSum: 300.00, payments: [
+        $this->enroll($db, $debtorId, $catalogue['course1'], chargeSum: 300.00, payments: [
             ['sum' => 60.00, 'daysAgo' => 25, 'desc' => 'Оплата картой, часть 1 (тест)'],
             ['sum' => 40.00, 'daysAgo' => 15, 'desc' => 'Оплата картой, часть 2 (тест)'],
         ], sendDaysAgo: 5);
-        $this->enroll($db, $debtorId, $catalogue['course2'], $catalogue['course2_lessons'], chargeSum: 150.00, payments: [], sendDaysAgo: 5);
+        $this->enroll($db, $debtorId, $catalogue['course2'], chargeSum: 150.00, payments: [], sendDaysAgo: 5);
         // Напоминание о долге — по формату из самого дампа (см. REV_MDEPAYMENTS.client_account_tdc:
         // "DOLG: "||CLIENT.GETTOTALDEBT||" bel.rub; KOD KLIENTA: "||CLCODE).
         $this->createSms($db, '+375293225337', 'DOLG: 350.00 bel.rub; KOD KLIENTA: TEST-DEBTOR-01 (тест)');
 
-        $this->resetClient($db, 'TEST-PAYER-01');
         $payerId = $this->createClient($db, 'Мария', 'Полноплатова', 'TEST-PAYER-01', sex: 0, birthday: now()->subYears(27));
         $this->createClientProperty($db, $payerId, phone: '+375293225337', email: 'payer.test@example.invalid');
         // Оба курса оплачены полностью, курс 1 — двумя платежами (демонстрирует именно "историю", а не одну строку).
-        $this->enroll($db, $payerId, $catalogue['course1'], $catalogue['course1_lessons'], chargeSum: 300.00, payments: [
+        $this->enroll($db, $payerId, $catalogue['course1'], chargeSum: 300.00, payments: [
             ['sum' => 150.00, 'daysAgo' => 25, 'desc' => 'Оплата картой, часть 1 (тест)'],
             ['sum' => 150.00, 'daysAgo' => 15, 'desc' => 'Оплата картой, часть 2 (тест)'],
         ], sendDaysAgo: 2);
-        $this->enroll($db, $payerId, $catalogue['course2'], $catalogue['course2_lessons'], chargeSum: 150.00, payments: [
+        $this->enroll($db, $payerId, $catalogue['course2'], chargeSum: 150.00, payments: [
             ['sum' => 150.00, 'daysAgo' => 10, 'desc' => 'Оплата картой (тест)'],
         ], sendDaysAgo: 2);
         $this->createSms($db, '+375293225337', 'Спасибо за оплату! Баланс: 0.00 bel.rub; KOD KLIENTA: TEST-PAYER-01 (тест)');
 
         if ($this->command) {
+            $this->command->info("Курс 1: [{$catalogue['course1']}] {$catalogue['course1_name']}");
+            $this->command->info("Курс 2: [{$catalogue['course2']}] {$catalogue['course2_name']}");
             $this->command->info("Debtor client_id = {$debtorId}: курс 1 — выставлено 300, оплачено 100 (2 платежа); курс 2 — выставлено 150, не оплачено. Итого долг 350.");
             $this->command->info("Payer  client_id = {$payerId}: курс 1 — выставлено 300, оплачено 300 (2 платежа); курс 2 — выставлено 150, оплачено 150. Долг 0.");
         }
     }
 
     /**
-     * Общий (не привязанный к конкретному клиенту) тестовый каталог: 2 курса + категории,
-     * с id категорий, зашитыми в WHERE наших API_* view. Идемпотентно — при повторном
-     * запуске не дублирует, если CATEGORY/CATALOGUE с этими кодами уже есть.
+     * Два самых недавно добавленных реальных активных курса из уже импортированного каталога
+     * (REC_DATE DESC — приоритет недавно добавленным, как попросили). ROWNUM, не FETCH FIRST —
+     * локальная XE не понимает ANSI OFFSET/FETCH (см. CourseController::search()).
      *
-     * @return array{course1: int, course1_lessons: int[], course2: int, course2_lessons: int[]}
+     * @return array{course1: int, course1_name: string, course2: int, course2_name: string}
      */
-    protected function ensureTestCatalogue(ConnectionInterface $db): array
+    protected function pickRealCourses(ConnectionInterface $db): array
     {
-        // Категория-якорь для API_CLIENT_COURSES_LESSONS
-        if (!$db->table('CATEGORY')->where('CATEGORY_ID', self::LESSON_CATEGORY_ID)->exists()) {
-            $db->table('CATEGORY')->insert([
-                'CATEGORY_ID' => self::LESSON_CATEGORY_ID,
-                'TYPE_ID' => 1,
-                'CATEGORY_CODE' => 'TEST_LESSON_CAT',
-                'CATEGORY_NAME' => 'Тестовая категория уроков',
-                'STATUS_ID' => 1,
-            ]);
+        $rows = $db->select("
+            SELECT * FROM (
+                SELECT node_id, node_name
+                FROM catalogue
+                WHERE type_id = 2 AND status_id = 1
+                ORDER BY rec_date DESC
+            ) WHERE ROWNUM <= 2
+        ");
+
+        if (count($rows) < 2) {
+            throw new \RuntimeException(
+                'В локальном каталоге меньше двух реальных активных курсов (CATALOGUE, TYPE_ID=2, STATUS_ID=1) — '
+                . 'проверь, что справочные данные импортированы (см. память project_local_reference_data_import).'
+            );
         }
-
-        // Категория-якорь (родитель) для API_COURSES_CATEGORY
-        if (!$db->table('CATEGORY')->where('CATEGORY_ID', self::COURSE_ROOT_CATEGORY_ID)->exists()) {
-            $db->table('CATEGORY')->insert([
-                'CATEGORY_ID' => self::COURSE_ROOT_CATEGORY_ID,
-                'TYPE_ID' => 1,
-                'CATEGORY_CODE' => 'TEST_ROOT',
-                'CATEGORY_NAME' => 'Тестовые курсы (корень)',
-                'STATUS_ID' => 1,
-            ]);
-        }
-
-        $childCategoryId = $db->table('CATEGORY')->where('CATEGORY_CODE', 'TEST_CHILD')->value('CATEGORY_ID');
-        if (!$childCategoryId) {
-            $childCategoryId = (int)$db->selectOne('SELECT S_CATEGORY.NEXTVAL AS ID FROM DUAL')->id;
-            $db->table('CATEGORY')->insert([
-                'CATEGORY_ID' => $childCategoryId,
-                'PARENT_ID' => self::COURSE_ROOT_CATEGORY_ID,
-                'TYPE_ID' => 1,
-                'CATEGORY_CODE' => 'TEST_CHILD',
-                'CATEGORY_NAME' => 'Тестовый курс: категория (дочерняя)',
-                'STATUS_ID' => 1,
-            ]);
-        }
-
-        $course1 = $this->ensureCourse($db, $childCategoryId, 'TEST-COURSE-1', 'Основы бухгалтерии', [
-            'TEST-LESSON-1' => 'Урок 1. Введение',
-            'TEST-LESSON-2' => 'Урок 2. Баланс',
-        ]);
-
-        $course2 = $this->ensureCourse($db, $childCategoryId, 'TEST-COURSE-2', 'Основы права', [
-            'TEST-LESSON-3' => 'Урок 1. Источники права',
-        ]);
 
         return [
-            'course1' => $course1['node_id'],
-            'course1_lessons' => $course1['lessons'],
-            'course2' => $course2['node_id'],
-            'course2_lessons' => $course2['lessons'],
+            'course1' => (int)$rows[0]->node_id,
+            'course1_name' => $rows[0]->node_name,
+            'course2' => (int)$rows[1]->node_id,
+            'course2_name' => $rows[1]->node_name,
         ];
     }
 
     /**
-     * @return array{node_id: int, lessons: int[]}
+     * Убирает фиктивные CATALOGUE/CATEGORY-записи прежней версии сидера (TEST-COURSE-*,
+     * TEST-LESSON-*, тестовые категории-якоря) — теперь курсы берутся из реального каталога
+     * (см. pickRealCourses()), эта выдуманная структура больше не нужна и не создаётся заново.
+     * Вызывать после resetClient() для обоих тестовых клиентов — иначе на эти записи ещё
+     * ссылается их CLIENT_BASKET.
      */
-    protected function ensureCourse(ConnectionInterface $db, int $categoryId, string $courseCode, string $courseName, array $lessons): array
+    protected function purgeFakeCatalogue(ConnectionInterface $db): void
     {
-        $existingCourse = $db->table('CATALOGUE')->where('NODE_CODE', $courseCode)->first();
-        if ($existingCourse) {
-            $lessonIds = $db->table('CATALOGUE')
-                ->whereIn('NODE_CODE', array_keys($lessons))
-                ->orderBy('NODE_CODE')
-                ->pluck('node_id')
-                ->map(fn ($id) => (int)$id)
-                ->all();
+        $nodeIds = $db->table('CATALOGUE')
+            ->where('NODE_CODE', 'like', 'TEST-COURSE-%')
+            ->orWhere('NODE_CODE', 'like', 'TEST-LESSON-%')
+            ->pluck('node_id');
 
-            return ['node_id' => (int)$existingCourse->node_id, 'lessons' => $lessonIds];
+        if ($nodeIds->isEmpty()) {
+            return;
         }
 
-        $courseNodeId = (int)$db->selectOne('SELECT S_CATALOGUE.NEXTVAL AS ID FROM DUAL')->id;
-        $db->table('CATALOGUE')->insert([
-            'NODE_ID' => $courseNodeId,
-            'TYPE_ID' => 2, // REV_CONST.goodTypeComposite — курс состоит из уроков
-            'STATUS_ID' => 1, // REV_CONST.productStatusActive
-            'NODE_CODE' => $courseCode,
-            'NODE_NAME' => 'Тестовый курс: ' . $courseName,
-            'NODE_ALT_NAME' => $courseName, // это поле отдаёт API_CLIENT_COURSES.NAME
-        ]);
-        $db->table('PRODUCT_CATEGORY')->insert([
-            'CATEGORY_ID' => $categoryId,
-            'NODE_ID' => $courseNodeId,
-        ]);
-
-        $lessonIds = [];
-        foreach ($lessons as $code => $name) {
-            $nodeId = (int)$db->selectOne('SELECT S_CATALOGUE.NEXTVAL AS ID FROM DUAL')->id;
-            $db->table('CATALOGUE')->insert([
-                'NODE_ID' => $nodeId,
-                'TYPE_ID' => 3, // REV_CONST.goodTypePrimary
-                'STATUS_ID' => 1,
-                'NODE_CODE' => $code,
-                'NODE_NAME' => $name,
-                // CHECK PRIMARYWAREHOUSECODE требует WAREHOUSE_CODE NOT NULL при TYPE_ID=3
-                'WAREHOUSE_CODE' => 'NO_WH_CODE', // REV_CONST.goodNoWarehouseCode
-            ]);
-            $db->table('PRODUCT_CATEGORY')->insert([
-                'CATEGORY_ID' => self::LESSON_CATEGORY_ID,
-                'NODE_ID' => $nodeId,
-            ]);
-            $lessonIds[] = $nodeId;
-        }
-
-        return ['node_id' => $courseNodeId, 'lessons' => $lessonIds];
+        $db->table('PRODUCT_CATEGORY')->whereIn('NODE_ID', $nodeIds)->delete();
+        $db->table('CATALOGUE')->whereIn('NODE_ID', $nodeIds)->delete();
+        $db->table('CATEGORY')->whereIn('CATEGORY_CODE', ['TEST_ROOT', 'TEST_LESSON_CAT', 'TEST_CHILD'])->delete();
     }
 
     /**
@@ -320,17 +266,16 @@ class TestClientDataSeeder extends Seeder
 
     /**
      * Записывает клиента на один курс: корзина на курс + подписка + заказ (контейнер) +
-     * корзина на уроки внутри этого заказа + начисление + ноль/несколько оплат (каждая —
-     * с записью-погашением, связывающей платёж с контейнером/курсом).
+     * дочерняя строка корзины — содержимое именно этого контейнера (CLIENT_BASKET иерархична:
+     * PARENT_ID указывает на строку курса/подписки, см. ниже) + начисление + ноль/несколько
+     * оплат (каждая — с записью-погашением, связывающей платёж с контейнером/курсом).
      *
-     * @param int[] $lessonNodeIds
      * @param array<array{sum: float, daysAgo: int, desc: string}> $payments
      */
     protected function enroll(
         ConnectionInterface $db,
         int $clientId,
         int $courseNodeId,
-        array $lessonNodeIds,
         float $chargeSum,
         array $payments,
         int $sendDaysAgo = 5
@@ -364,6 +309,18 @@ class TestClientDataSeeder extends Seeder
             'MODE_SALE' => 2, // REV_CONST.boxModeSaleAtOnce
         ]);
 
+        // Параметры отправки заказа (частота/день/уроков за раз) — не заполняется автоматически
+        // нигде в схеме, легаси-форма пишет её сама при оформлении подписки. Без этой строки
+        // CourseScheduleCalculator не может посчитать график (нет данных — не гадает), поэтому
+        // сеятся тестовые значения: раз в месяц, 20-го числа, 1 урок за отправку.
+        $db->table('OBJECT_CONTRACT')->insert([
+            'TYPE_ID' => 16, // REV_CONST.objTypeBasket
+            'OBJECT_ID' => $courseItemId,
+            'P4' => 1, // SbsUnitsInOneShipment
+            'P5' => '1 Month', // SbsFrequencyOfSending
+            'P6' => '20', // SbsRecalculationDay
+        ]);
+
         $containerId = (int)$db->selectOne('SELECT S_CONTAINER.NEXTVAL AS ID FROM DUAL')->id;
         $db->table('CONTAINER')->insert([
             'CONTAINER_ID' => $containerId,
@@ -378,8 +335,8 @@ class TestClientDataSeeder extends Seeder
             'POST_VAL4' => 0,
             'POST_VAL5' => 0,
             'POST_VAL6' => 0,
-            'POST_FEE' => 0,
-            'POST_FEE_CLIENT' => 0,
+            'POST_FEE' => 2.50, // фактическая стоимость пересылки
+            'POST_FEE_CLIENT' => 3.00, // выставлено клиенту за пересылку (см. ContainerController::finance)
             'POST_PACK' => 0,
             'CONTAINER_DATE' => now()->subDays(30),
             'SEND_DATE' => now()->subDays($sendDaysAgo),
@@ -392,21 +349,26 @@ class TestClientDataSeeder extends Seeder
             'SUB_ID' => $subId,
         ]);
 
-        foreach ($lessonNodeIds as $lessonNodeId) {
-            $lessonItemId = (int)$db->selectOne('SELECT S_CLIENT_BASKET.NEXTVAL AS ID FROM DUAL')->id;
-            $db->table('CLIENT_BASKET')->insert([
-                'ITEM_ID' => $lessonItemId,
-                'CHANNEL_ID' => -1,
-                'SALE_ID' => -1,
-                'NODE_ID' => $lessonNodeId,
-                'CONTAINER_ID' => $containerId,
-                'ITEM_PRICE' => 0,
-                'ITEM_DISCOUNT' => 0,
-                'ITEM_STATUS' => 1,
-                'ITEM_MODE' => 0,
-                'REC_DATE' => now(),
-            ]);
-        }
+        // Содержимое контейнера — дочерняя строка корзины (PARENT_ID = строка курса/подписки
+        // выше, CONTAINER_ID = эта конкретная отправка). Реального состава курса (какие именно
+        // уроки) не найти — CATALOGUE_CONTENT не импортирован (см. память
+        // project_local_reference_data_import), поэтому честно ссылаемся на сам узел курса, а
+        // не выдумываем несуществующие "уроки".
+        $contentItemId = (int)$db->selectOne('SELECT S_CLIENT_BASKET.NEXTVAL AS ID FROM DUAL')->id;
+        $db->table('CLIENT_BASKET')->insert([
+            'ITEM_ID' => $contentItemId,
+            'PARENT_ID' => $courseItemId,
+            'CHANNEL_ID' => -1,
+            'SALE_ID' => -1,
+            'NODE_ID' => $courseNodeId,
+            'CONTAINER_ID' => $containerId,
+            'ITEM_PRICE' => $chargeSum,
+            'ITEM_COST' => $chargeSum,
+            'ITEM_DISCOUNT' => 0,
+            'ITEM_STATUS' => 1,
+            'ITEM_MODE' => 0,
+            'REC_DATE' => now(),
+        ]);
 
         $logId = (int)$db->selectOne('SELECT S_MONEY_DIST.NEXTVAL AS ID FROM DUAL')->id;
         $db->table('MONEY_DIST')->insert([

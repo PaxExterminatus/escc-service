@@ -8,6 +8,8 @@ use Illuminate\Validation\Rule;
 
 /**
  * @property string type
+ * @property string|null from
+ * @property string|null to
  */
 class DailyMessagesRequest extends ApplicationProgrammingInterfaceRequest
 {
@@ -16,6 +18,9 @@ class DailyMessagesRequest extends ApplicationProgrammingInterfaceRequest
         return [
             // Route segment is the type's case name ('sms'/'email'), not its numeric EMSG_TYPE value.
             'type' => ['required', Rule::in(array_column(MessageTypeEnum::cases(), 'name'))],
+            // Оба необязательны и независимы: ни одного — без ограничения по дате ("все неотправленные").
+            'from' => ['nullable', 'date_format:Y-m-d'],
+            'to' => ['nullable', 'date_format:Y-m-d'],
         ];
     }
 

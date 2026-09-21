@@ -35,6 +35,50 @@ export const appMenuData = [
                     menu.hide()
                 },
             }),
+            MenuItem({
+                key: 23,
+                label: 'Курс',
+                icon: 'pi pi-book',
+                route: '/course',
+                command () {
+                    menu.hide()
+                },
+            }),
+        ],
+    }),
+
+    MenuItem({
+        key: 8,
+        label: 'Поиск',
+        icon: 'pi pi-search',
+        items: [
+            MenuItem({
+                key: 81,
+                label: 'Клиенты',
+                icon: 'pi pi-users',
+                route: '/clients',
+                command () {
+                    menu.hide()
+                },
+            }),
+            MenuItem({
+                key: 82,
+                label: 'Контейнеры',
+                icon: 'pi pi-box',
+                route: '/containers',
+                command () {
+                    menu.hide()
+                },
+            }),
+            MenuItem({
+                key: 83,
+                label: 'Курсы',
+                icon: 'pi pi-book',
+                route: '/courses',
+                command () {
+                    menu.hide()
+                },
+            }),
         ],
     }),
 
@@ -96,6 +140,16 @@ export const appMenuData = [
                 },
             }),
         ],
+    }),
+
+    MenuItem({
+        key: 7,
+        label: 'Планировщик',
+        icon: 'pi pi-clock',
+        route: '/scheduler',
+        command () {
+            menu.hide()
+        },
     }),
 
     MenuItem({

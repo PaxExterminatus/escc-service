@@ -3,10 +3,10 @@
 namespace App\Domain\Messages\Controllers;
 
 use App\Domain\Messages\DataService\DailyMessagesDataService;
+use App\Domain\Messages\Enums\MessageTypeEnum;
 use App\Domain\Messages\Requests\DailyMessagesRequest;
 use App\Domain\Messages\Resources\DailyMessageCollection;
-use App\Domain\Messages\Services\DataManagement\DailyMessagingUpdateStatusService;
-use App\Domain\Messages\Services\Senders\MobileTeleSystems\MobileTeleSystemsProvider;
+use App\Domain\Messages\Services\DailyBatchDispatcher;
 use App\Http\Controllers\Controller;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
@@ -20,13 +20,6 @@ use Illuminate\Http\Response;
  */
 class DailyMessagingController extends Controller
 {
-    protected DailyMessagingUpdateStatusService $statusService;
-
-    public function __construct()
-    {
-        $this->statusService = new DailyMessagingUpdateStatusService();
-    }
-
     /**
      * Daily: get list
      * @example /api/messages/daily/sms
@@ -39,38 +32,18 @@ class DailyMessagingController extends Controller
     }
 
     /**
-     * Daily: send
+     * Daily: send — та же логика, что и у планировщика (см. App\Console\Commands\SendDailyMessages
+     * и DailyBatchDispatcher), только по нажатию кнопки, а не по расписанию.
      * @example /api/messages/daily/sms/send
      * @example /api/messages/daily/email/send
      */
-    public function send(DailyMessagesRequest $request): JsonResponse
+    public function send(DailyMessagesRequest $request, DailyBatchDispatcher $dispatcher): JsonResponse
     {
-        $messages = $this->repository($request)->get();
+        // $request->type — имя кейса enum'а ('sms'/'email', см. DailyMessagesRequest), не его
+        // числовое значение, поэтому constant(), а не from()/tryFrom().
+        $type = constant(MessageTypeEnum::class.'::'.$request->type);
 
-        $result = MobileTeleSystemsProvider::make()->massSending($messages, $this->senderName());
-
-        $request = $result['request'];
-        $response = $result['response'];
-
-        if ($response->status() === 200)
-        {
-            $this->statusService->massSendingSuccess($messages);
-        }
-
-        return response()->json([
-            'response' => [
-                'status' => $response->status(),
-                'reason' => $response->reason(),
-                'job_id' => $result['response']['job_id'] ?? null,
-            ],
-            /**
-             * @var array{messages: object[], channels: string[], channel_options: object}
-             */
-            'request' => [
-                'messages' => $request['messages'],
-                'channels' => $request['channels'],
-            ],
-        ]);
+        return response()->json(['response' => $dispatcher->dispatch($type)]);
     }
 
     /**
@@ -100,7 +73,7 @@ class DailyMessagingController extends Controller
 
     protected function repository(DailyMessagesRequest $request): DailyMessagesDataService
     {
-       return DailyMessagesDataService::make()->setType($request->type);
+       return DailyMessagesDataService::make()->setType($request->type)->setRange($request->from, $request->to);
     }
 
     protected function senderName(): string

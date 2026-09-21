@@ -5,7 +5,18 @@ class ProfileAPI {
     routers = {
         get: (id) => `/api/profile/${id}`,
         updateCommunication: (id) => `/api/profile/${id}/communication`,
+        search: () => `/api/clients/search`,
     };
+
+    /**
+     * @param {object} filters
+     * @param {number} page
+     * @return {Promise<axios.AxiosResponse<PaginatedResponse>>}
+     */
+    search(filters, page = 1)
+    {
+        return axios.get(this.routers.search(), {params: {...filters, page}});
+    }
 
     /**
      * @param {string|int} id

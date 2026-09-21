@@ -39,16 +39,17 @@ class TemplateSeeder extends Seeder
     protected function seedWrappers(): void
     {
         $presets = [
-            'wrapper_neutral_blue' => ['Обёртка — нейтральная (синяя)', EmailWrapperLayout::NEUTRAL, true, null],
-            'wrapper_debt_red' => ['Обёртка — задолженность (красная)', EmailWrapperLayout::DEBT, false, TemplateWrapperRoleEnum::debt],
-            'wrapper_ok_green' => ['Обёртка — без задолженности (зелёная)', EmailWrapperLayout::POSITIVE, false, TemplateWrapperRoleEnum::positive],
+            'wrapper_neutral_blue' => ['Обёртка — нейтральная (синяя)', EmailWrapperLayout::build(EmailWrapperLayout::NEUTRAL), true, null],
+            'wrapper_debt_red' => ['Обёртка — задолженность (красная)', EmailWrapperLayout::build(EmailWrapperLayout::DEBT), false, TemplateWrapperRoleEnum::debt],
+            'wrapper_ok_green' => ['Обёртка — без задолженности (зелёная)', EmailWrapperLayout::build(EmailWrapperLayout::POSITIVE), false, TemplateWrapperRoleEnum::positive],
+            'wrapper_formal_navy' => ['Обёртка — официальная (тёмно-синяя, золото)', EmailWrapperLayout::buildFormal(), false, null],
         ];
 
-        foreach ($presets as $code => [$name, $palette, $isDefault, $role]) {
+        foreach ($presets as $code => [$name, $html, $isDefault, $role]) {
             Template::firstOrCreate(['code' => $code], [
                 'type_id' => TemplateTypeEnum::wrapper->value,
                 'name' => $name,
-                'body' => EmailWrapperLayout::build($palette),
+                'body' => $html,
                 'is_default' => $isDefault,
                 'wrapper_role' => $role?->value,
                 'is_active' => true,

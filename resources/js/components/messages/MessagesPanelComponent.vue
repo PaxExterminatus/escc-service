@@ -25,11 +25,10 @@
 
         <Dropdown
             v-model="templateId"
-            :options="messaging.templates"
+            :options="templateOptions"
             optionLabel="name"
             optionValue="id"
             placeholder="Выбрать шаблон"
-            showClear
             :disabled="renderingTemplate"
             @change="applyTemplate"
         />
@@ -67,6 +66,13 @@ const renderingTemplate = ref(false);
 
 const channelOptions = computed(() => props.messaging.channels.map((c) => ({label: c.label, value: c.code})));
 const selectedChannel = computed(() => props.messaging.channel(channel.value));
+
+// Явный пункт "без шаблона" в самом списке — чтобы написать сообщение с нуля было так же
+// просто, как выбрать готовый шаблон, а не искать отдельный крестик очистки.
+const templateOptions = computed(() => [
+    {id: null, name: 'Без шаблона (написать самостоятельно)'},
+    ...props.messaging.templates,
+]);
 
 watch(() => props.loaded, (loaded) => {
     if (loaded && !channel.value) {

@@ -13,7 +13,7 @@
             <slot name="before"/>
 
             <div v-if="resolvedContainer" class="text-xs text-color-secondary">
-                Посылка {{ resolvedContainer.container_code }}
+                Курс «{{ resolvedContainer.course_name }}», посылка {{ resolvedContainer.container_code }}
                 <a href="#" @click.prevent="openPicker(null)">(сменить)</a>
             </div>
             <TagTree :tags="tags" @select="onSelectTag"/>
@@ -21,7 +21,7 @@
     </LazyPanel>
 
     <Dialog v-model:visible="pickerVisible" modal header="Выберите посылку" style="width: 45rem">
-        <ClientCoursesPanel :client-id="clientId" selectable @select-container="onContainerPicked"/>
+        <ClientCoursesPanel :client-id="clientId" selectable :show-finance="false" @select-container="onContainerPicked"/>
     </Dialog>
 </template>
 

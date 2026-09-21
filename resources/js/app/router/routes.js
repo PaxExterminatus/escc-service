@@ -1,10 +1,15 @@
 import AppPage from 'page/AppPage'
 import ProfilePage from 'page/ProfilePage'
+import ClientsPage from 'page/ClientsPage'
 import ContainerPage from 'page/ContainerPage';
+import ContainersPage from 'page/ContainersPage';
+import CoursePage from 'page/CoursePage';
+import CoursesPage from 'page/CoursesPage';
 import TemplatesPage from 'page/TemplatesPage';
 import DailyMessagingPage from 'page/DailyMessagingPage';
 import InvoiceDailyPage from 'page/InvoiceDailyPage';
 import TagsPage from 'page/TagsPage';
+import SchedulerPage from 'page/SchedulerPage';
 
 export default [
     {
@@ -17,33 +22,46 @@ export default [
         name: 'tags',
         component: TagsPage,
     },
+
+    // Плоские маршруты без вложенности: ни один из компонентов страниц не рендерит свой
+    // <router-view/>, поэтому "children" здесь были бы чистым неймспейсом без эффекта — Vue
+    // Router прекрасно матчит /clients и /clients/profile/:id? как два независимых пути.
     {
         path: '/clients',
         name: 'clients',
-        children: [
-            {
-                path: '/clients/profile/:id?',
-                name: 'clientsProfile',
-                component: ProfilePage,
-            }
-        ],
+        component: ClientsPage,
+    },
+    {
+        path: '/clients/profile/:id?',
+        name: 'clientsProfile',
+        component: ProfilePage,
     },
 
     {
-        path: '/container',
-        name: 'container',
-        children: [
-            {
-                path: '/container/:id?',
-                name: 'containerShow',
-                component: ContainerPage,
-            },
-            {
-                path: '/container/invoices/daily',
-                name: 'containerInvoicesDaily',
-                component: InvoiceDailyPage,
-            },
-        ],
+        path: '/containers',
+        name: 'containers',
+        component: ContainersPage,
+    },
+    {
+        path: '/container/:id?',
+        name: 'containerShow',
+        component: ContainerPage,
+    },
+    {
+        path: '/container/invoices/daily',
+        name: 'containerInvoicesDaily',
+        component: InvoiceDailyPage,
+    },
+
+    {
+        path: '/courses',
+        name: 'courses',
+        component: CoursesPage,
+    },
+    {
+        path: '/course/:id?',
+        name: 'courseShow',
+        component: CoursePage,
     },
 
     {
@@ -61,5 +79,11 @@ export default [
                 component: DailyMessagingPage,
             },
         ],
+    },
+
+    {
+        path: '/scheduler',
+        name: 'scheduler',
+        component: SchedulerPage,
     },
 ];

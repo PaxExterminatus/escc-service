@@ -3,6 +3,7 @@
 namespace App\Domain\Templates\Services;
 
 use App\Domain\App\Container\Models\Container;
+use App\Domain\App\Course\Services\CourseBalanceCalculator;
 use App\Domain\App\Profile\Models\Profile;
 use App\Domain\Messages\Models\ClientCommunication;
 use Illuminate\Support\Carbon;
@@ -16,6 +17,10 @@ use Throwable;
  */
 class TagResolver
 {
+    public function __construct(protected CourseBalanceCalculator $balance)
+    {
+    }
+
     /**
      * @return array<string, string>
      */
@@ -38,17 +43,11 @@ class TagResolver
             $params['client_email'] = $communication->client_email ?? '—';
         }
 
-        try {
-            $amount = DB::connection('oracle')->selectOne(
-                'SELECT API_SERVICE_ACCOUNT.ACCOUNT_CLIENT_TOTAL_DEB(:id) AS DEB FROM DUAL',
-                ['id' => $clientId]
-            )->deb;
-
-            // Точка, без пробелов — формат самого легаси (см. client_account_tdc: "DOLG: "||GETTOTALDEBT||" bel.rub").
-            $params['amount'] = number_format((float) $amount, 2, '.', '');
-        } catch (Throwable $e) {
-            // долг недоступен (см. project_local_xe_debt_function_broken) — оставляем {amount} неразрешённым
-        }
+        // Раньше брали готовое значение из API_SERVICE_ACCOUNT.ACCOUNT_CLIENT_TOTAL_DEB — эта
+        // легаси-функция требует контекст USERID, которого нет вне самого приложения-легаси
+        // (см. project_local_xe_debt_function_broken), поэтому считаем баланс инлайн-SQL по
+        // MONEY_DIST — та же формула, что и для курса/контейнера (см. CourseBalanceCalculator).
+        $params['amount'] = number_format($this->balance->forClient($clientId)['balance'], 2, '.', '');
 
         return $params;
     }

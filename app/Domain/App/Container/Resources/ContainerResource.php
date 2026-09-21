@@ -17,10 +17,15 @@ class ContainerResource extends JsonResource
         return [
             'id' => (int)$this->container_id,
             'client_id' => (int)$this->client_id,
+            'sub_id' => $this->sub_id !== null ? (int)$this->sub_id : null,
             'code' => $this->container_code,
             'status' => $this->status_id, // строка-имя статуса, см. ContainerStatusCast/ContainerStatusEnum
             'created_at' => $this->container_date?->format('d.m.Y H:i'),
             'send_date' => $this->send_date?->format('d.m.Y H:i'),
+            // См. ContainerController::withCommunication — куда реально уйдёт счёт и есть ли
+            // согласие клиента, до того как оператор нажмёт "Email".
+            'client_email' => $this->client_email,
+            'email_allowed' => (bool) $this->email_allowed,
         ];
     }
 }

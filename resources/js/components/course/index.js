@@ -1,11 +1,15 @@
 import {courseAPI} from './CourseAPI.js';
-import CourseList from './CourseListComponent.vue';
-import ContainerList from './ContainerListComponent.vue';
+import {Course} from './Course.js';
 import ClientCoursesPanel from './ClientCoursesPanelComponent.vue';
+import ClientCoursesTable from './ClientCoursesTableComponent.vue';
+import CourseCard from './CourseCardComponent.vue';
+import ShipmentScheduleTimeline from './ShipmentScheduleTimelineComponent.vue';
 
 export {
     courseAPI,
-    CourseList,
-    ContainerList,
+    Course,
     ClientCoursesPanel,
+    ClientCoursesTable,
+    CourseCard,
+    ShipmentScheduleTimeline,
 }

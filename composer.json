@@ -40,6 +40,7 @@
         "guzzlehttp/guzzle": "^7.5.0",
         "laravel/framework": "^v13.15.0",
         "laravel/tinker": "^v3.0.2",
+        "phpoffice/phpspreadsheet": "^5.10",
         "phpoffice/phpword": "^1.4",
         "yajra/laravel-oci8": "^v13.6.0"
     },

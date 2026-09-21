@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Domain\Messages\Controllers\DailyMessagingController;
+use App\Domain\Messages\Controllers\MessageHistoryController;
+use App\Domain\Messages\Controllers\MessageQueueController;
 use App\Domain\Messages\Controllers\MessageSendController;
 
 Route::prefix('api/messages/')
@@ -9,8 +11,16 @@ Route::prefix('api/messages/')
         /** Recipient status (address + consent) for a client, per channel */
         Route::get('recipient/{clientId}', [MessageSendController::class, 'recipient']);
 
+        /** История уведомлений клиента (SMS/Email) — уже отправленное + то, что ещё в очереди */
+        Route::get('history/{clientId}', [MessageHistoryController::class, 'forClient']);
+
         /** Send one message (SMS or Email) to a client */
         Route::post('send', [MessageSendController::class, 'send']);
+
+        /** Редактор очереди: добавить/изменить/удалить одну строку дневной рассылки (пока wait) */
+        Route::post('queue', [MessageQueueController::class, 'store']);
+        Route::put('queue/{id}', [MessageQueueController::class, 'update'])->whereNumber('id');
+        Route::delete('queue/{id}', [MessageQueueController::class, 'destroy'])->whereNumber('id');
 
         /**
          * @example /api/messages/daily/sms

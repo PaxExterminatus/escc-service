@@ -28,4 +28,3 @@
         </PanelMenu>
     </Sidebar>
 </template>
-
